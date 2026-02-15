@@ -174,11 +174,33 @@ class DriveBase:
             self.run_speed(speed, speed)
             time.sleep(amount)
         elif unit == CM:
-            self.run_speed(speed, speed)
-            # Approximate time based on speed and distance
-            # At 100% speed, assume ~30cm/sec
-            est_time = amount / (abs(speed) / 100.0 * 30.0)
-            time.sleep(est_time)
+            # Move by distance in CM
+            dist_mm = amount * 10
+            rotations = dist_mm / self._wheel_circ
+            target_deg = rotations * 360.0
+            
+            m_l = self.left[0] if self.left else None
+            m_r = self.right[0] if self.right else None
+            
+            if m_l and m_r:
+                start_l = m_l.driver.get_encoder(m_l.port)
+                start_r = m_r.driver.get_encoder(m_r.port)
+                
+                self.run_speed(speed, speed)
+                
+                while True:
+                    curr_l = m_l.driver.get_encoder(m_l.port)
+                    curr_r = m_r.driver.get_encoder(m_r.port)
+                    
+                    trav_l = abs(curr_l - start_l)
+                    trav_r = abs(curr_r - start_r)
+                    avg_trav = (trav_l + trav_r) / 2.0
+                    
+                    if avg_trav >= target_deg:
+                        break
+                    time.sleep(0.01)
+            else:
+                time.sleep(0.1)
         else:
             self.run_speed(speed, speed)
             time.sleep(amount)
