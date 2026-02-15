@@ -435,19 +435,10 @@ var main = new function() {
       e.stopPropagation();
 
       let menuItems = [
-        {html: 'Ev3dev Mode', line: false, callback: self.switchToEv3dev},
-        {html: 'Pybricks Mode', line: true, callback: self.switchToPybricks},
         {html: 'Zoom In', line: false, callback: pythonPanel.zoomIn},
         {html: 'Zoom Out', line: false, callback: pythonPanel.zoomOut},
         {html: 'Reset Zoom', line: false, callback: pythonPanel.zoomReset},
       ];
-      var tickIndex;
-      if (blockly.generator == ev3dev2_generator) {
-        tickIndex = 0;
-      } else if (blockly.generator == pybricks_generator) {
-        tickIndex = 1;
-      }
-      menuItems[tickIndex].html = '<span class="tick">&#x2713;</span> ' + menuItems[tickIndex].html;
 
       menuDropDown(self.$pythonMenu, menuItems, {className: 'pythonMenuDropDown'});
     }

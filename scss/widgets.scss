@@ -1,17 +1,43 @@
+@import '_variables.scss';
+
 @keyframes show {
-  0% { transform: translateY(100vh) scaleX(0.1); }
-  100% { transform: translateY(0) scaleX(1); }
+  0% {
+    transform: translateY(100vh) scaleX(0.1);
+  }
+
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
 }
+
 @keyframes hide {
-  from { transform: scale(1, 1); }
-  to { transform: scale(0, 0); }
+  from {
+    transform: scale(1, 1);
+  }
+
+  to {
+    transform: scale(0, 0);
+  }
 }
+
 @keyframes toast {
-  0% { transform: scale(0, 0); }
-  10% { transform: scale(1, 1); }
-  90% { transform: scale(1, 1); }
-  100% { transform: scale(0, 0); }
+  0% {
+    transform: scale(0, 0);
+  }
+
+  10% {
+    transform: scale(1, 1);
+  }
+
+  90% {
+    transform: scale(1, 1);
+  }
+
+  100% {
+    transform: scale(0, 0);
+  }
 }
+
 .animatedHide {
   animation-name: hide !important;
 }
@@ -23,12 +49,12 @@
   left: 0;
   height: 100%;
   width: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
 
-  > i {
+  >i {
     font-size: 200px;
     color: white;
   }
@@ -53,9 +79,9 @@
   padding-top: 0.5em;
   padding-bottom: 0.5em;
   text-align: center;
-  box-shadow: 5px 5px 10px black;
-  background: grey;
-  color: white;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);
+  background: $text-muted;
+  color: $white;
 }
 
 .dialogScreen {
@@ -65,13 +91,13 @@
   left: 0;
   height: 100%;
   width: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   font-size: 100%;
   display: flex;
   align-items: center;
   flex-direction: column;
 
-  > .dialogWindow {
+  >.dialogWindow {
     animation-name: show;
     animation-duration: 0.2s;
     animation-timing-function: linear;
@@ -80,25 +106,25 @@
     max-width: 90%;
     top: 10%;
     position: absolute;
-    background: #4994FB;
-    color: white;
+    background: $bg-light;
+    color: $text-main;
     border-radius: 10px;
     font-size: 120%;
     max-height: 80%;
     overflow-y: auto;
     margin: auto;
-    border: solid 2px white;
+    border: solid 2px $primary;
     display: flex;
     flex-direction: column;
 
-    > .dialogTitle {
+    >.dialogTitle {
       padding: 0.4rem 1.2rem;
       font-size: 130%;
       font-weight: bold;
-      border-bottom: solid 2px #bbbbbb;
+      border-bottom: solid 2px $border;
     }
 
-    > .dialogBody {
+    >.dialogBody {
       padding: 0.8rem 1.2rem;
       overflow-y: auto;
 
@@ -107,21 +133,21 @@
       }
     }
 
-    > .dialogButtonsRow {
+    >.dialogButtonsRow {
       display: flex;
       justify-content: flex-end;
       width: 100%;
       padding: 0.5em 1em;
       box-sizing: border-box;
 
-      > button {
+      >button {
         margin-left: 5px;
         font-size: 100%;
         border: none;
         border-radius: 0.3em;
         padding: 0.2em 0.5em;
         min-width: 4em;
-        border: solid 2px #bbbbbb;
+        border: solid 2px $border;
       }
 
       .push-left {
@@ -129,21 +155,23 @@
       }
 
       .btn-success {
-        color: white;
-        background-color: #28a745;
+        color: $white;
+        background-color: $primary;
+        border-color: $primary;
       }
 
       .btn-light {
-        background-color: #f8f9fa;
+        background-color: $bg-medium;
       }
     }
 
     select {
       font-size: 100%;
       width: 100%;
-      background: #4994FB;
-      color: white;
-      border-color: white;
+      background: $white;
+      color: $text-main;
+      border: solid 1px $border;
+      padding: 0.3em;
     }
   }
 }

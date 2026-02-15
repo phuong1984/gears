@@ -1,4 +1,7 @@
-html, body {
+@import '_variables.scss';
+
+html,
+body {
   height: 100%;
   width: 100%;
   margin: 0px;
@@ -8,14 +11,14 @@ html, body {
 }
 
 body {
-  background: #E4F0FE;
-  font-family: sans-serif;
+  background: $bg-light;
+  font-family: $font-stack;
   display: flex;
   flex-direction: column;
 }
 
 header {
-  background: #4994FB;
+  background: $primary-dark;
   display: flex;
   flex-direction: row;
   color: white;
@@ -30,14 +33,15 @@ header {
     margin-bottom: -0.3em;
   }
 
-  #projectName, #robotName {
+  #projectName,
+  #robotName {
     margin-left: 1em;
-    background: #76AFFC;
-    border: dashed 1px #5781BA;
+    background: lighten($primary-dark, 50%);
+    border: dashed 1px $primary-dark;
     border-radius: 0.3em;
     padding: 0.3em 0.5em;
     position: relative;
-    color: white;
+    color: $text-main;
   }
 
   #projectName::placeholder {
@@ -64,7 +68,7 @@ main {
 nav {
   margin-top: 0.5em;
   display: flex;
-  border-bottom: solid 1px #bbbbbb;
+  border-bottom: solid 1px $border;
   align-items: center;
 
   ul.panelTabs {
@@ -74,26 +78,26 @@ nav {
 
     li {
       display: block;
-      border: solid 1px #bbbbbb;
+      border: solid 1px $border;
       padding: 0.3em 1em;
       border-radius: 0.5em 0.5em 0 0;
       border-bottom: none;
       margin-left: -5px;
-      background: #D9E3F1;
-      color: #999999;
+      background: $bg-medium;
+      color: $text-muted;
       cursor: pointer;
       user-select: none;
-      white-space:nowrap;
+      white-space: nowrap;
     }
 
     li:hover {
-      background: #E4F0FE;
+      background: $bg-light;
     }
 
     li.active {
       z-index: 1;
-      background: white;
-      color: #4994FB;
+      background: $white;
+      color: $primary-dark;
       margin-top: -5px;
       font-size: 110%;
     }
@@ -112,7 +116,7 @@ nav {
     }
 
     .menuItem:hover {
-      color: #4994FB;
+      color: $primary-dark;
     }
   }
 
@@ -154,7 +158,8 @@ nav {
   }
 }
 
-.saveBlockly, .savePython {
+.saveBlockly,
+.savePython {
   font-weight: bold;
   color: gray;
   cursor: pointer;
@@ -162,7 +167,8 @@ nav {
   margin: 0 1em;
 }
 
-.saveBlockly.hide, .savePython.hide {
+.saveBlockly.hide,
+.savePython.hide {
   display: none;
 }
 
@@ -215,8 +221,8 @@ nav {
 }
 
 ul.menuDropDown {
-  background: #E4F0FE;
-  border: solid 1px #bbbbbb;
+  background: $bg-light;
+  border: solid 1px $border;
   position: absolute;
   // top: 71px;
   // left: 272px;
@@ -227,19 +233,22 @@ ul.menuDropDown {
   padding: 0;
   border-radius: 0 0 0.5em 0.5em;
   overflow: hidden;
-  box-shadow: 0px 10px 6px 0px rgba(0,0,0,0.25);
+  box-shadow: 0px 10px 6px 0px rgba(0, 0, 0, 0.25);
 
   li {
     display: block;
     color: gray;
     padding: 0.5em;
   }
+
   li:hover {
-    background: white;
+    background: $white;
   }
+
   li.underline {
-    border-bottom: solid 1px #bbbbbb;
+    border-bottom: solid 1px $border;
   }
+
   .tick {
     color: green;
   }
