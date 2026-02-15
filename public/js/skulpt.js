@@ -1,32 +1,32 @@
-var skulpt = new function() {
+var skulpt = new function () {
   var self = this;
 
   this.externalLibs = {
     './ev3dev2/__init__.py': false,
-    './ev3dev2/motor.py': 'ev3dev2/motor.py?v=d118b16a',
-    './ev3dev2/sound.py': 'ev3dev2/sound.py?v=ec3085ff',
-    './ev3dev2/button.py': 'ev3dev2/button.py?v=a7f892ad',
-    './ev3dev2/sensor/__init__.py': 'ev3dev2/sensor/__init__.py?v=6d1f054c',
-    './ev3dev2/sensor/lego.py': 'ev3dev2/sensor/lego.py?v=9fa3d991',
-    './ev3dev2/sensor/virtual.py': 'ev3dev2/sensor/virtual.py?v=db93c480',
-    './simPython.js': 'js/simPython.js?v=ext_robotics_10',
+    './ev3dev2/motor.py': 'ev3dev2/motor.py?v=8a7d9967',
+    './ev3dev2/sound.py': 'ev3dev2/sound.py?v=a54e0bb7',
+    './ev3dev2/button.py': 'ev3dev2/button.py?v=5323928b',
+    './ev3dev2/sensor/__init__.py': 'ev3dev2/sensor/__init__.py?v=c01f00db',
+    './ev3dev2/sensor/lego.py': 'ev3dev2/sensor/lego.py?v=4cbc6b8b',
+    './ev3dev2/sensor/virtual.py': 'ev3dev2/sensor/virtual.py?v=36db9ebf',
+    './simPython.js': 'js/simPython.js?v=163d13a3',
     './pybricks/__init__.py': false,
-    './pybricks/parameters.py': 'pybricks/parameters.py?v=2db482b9',
-    './pybricks/tools.py': 'pybricks/tools.py?v=20eafcfc',
-    './pybricks/hubs.py': 'pybricks/hubs.py?v=7fa5cb11',
-    './pybricks/ev3devices.py': 'pybricks/ev3devices.py?v=8ee63a93',
-    './pybricks/robotics.py': 'pybricks/robotics.py?v=bf287d71',
-    './ev3dev2/Training_Wheels.py': 'ev3dev2/Training_Wheels.py?v=ad06cf56',
-    './ext_robotics/__init__.py': 'ext_robotics/__init__.py',
-    './ext_robotics/sim_constants.py': 'ext_robotics/sim_constants.py?v=01',
-    './ext_robotics/sim_motor_driver.py': 'ext_robotics/sim_motor_driver.py?v=01',
-    './ext_robotics/sim_motor.py': 'ext_robotics/sim_motor.py?v=01',
-    './ext_robotics/sim_drivebase.py': 'ext_robotics/sim_drivebase.py?v=01',
+    './pybricks/parameters.py': 'pybricks/parameters.py?v=eb349cab',
+    './pybricks/tools.py': 'pybricks/tools.py?v=a41c5df7',
+    './pybricks/hubs.py': 'pybricks/hubs.py?v=9bfa3598',
+    './pybricks/ev3devices.py': 'pybricks/ev3devices.py?v=0ae43604',
+    './pybricks/robotics.py': 'pybricks/robotics.py?v=1e16263a',
+    './ev3dev2/Training_Wheels.py': 'ev3dev2/Training_Wheels.py?v=24b9b81a',
+    './ext_robotics/__init__.py': 'ext_robotics/__init__.py?v=1bb63e76',
+    './ext_robotics/sim_constants.py': 'ext_robotics/sim_constants.py?v=03e2e88d',
+    './ext_robotics/sim_motor_driver.py': 'ext_robotics/sim_motor_driver.py?v=7b2f360a',
+    './ext_robotics/sim_motor.py': 'ext_robotics/sim_motor.py?v=5627a42c',
+    './ext_robotics/sim_drivebase.py': 'ext_robotics/sim_drivebase.py?v=563cf9f3',
   };
   this.preloadedLibs = {};
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     Sk.configure({
       output: self.outf,
       read: self.builtinRead,
@@ -38,7 +38,7 @@ var skulpt = new function() {
   };
 
   // Run program
-  this.runPython = function(prog) {
+  this.runPython = function (prog) {
     if (typeof self.hardInterrupt != 'undefined') {
       delete self.hardInterrupt;
     }
@@ -48,21 +48,21 @@ var skulpt = new function() {
     self.running = true;
 
     var myPromise = Sk.misceval.asyncToPromise(
-      function() {
+      function () {
         return Sk.importMainWithBody("<stdin>", false, prog, true);
       },
       {
         '*': self.interruptHandler
       }
     );
-    var resetExecStart = setInterval(function(){Sk.execStart = Date();}, 2000);
+    var resetExecStart = setInterval(function () { Sk.execStart = Date(); }, 2000);
     myPromise.then(
-      function(mod) {
+      function (mod) {
         self.running = false;
         clearInterval(resetExecStart);
         simPanel.setRunIcon('run');
       },
-      function(err) {
+      function (err) {
         self.running = false;
         if (err instanceof Sk.builtin.ExternalError) {
           console.log(err.toString());
@@ -92,12 +92,12 @@ var skulpt = new function() {
 
   // Files preloader
   this.preload = function () {
-    function fetchPreload(key, url){
+    function fetchPreload(key, url) {
       fetch(url)
-        .then(function(r){
+        .then(function (r) {
           return r.text();
         })
-        .then(function(r){
+        .then(function (r) {
           self.preloadedLibs[key] = r;
         });
     }

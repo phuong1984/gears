@@ -26,6 +26,7 @@ def get_hash(url):
   f = open(os.path.join(BASE_DIR, filename), 'rb')
   m = hashlib.md5()
   m.update(f.read())
+  f.close()
   hash = m.hexdigest()[:8]
   hash_cache[filename] = hash
 
@@ -40,7 +41,7 @@ def replace_path(url):
 
 def scan_file(full_path):
   regex = re.compile('["\'][^"\']+v=[0-9a-f]+["\']')
-  f = open(full_path, 'r')
+  f = open(full_path, 'r', encoding='utf-8', errors='replace')
   infile = f.read()
   outfile = ''
   start = 0
@@ -55,7 +56,7 @@ def scan_file(full_path):
     start = match.end()
   if outfile != infile:
     log(LOG_INFO, '    File changed: ' + full_path)
-    f_out = open(full_path, 'w')
+    f_out = open(full_path, 'w', encoding='utf-8', errors='replace')
     f_out.write(outfile)
     f_out.close()
 
@@ -63,7 +64,7 @@ def scan_directory(directory):
   for name in os.listdir(directory):
     full_path = os.path.join(directory, name)
     if os.path.isfile(full_path) and (full_path[-3:] == '.js' or full_path[-5:] == '.html'):
-      log(LOG_DEBUG, '  File: ' + full_path)
+      log(LOG_INFO, '  Scanning File: ' + full_path)
       scan_file(full_path)
 
 def main():

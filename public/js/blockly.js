@@ -22,7 +22,7 @@ var blockly = new function () {
     horizontalLayout: false,
     toolboxPosition: 'start',
     css: true,
-    media: 'blockly-9.0.0/media',
+    media: 'blockly-12.3.0/media',
     rtl: RTL,
     scrollbars: true,
     sounds: true,
@@ -37,26 +37,32 @@ var blockly = new function () {
 
   // Run on page load
   this.init = function () {
+    /* 
     Blockly.geras.Renderer.prototype.makeConstants_ = function () {
       var constants = new Blockly.geras.ConstantProvider();
       constants.ADD_START_HATS = true;
       return constants;
     };
+    */
 
     const script = document.createElement('script');
-    script.src = 'blockly-9.0.0/msg/js/' + LANG + '.js';
+    script.src = 'blockly-12.3.0/msg/' + LANG + '.js';
     script.addEventListener('load', function () {
       self.loadCustomBlocks()
         .then(self.loadToolBox)
         .then(self.loadExtRoboticsToolbox)
-        .then(self.generator.load());
+        .then(() => {
+          if (self.generator && typeof self.generator.load === 'function') {
+            self.generator.load();
+          }
+        });
     });
     document.head.appendChild(script);
   };
 
   // Load toolbox
   this.loadToolBox = function () {
-    return fetch('toolbox.xml?v=f7456359')
+    return fetch('toolbox.xml?v=d22b4dc7')
       .then(response => response.text())
       .then(function (response) {
         response = i18n.replace(response);
@@ -277,7 +283,7 @@ var blockly = new function () {
 
   // Load custom blocks
   this.loadCustomBlocks = function () {
-    return fetch('customBlocks.json?v=3cd8436f')
+    return fetch('customBlocks.json?v=86f47536')
       .then(response => response.text())
       .then(function (response) {
         let json = JSON.parse(i18n.replace(response));
