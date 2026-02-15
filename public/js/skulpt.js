@@ -9,7 +9,7 @@ var skulpt = new function() {
     './ev3dev2/sensor/__init__.py': 'ev3dev2/sensor/__init__.py?v=6d1f054c',
     './ev3dev2/sensor/lego.py': 'ev3dev2/sensor/lego.py?v=9fa3d991',
     './ev3dev2/sensor/virtual.py': 'ev3dev2/sensor/virtual.py?v=db93c480',
-    './simPython.js': 'js/simPython.js?v=1b9bc620',
+    './simPython.js': 'js/simPython.js?v=ext_robotics_10',
     './pybricks/__init__.py': false,
     './pybricks/parameters.py': 'pybricks/parameters.py?v=2db482b9',
     './pybricks/tools.py': 'pybricks/tools.py?v=20eafcfc',
@@ -17,6 +17,11 @@ var skulpt = new function() {
     './pybricks/ev3devices.py': 'pybricks/ev3devices.py?v=8ee63a93',
     './pybricks/robotics.py': 'pybricks/robotics.py?v=bf287d71',
     './ev3dev2/Training_Wheels.py': 'ev3dev2/Training_Wheels.py?v=ad06cf56',
+    './ext_robotics/__init__.py': 'ext_robotics/__init__.py',
+    './ext_robotics/sim_constants.py': 'ext_robotics/sim_constants.py?v=01',
+    './ext_robotics/sim_motor_driver.py': 'ext_robotics/sim_motor_driver.py?v=01',
+    './ext_robotics/sim_motor.py': 'ext_robotics/sim_motor.py?v=01',
+    './ext_robotics/sim_drivebase.py': 'ext_robotics/sim_drivebase.py?v=01',
   };
   this.preloadedLibs = {};
 

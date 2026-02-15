@@ -118,7 +118,97 @@ var $builtinmodule = function(name) {
 
   }, 'Motor', []);
 
-  mod.Pen = Sk.misceval.buildClass(mod, function($gbl, $loc) {
+
+
+  var _driveRampInterval = null;
+
+  mod.set_drive = new Sk.builtin.func(function (left_sp, right_sp) {
+    if (!robot.processedOptions.wheels) return;
+
+    // Clear any previous ramp
+    if (_driveRampInterval) {
+      clearInterval(_driveRampInterval);
+      _driveRampInterval = null;
+    }
+
+    var targetLeft = left_sp.v;
+    var targetRight = right_sp.v;
+    // Gentler ramp step to avoid physics shock/slip
+    var RAMP_STEP = 30; // units per 16ms frame (0->735 in ~400ms)
+
+    // Start both motors (speed_sp starts at 0 from reset_drive)
+    robot.leftWheel.runForever();
+    robot.rightWheel.runForever();
+
+    // Custom ramp loop
+    _driveRampInterval = setInterval(function () {
+      // Calculate current ramp value (same logic for both)
+      var currentLeft = robot.leftWheel.speed_sp;
+      var currentRight = robot.rightWheel.speed_sp;
+      var newLeft = currentLeft;
+      var newRight = currentRight;
+
+      // Ramp Left
+      if (Math.abs(targetLeft - currentLeft) <= RAMP_STEP) {
+        newLeft = targetLeft;
+      } else {
+        newLeft += (targetLeft > currentLeft) ? RAMP_STEP : -RAMP_STEP;
+      }
+
+      // Ramp Right
+      if (Math.abs(targetRight - currentRight) <= RAMP_STEP) {
+        newRight = targetRight;
+      } else {
+        newRight += (targetRight > currentRight) ? RAMP_STEP : -RAMP_STEP;
+      }
+
+      // SYNC: Force _speed_sp to match speed_sp exactly
+      robot.leftWheel.speed_sp = newLeft;
+      robot.leftWheel._speed_sp = newLeft;
+      robot.rightWheel.speed_sp = newRight;
+      robot.rightWheel._speed_sp = newRight;
+
+      // Stop ramp when targets reached
+      if (newLeft === targetLeft && newRight === targetRight) {
+        clearInterval(_driveRampInterval);
+        _driveRampInterval = null;
+      }
+    }, 16); // Sync with ~60fps physics loop
+  });
+
+  mod.reset_drive = new Sk.builtin.func(function () {
+    if (!robot.processedOptions.wheels) return;
+    // Fully reset both wheels' software state
+    robot.leftWheel.speed_sp = 0;
+    robot.rightWheel.speed_sp = 0;
+    robot.leftWheel._speed_sp = 0;
+    robot.rightWheel._speed_sp = 0;
+    robot.leftWheel.speed = 0;
+    robot.rightWheel.speed = 0;
+    robot.leftWheel.prevPosition = robot.leftWheel.position;
+    robot.rightWheel.prevPosition = robot.rightWheel.position;
+    // Apply hold force to physics motor — actively brake both wheels to 0
+    robot.leftWheel.stop_action = 'hold';
+    robot.rightWheel.stop_action = 'hold';
+    robot.leftWheel.stop();
+    robot.rightWheel.stop();
+  });
+
+  mod.stop_drive = new Sk.builtin.func(function (action) {
+    if (!robot.processedOptions.wheels) return;
+    // Clear any active ramp
+    if (_driveRampInterval) {
+      clearInterval(_driveRampInterval);
+      _driveRampInterval = null;
+    }
+    var act = (typeof action !== 'undefined') ? action.v : 'hold';
+    robot.leftWheel.stop_action = act;
+    robot.rightWheel.stop_action = act;
+    robot.leftWheel.stop();
+    robot.rightWheel.stop();
+  });
+
+  mod.Pen = Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     var self = this;
 
     $loc.__init__ = new Sk.builtin.func(function(self, address) {

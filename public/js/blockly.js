@@ -1,4 +1,4 @@
-var blockly = new function() {
+var blockly = new function () {
   var self = this;
 
   self.theme = Blockly.Theme.defineTheme('customTheme', {
@@ -7,37 +7,37 @@ var blockly = new function() {
   });
 
   var options = {
-    toolbox : null,
+    toolbox: null,
     zoom: {
       controls: true
     },
     move: {
       wheel: true
     },
-    collapse : true,
-    comments : true,
-    disable : true,
-    maxBlocks : Infinity,
-    trashcan : false,
-    horizontalLayout : false,
-    toolboxPosition : 'start',
-    css : true,
+    collapse: true,
+    comments: true,
+    disable: true,
+    maxBlocks: Infinity,
+    trashcan: false,
+    horizontalLayout: false,
+    toolboxPosition: 'start',
+    css: true,
     media: 'blockly-9.0.0/media',
-    rtl : RTL,
-    scrollbars : true,
-    sounds : true,
-    oneBasedIndex : false,
+    rtl: RTL,
+    scrollbars: true,
+    sounds: true,
+    oneBasedIndex: false,
     theme: self.theme
   };
 
   this.unsaved = false;
-  this.generator = ev3dev2_generator;
+  this.generator = ext_robotics_generator;
 
   this.mirror = true;
 
   // Run on page load
-  this.init = function() {
-    Blockly.geras.Renderer.prototype.makeConstants_ = function() {
+  this.init = function () {
+    Blockly.geras.Renderer.prototype.makeConstants_ = function () {
       var constants = new Blockly.geras.ConstantProvider();
       constants.ADD_START_HATS = true;
       return constants;
@@ -45,19 +45,20 @@ var blockly = new function() {
 
     const script = document.createElement('script');
     script.src = 'blockly-9.0.0/msg/js/' + LANG + '.js';
-    script.addEventListener('load', function() {
+    script.addEventListener('load', function () {
       self.loadCustomBlocks()
         .then(self.loadToolBox)
+        .then(self.loadExtRoboticsToolbox)
         .then(self.generator.load());
     });
     document.head.appendChild(script);
   };
 
   // Load toolbox
-  this.loadToolBox = function() {
+  this.loadToolBox = function () {
     return fetch('toolbox.xml?v=f7456359')
       .then(response => response.text())
-      .then(function(response) {
+      .then(function (response) {
         response = i18n.replace(response);
         self.toolboxXml = (new DOMParser()).parseFromString(response, "text/xml");
         options.toolbox = self.toolboxXml.getElementById('toolbox');
@@ -74,16 +75,42 @@ var blockly = new function() {
         self.displayedWorkspace.addChangeListener(Blockly.Events.disableOrphans);
         // self.loadLocalStorage();
         setTimeout(self.loadLocalStorage, 200);
-        setTimeout(function(){
+        setTimeout(function () {
           self.workspace.addChangeListener(self.checkModified);
         }, 1000);
       });
   };
 
+  // Load and switch to the ext_robotics toolbox
+  this.loadExtRoboticsToolbox = function () {
+    if (self.extRoboticsToolboxXml) {
+      // Already loaded, just switch
+      self.toolboxXml = self.extRoboticsToolboxXml;
+      self.displayedWorkspace.updateToolbox(self.toolboxXml.getElementById('toolbox'));
+      return;
+    }
+    fetch('ext_robotics_toolbox.xml')
+      .then(response => response.text())
+      .then(function (response) {
+        response = i18n.replace(response);
+        self.extRoboticsToolboxXml = (new DOMParser()).parseFromString(response, "text/xml");
+        self.toolboxXml = self.extRoboticsToolboxXml;
+        self.displayedWorkspace.updateToolbox(self.toolboxXml.getElementById('toolbox'));
+      });
+  };
+
+  // Restore the default (ev3dev2/pybricks) toolbox
+  this.loadDefaultToolbox = function () {
+    if (self.defaultToolboxXml) {
+      self.toolboxXml = self.defaultToolboxXml;
+      self.displayedWorkspace.updateToolbox(self.toolboxXml.getElementById('toolbox'));
+    }
+  };
+
   // Filter blocks from toolbox. Load from URL.
-  this.loadToolboxFilterURL = function(url) {
+  this.loadToolboxFilterURL = function (url) {
     return fetch(url)
-      .then(function(response) {
+      .then(function (response) {
         if (response.ok) {
           return response.text();
         } else {
@@ -91,15 +118,15 @@ var blockly = new function() {
           return Promise.reject(new Error('invalid_blocks_filter'));
         }
       })
-      .then(function(response) {
+      .then(function (response) {
         self.loadToolboxFilter(JSON.parse(response));
       });
   };
 
   // Filter blocks from toolbox
-  this.loadToolboxFilter = function(filter) {
+  this.loadToolboxFilter = function (filter) {
     if (typeof self.displayedWorkspace == 'undefined') {
-      setTimeout(function(){ self.loadToolboxFilter(filter); }, 500);
+      setTimeout(function () { self.loadToolboxFilter(filter); }, 500);
       return;
     }
 
@@ -136,16 +163,16 @@ var blockly = new function() {
   };
 
   // Register variables and procedures toolboxes callbacks
-  this.registerCustomToolboxes = function() {
-    self.displayedWorkspace.registerToolboxCategoryCallback('VARIABLE2', function(workspace) {
+  this.registerCustomToolboxes = function () {
+    self.displayedWorkspace.registerToolboxCategoryCallback('VARIABLE2', function (workspace) {
       var xmlList = [];
       var button = document.createElement('button');
       button.setAttribute('text', '%{BKY_NEW_VARIABLE}');
       button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-      workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
+      workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
         Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
-        setTimeout(function(){
+        setTimeout(function () {
           self.displayedWorkspace.toolbox.refreshSelection()
         }, 100);
       });
@@ -157,13 +184,13 @@ var blockly = new function() {
       return xmlList;
     });
 
-    self.displayedWorkspace.registerToolboxCategoryCallback('PROCEDURE2', function(workspace){
+    self.displayedWorkspace.registerToolboxCategoryCallback('PROCEDURE2', function (workspace) {
       let blocks = self.workspace.getToolboxCategoryCallback('PROCEDURE')(self.workspace);
       for (let block of blocks) {
         if (block.type == 'procedures_callnoreturn' || block.type == 'procedures_callreturn') {
           block.inline = true;
           block.inputs = {};
-          for (let i=0; i<block.extraState.params.length; i++) {
+          for (let i = 0; i < block.extraState.params.length; i++) {
             block.inputs['ARG' + i] = {
               'shadow': {
                 'type': 'math_number',
@@ -180,7 +207,7 @@ var blockly = new function() {
   };
 
   // mirror from displayed to actual (hidden) workspace
-  this.mirrorEvent = function(primaryEvent) {
+  this.mirrorEvent = function (primaryEvent) {
     if (self.mirror == false) {
       return;
     }
@@ -194,12 +221,12 @@ var blockly = new function() {
       let id1 = primaryEvent.blockId;
       let parentId = self.displayedWorkspace.getBlockById(id1).parentBlock_.id;
       let blockIds = [];
-      self.displayedWorkspace.getAllBlocks().forEach(function(block){
+      self.displayedWorkspace.getAllBlocks().forEach(function (block) {
         blockIds.push(block.id);
       });
 
       let block2 = null;
-      self.workspace.getAllBlocks().forEach(function(block){
+      self.workspace.getAllBlocks().forEach(function (block) {
         if (
           block.isShadow_
           && block.parentBlock_.id == parentId
@@ -240,26 +267,26 @@ var blockly = new function() {
   };
 
   // Load default workspace
-  this.loadDefaultWorkspace = function() {
+  this.loadDefaultWorkspace = function () {
     let xmlText =
       '<xml xmlns="https://developers.google.com/blockly/xml">' +
-        '<block type="when_started" id="Q!^ZqS4/(a/0XL$cIi-~" x="63" y="38" deletable="false"><data>Main</data></block>' +
+      '<block type="when_started" id="Q!^ZqS4/(a/0XL$cIi-~" x="63" y="38" deletable="false"><data>Main</data></block>' +
       '</xml>';
     self.loadXmlText(xmlText);
   };
 
   // Load custom blocks
-  this.loadCustomBlocks = function() {
+  this.loadCustomBlocks = function () {
     return fetch('customBlocks.json?v=3cd8436f')
       .then(response => response.text())
-      .then(function(response) {
+      .then(function (response) {
         let json = JSON.parse(i18n.replace(response));
         Blockly.defineBlocksWithJsonArray(json);
       });
   };
 
   // Mark workspace as unsaved
-  this.checkModified = function(e) {
+  this.checkModified = function (e) {
     if (e.type != Blockly.Events.UI) {
       self.unsaved = true;
       blocklyPanel.showSave();
@@ -267,13 +294,13 @@ var blockly = new function() {
   };
 
   // get xmlText
-  this.getXmlText = function() {
+  this.getXmlText = function () {
     var xml = Blockly.Xml.workspaceToDom(self.workspace);
     return Blockly.Xml.domToText(xml);
   };
 
   // Save to local storage
-  this.saveLocalStorage = function() {
+  this.saveLocalStorage = function () {
     if (self.workspace && self.unsaved) {
       self.unsaved = false;
       blocklyPanel.hideSave();
@@ -282,7 +309,7 @@ var blockly = new function() {
   };
 
   // load xmlText to workspace
-  this.loadXmlText = function(xmlText) {
+  this.loadXmlText = function (xmlText) {
     let oldXmlText = self.getXmlText();
     if (xmlText) {
       try {
@@ -293,7 +320,7 @@ var blockly = new function() {
         self.showPage('Main');
 
         let pages = [];
-        self.workspace.getAllBlocks().forEach(function(block){
+        self.workspace.getAllBlocks().forEach(function (block) {
           if (pages.indexOf(block.data) == -1) {
             pages.push(block.data);
           }
@@ -311,23 +338,23 @@ var blockly = new function() {
   };
 
   // import functions from xmlText to workspace
-  this.importXmlTextFunctions = function(xmlText) {
+  this.importXmlTextFunctions = function (xmlText) {
     if (xmlText) {
       try {
         let procs = [];
         let dom = Blockly.utils.xml.textToDom(xmlText);
 
         // Save all functions
-        dom.querySelectorAll('[type="procedures_defnoreturn"]').forEach(function(block){
+        dom.querySelectorAll('[type="procedures_defnoreturn"]').forEach(function (block) {
           procs.push(block);
         });
-        dom.querySelectorAll('[type="procedures_defreturn"]').forEach(function(block){
+        dom.querySelectorAll('[type="procedures_defreturn"]').forEach(function (block) {
           procs.push(block);
         });
 
         // Empty dom
         dom = Blockly.utils.xml.textToDom('<xml xmlns="https://developers.google.com/blockly/xml"></xml>');
-        procs.forEach(function(block){
+        procs.forEach(function (block) {
           dom.append(block);
         });
 
@@ -335,7 +362,7 @@ var blockly = new function() {
         self.assignOrphenToPage('Main');
 
         let pages = [];
-        self.workspace.getAllBlocks().forEach(function(block){
+        self.workspace.getAllBlocks().forEach(function (block) {
           if (pages.indexOf(block.data) == -1) {
             pages.push(block.data);
           }
@@ -352,23 +379,23 @@ var blockly = new function() {
   };
 
   // Load from local storage
-  this.loadLocalStorage = function() {
+  this.loadLocalStorage = function () {
     self.loadXmlText(localStorage.getItem('blocklyXML'));
   };
 
   // Clear all blocks from displayed workspace
-  this.clearDisplayedWorkspace = function() {
+  this.clearDisplayedWorkspace = function () {
     self.mirror = false;
     self.displayedWorkspace.clear();
-    setTimeout(function() {
+    setTimeout(function () {
       self.mirror = true;
     }, 200);
   };
 
   // Delete all blocks in page
-  this.deleteAllInPage = function(page) {
+  this.deleteAllInPage = function (page) {
     let blocks = self.workspace.getAllBlocks();
-    blocks.forEach(function(block){
+    blocks.forEach(function (block) {
       if (block.data == page) {
         block.data = '';
         block.dispose();
@@ -379,12 +406,12 @@ var blockly = new function() {
   };
 
   // Copy blocks of specified page into displayed workspace
-  this.showPage = function(page) {
+  this.showPage = function (page) {
     self.mirror = false;
     self.displayedWorkspace.clear();
 
     let xy = null;
-    self.workspace.getAllBlocks().forEach(function(block){
+    self.workspace.getAllBlocks().forEach(function (block) {
       if (block.parentBlock_ == null && block.data == page) {
         let dom = Blockly.Xml.blockToDomWithXY(block);
         xy = block.getRelativeToSurfaceXY();
@@ -392,7 +419,7 @@ var blockly = new function() {
         displayedBlock.moveBy(xy.x, xy.y);
       }
     });
-    self.workspace.getAllBlocks().forEach(function(block){
+    self.workspace.getAllBlocks().forEach(function (block) {
       if (
         block.data != page
         && (block.type == 'procedures_defnoreturn' || block.type == 'procedures_defreturn')
@@ -405,33 +432,33 @@ var blockly = new function() {
         displayedBlock.setMovable(false);
         displayedBlock.setCollapsed(true);
         displayedBlock.setDeletable(false);
-        displayedBlock.getDescendants().forEach(function(desc){
+        displayedBlock.getDescendants().forEach(function (desc) {
           desc.setDeletable(false);
         });
         displayedBlock.svgGroup_.style.display = 'none';
       }
     });
     self.displayedWorkspace.scrollCenter();
-    setTimeout(function() {
+    setTimeout(function () {
       self.mirror = true;
     }, 200);
   };
 
   // Assign orphen blocks to current page
-  this.assignOrphenToPage = function(page) {
+  this.assignOrphenToPage = function (page) {
     let blocks = self.workspace.getAllBlocks();
-    blocks.forEach(function(block){
-      if (typeof block.data == 'undefined' || ! block.data) {
+    blocks.forEach(function (block) {
+      if (typeof block.data == 'undefined' || !block.data) {
         block.data = page;
       }
     });
   };
 
   // Change page name
-  this.changePageName = function(from, to) {
+  this.changePageName = function (from, to) {
     self.assignOrphenToPage(from);
     let blocks = self.workspace.getAllBlocks();
-    blocks.forEach(function(block){
+    blocks.forEach(function (block) {
       if (block.data == from) {
         block.data = to;
       }
@@ -441,14 +468,14 @@ var blockly = new function() {
   };
 
   // Copy page
-  this.copyPage = function(from, to) {
+  this.copyPage = function (from, to) {
     let blocks = self.workspace.getAllBlocks();
-    blocks.forEach(function(block){
+    blocks.forEach(function (block) {
       if (block.parentBlock_ == null && block.data == from && block.type != 'when_started') {
         let dom = Blockly.Xml.blockToDom(block);
         let newBlock = Blockly.Xml.domToBlock(dom, self.workspace);
         newBlock.data = to;
-        newBlock.getDescendants().forEach(function(desc){
+        newBlock.getDescendants().forEach(function (desc) {
           desc.data = to;
         })
         let xy = block.getRelativeToSurfaceXY();
@@ -460,10 +487,10 @@ var blockly = new function() {
   };
 
   // Move blocks
-  this.moveSelected = function(selected, to) {
+  this.moveSelected = function (selected, to) {
     function moveBlock(block, to) {
       block.data = to;
-      block.getChildren().forEach(function(desc) {
+      block.getChildren().forEach(function (desc) {
         moveBlock(desc, to);
       });
     }
