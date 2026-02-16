@@ -182,10 +182,10 @@ var simPanel = new function () {
         var rect = e.target.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var y = e.clientY - rect.top;
-        self.$virtualJoystickIndicator[0].style.left = (x - 75) + 'px';
-        self.$virtualJoystickIndicator[0].style.top = (y - 75) + 'px';
-        y = (75 - y) / 75;
-        x = (x - 75) / 75;
+        self.$virtualJoystickIndicator[0].style.left = (x - 50) + 'px'; // Changed from 75 to 50
+        self.$virtualJoystickIndicator[0].style.top = (y - 50) + 'px'; // Changed from 75 to 50
+        y = (50 - y) / 50; // Changed from 75 to 50
+        x = (x - 50) / 50; // Changed from 75 to 50
 
         let steering = 1 - 2 * Math.abs(Math.atan2(y, x) / Math.PI);
         let speed = Math.sqrt(y ** 2 + x ** 2);
