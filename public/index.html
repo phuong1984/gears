@@ -95,12 +95,25 @@
 
       <div class="panel" aria-labelledby="navSim" id="simPanel">
         <canvas id="renderCanvas" touch-action="none"></canvas>
-        <div class="runSim"><span class="icon-play"></span></div>
-        <div class="world"><span class="icon-globe"></span></div>
-        <div class="reset"><span class="icon-reset"></span></div>
-        <div class="sensors"><span class="icon-sensors"></span></div>
+        <div class="runSim tooltip right">
+          <span class="icon-play"></span>
+          <span class="tooltiptext">Run Simulation</span>
+        </div>
+        <div class="world tooltip right">
+          <span class="icon-globe"></span>
+          <span class="tooltiptext">Select World</span>
+        </div>
+        <div class="reset tooltip right">
+          <span class="icon-reset"></span>
+          <span class="tooltiptext">Reset Robot</span>
+        </div>
+        <div class="sensors tooltip bottom">
+          <span class="icon-sensors"></span>
+          <span class="tooltiptext">Sensors</span>
+        </div>
         <div class="sensorReadings hide"></div>
-        <div class="cameraSelector closed">
+        <div class="cameraSelector closed tooltip left">
+          <span class="tooltiptext">Camera View</span>
           <div class="camera">
             <span class="icon-cameraFollow"></span>
           </div>
@@ -119,25 +132,25 @@
         </div>
 
         <div class="worldInfo hide"></div>
-        <div class="ruler closed">
+        <div class="ruler closed tooltip right">
+          <span class="tooltiptext">Ruler</span>
           <div class="icon">
             <span class="icon-ruler"></span>
           </div>
           <div class="measurements">
-            <table>
-              <tr>
-                <td class="x">X:</td>
-                <td class="y">Y:</td>
-                <td class="alt">Alt:</td>
-              </tr>
-              <tr>
-                <td class="dist" colspan="2">Distance:</td>
-                <td class="angle">Angle:</td>
-              </tr>
-            </table>
+            <div class="row">
+              <div class="x">X:</div>
+              <div class="y">Y:</div>
+              <div class="alt">Alt:</div>
+            </div>
+            <div class="row">
+              <div class="dist">Distance:</div>
+              <div class="angle">Angle:</div>
+            </div>
           </div>
         </div>
-        <div class="joystick closed" tabindex=0>
+        <div class="joystick closed tooltip right" tabindex=0>
+          <span class="tooltiptext">Manual Control</span>
           <div class="icon">
             <span class="icon-joystick"></span>
           </div>
@@ -149,7 +162,8 @@
             <span class="icon-virtualJoystick"></span>
           </div>
         </div>
-        <div class="hubButtons closed">
+        <div class="hubButtons closed tooltip right">
+          <span class="tooltiptext">Brick Buttons</span>
           <div class="icon">
             <span class="icon-buttons"></span>
           </div>

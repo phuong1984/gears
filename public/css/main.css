@@ -1,5 +1,6 @@
 @charset "UTF-8";
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+
 html,
 body {
   height: 100%;
@@ -26,12 +27,14 @@ header {
   height: 2.2em;
   align-items: center;
 }
+
 header .gearsIcon {
   height: 1.6em;
   margin-right: 0.5em;
   margin-top: -0.3em;
   margin-bottom: -0.3em;
 }
+
 header #projectName,
 header #robotName {
   margin-left: 1em;
@@ -42,9 +45,11 @@ header #robotName {
   position: relative;
   color: #2C3E50;
 }
+
 header #projectName::placeholder {
   color: #95989A;
 }
+
 header .language {
   margin-left: auto;
   cursor: pointer;
@@ -67,11 +72,13 @@ nav {
   border-bottom: solid 1px #D6B59D;
   align-items: center;
 }
+
 nav ul.panelTabs {
   display: flex;
   padding-left: 5px;
   margin: 0;
 }
+
 nav ul.panelTabs li {
   display: block;
   border: solid 1px #D6B59D;
@@ -85,9 +92,11 @@ nav ul.panelTabs li {
   user-select: none;
   white-space: nowrap;
 }
+
 nav ul.panelTabs li:hover {
   background: #FEFDF5;
 }
+
 nav ul.panelTabs li.active {
   z-index: 1;
   background: #ffffff;
@@ -95,10 +104,12 @@ nav ul.panelTabs li.active {
   margin-top: -5px;
   font-size: 110%;
 }
+
 nav .menuBar {
   display: flex;
   margin-left: 0.5em;
 }
+
 nav .menuBar .menuItem {
   padding: 0.3em 0.5em;
   font-weight: bold;
@@ -106,9 +117,11 @@ nav .menuBar .menuItem {
   cursor: pointer;
   user-select: none;
 }
+
 nav .menuBar .menuItem:hover {
   color: #01688D;
 }
+
 nav .news {
   margin-left: 2em;
   font-weight: bold;
@@ -116,12 +129,15 @@ nav .news {
   cursor: pointer;
   user-select: none;
 }
+
 nav .panelControlsArea {
   margin-left: auto;
 }
+
 nav .panelControlsArea .panelControls {
   display: none;
 }
+
 nav .panelControlsArea .panelControls.active {
   display: block;
 }
@@ -131,12 +147,14 @@ nav .panelControlsArea .panelControls.active {
   position: relative;
   overflow: hidden;
 }
+
 .panels .panel {
   height: 100%;
   width: 100%;
   z-index: -1;
   position: absolute;
 }
+
 .panels .panel.active {
   z-index: 0;
 }
@@ -160,15 +178,18 @@ nav .panelControlsArea .panelControls.active {
   border: solid 1px white;
   margin-top: 0.5em;
 }
+
 .dialogWindow .selectRobot .description .thumbnail {
   width: 200px;
   height: 200px;
 }
+
 .dialogWindow .selectRobot .description .text {
   border-left: solid 1px white;
   padding: 0 1em;
   flex-shrink: 1;
 }
+
 .dialogWindow .selectRobot .configurations {
   border: solid 1px white;
   margin-top: 0.5em;
@@ -188,17 +209,21 @@ ul.menuDropDown {
   overflow: hidden;
   box-shadow: 0px 10px 6px 0px rgba(0, 0, 0, 0.25);
 }
+
 ul.menuDropDown li {
   display: block;
   color: gray;
   padding: 0.5em;
 }
+
 ul.menuDropDown li:hover {
   background: #ffffff;
 }
+
 ul.menuDropDown li.underline {
   border-bottom: solid 1px #D6B59D;
 }
+
 ul.menuDropDown .tick {
   color: green;
 }
@@ -219,6 +244,7 @@ ul.menuDropDownRightAlign {
   justify-content: center;
   align-items: center;
 }
+
 .blocklyEditor .disable .enable {
   font-size: 200%;
   color: red;
@@ -228,6 +254,7 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
+
 .blocklyEditor #blocklyPages {
   position: absolute;
   top: 0.5em;
@@ -239,6 +266,7 @@ ul.menuDropDownRightAlign {
   user-select: none;
   cursor: pointer;
 }
+
 .blocklyEditor #blocklyPages ul.menuDropDown {
   right: 0;
   left: auto;
@@ -263,84 +291,136 @@ ul.menuDropDownRightAlign {
   height: 100%;
 }
 
-.runSim {
+/* Simulation Panel Buttons - Modernized */
+.runSim,
+.startSim,
+.stopSim,
+.world,
+.reset,
+/* Simulation Panel Buttons - Modernized */
+.runSim,
+.startSim,
+.stopSim,
+.world,
+.reset,
+.sensors {
   position: absolute;
+  background-color: #01688D;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 2em;
-  font-size: 200%;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   user-select: none;
+  font-size: 1.3em;
+  transition: transform 0.2s, background-color 0.2s, width 0.3s, height 0.3s;
+  z-index: 100;
 }
 
-.startSim {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 1.5em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+/* Icon Sizing - 70% of button size */
+.runSim [class^="icon-"],
+.startSim [class^="icon-"],
+.stopSim [class^="icon-"],
+.world [class^="icon-"],
+.reset [class^="icon-"],
+.sensors [class^="icon-"] {
+  font-size: 0.8em !important;
+  /* using em relative to parent font-size 1.3em. 0.8 * 1.3 ~= 1.04 */
+  line-height: 1;
 }
 
+/* Button & Widget Positions - Vertical column on left */
+.runSim,
+.startSim,
 .stopSim {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 2.5em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+  top: 1em;
+  left: 1em;
 }
 
 .world {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 4em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+  top: 3.5em;
+  /* Below Run button */
+  left: 1em;
 }
 
 .reset {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 6em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+  top: 6em;
+  /* Below World button */
+  left: 1em;
 }
 
+.sensors {
+  top: 1em;
+  right: 1em;
+  opacity: 1 !important;
+  /* Overriding potential opacity */
+}
+
+/* Hover Effects */
+.runSim:hover,
+.world:hover,
+.reset:hover,
+.sensors:hover {
+  transform: scale(1.1);
+  background-color: #01506d;
+}
+
+/* Camera Selector - Expandable */
 .cameraSelector,
 .cameraSelectorShort {
   position: absolute;
-  overflow: hidden;
-  color: #444;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  opacity: 0.8;
   top: 1em;
-  right: 1.5em;
-  height: 6.2em;
-  font-size: 300%;
-  transition: 0.3s height, 0.3s color, 0.3s background-color;
+  /* Restored to original position */
+  right: 3.2em;
+
+  /* Base Button Style */
+  background-color: #01688D;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   user-select: none;
+  font-size: 1.3em;
+  transition: all 0.3s ease;
+  z-index: 100;
+  display: flex;
+  flex-direction: row;
+  /* Changed to row for horizontal layout */
+  align-items: center;
 }
-.cameraSelector > div,
-.cameraSelectorShort > div {
+
+.cameraSelector.closed {
+  width: 1.6em;
+  height: 1.6em !important;
+  border-radius: 50%;
+  justify-content: center;
+  background-color: #01688D;
+  /* Ensure blue when closed */
+}
+
+/* Fix: Hide camera options when closed to prevent spillover */
+.cameraSelector.closed .cameraOptions {
+  display: none;
+}
+
+.cameraSelector:not(.closed) {
+  height: 1.6em;
+  /* Fixed height for horizontal layout */
+  width: auto;
+  border-radius: 0.8em;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #01688D;
+  padding: 0.2em;
+}
+
+.cameraSelector>div,
+.cameraSelectorShort>div {
   margin: 0.2em;
 }
+
 .cameraSelector .hide,
 .cameraSelectorShort .hide {
   display: none;
@@ -348,142 +428,259 @@ ul.menuDropDownRightAlign {
 
 .cameraSelectorShort {
   height: 3.5em;
+  /* Specific height for short version if used */
 }
 
-.cameraSelector.closed,
 .cameraSelectorShort.closed {
-  color: white;
-  background: none;
-  height: 1.3em !important;
+  height: 1.6em !important;
 }
 
+
+/* Ruler - Expandable */
 .ruler {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 4em;
-  left: 2em;
-  font-size: 200%;
+  top: 8.5em;
+  /* Moved down to avoid button overlap */
+  left: 1em;
+
+  /* Base Styles matching buttons */
+  background-color: #01688D;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   user-select: none;
+  font-size: 1.3em;
+  transition: all 0.5s ease;
+  z-index: 90;
+  /* overflow: hidden; Removed */
   display: flex;
   align-items: center;
-  width: 13em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s color, 0.5s background-color;
-}
-.ruler .icon {
-  margin-right: 0.5em;
-  font-size: 120%;
-}
-.ruler .row1,
-.ruler .row2 {
-  font-size: 50%;
-  white-space: nowrap;
-}
-.ruler .measurements {
-  font-size: 50%;
-  white-space: nowrap;
-  flex-grow: 1;
-}
-.ruler .measurements table {
-  width: 100%;
-}
-.ruler .measurements td {
-  width: 33%;
+  justify-content: center;
 }
 
 .ruler.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  padding: 0;
+  background: #01688D;
+  /* Ensure blue */
 }
 
+.ruler.closed .measurements {
+  display: none;
+}
+
+.ruler:not(.closed) {
+  width: auto;
+  max-width: 25em;
+  height: auto;
+  border-radius: 0.5em;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #000;
+  padding: 0.8em;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.ruler .icon {
+  margin-right: 0.5em;
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.ruler.closed .icon {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.ruler .measurements {
+  font-size: 0.75em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  line-height: 1.4;
+}
+
+.ruler .measurements .row {
+  display: flex;
+  gap: 1em;
+  /* Increased spacing between items */
+}
+
+.ruler .measurements>.row>div {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+
+/* Joystick - Expandable */
 .joystick {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 6em;
-  left: 2em;
-  font-size: 200%;
+  top: 14.5em;
+  /* Moved down to avoid ruler overlap */
+  left: 1em;
+
+  background-color: #01688D;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   user-select: none;
+  font-size: 1.3em;
+  transition: all 0.5s ease;
+  z-index: 90;
+  /* overflow: hidden; Removed */
   display: flex;
-  align-items: flex-start;
-  width: 7em;
-  height: 4.8em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s height, 0.5s color, 0.5s background-color;
+  align-items: center;
+  justify-content: center;
   outline: none;
-}
-.joystick .icon {
-  margin-right: 0.5em;
-  font-size: 120%;
-}
-.joystick .virtualJoystick {
-  position: relative;
-  font-size: 150px;
-  height: 150px;
-}
-.joystick .virtualJoystick .icon-virtualJoystickIndicator {
-  position: absolute;
-  color: #ddd;
-  top: 0;
-  left: 0;
-}
-.joystick .virtualJoystick .icon-virtualJoystick {
-  position: absolute;
-  color: #bbb;
-  top: 0;
-  left: 0;
-}
-.joystick .keyboard {
-  position: absolute;
-  top: 4em;
-  left: 0.5em;
 }
 
 .joystick.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
-  height: 1.3em;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: #01688D;
 }
 
-.hubButtons {
-  position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
+.joystick.closed .virtualJoystick,
+.joystick.closed .keyboard {
+  display: none;
+}
+
+.joystick:not(.closed) {
+  width: 8.8em;
+  /* Reduced by 20% from 11em */
+  height: 8.8em;
   border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 8em;
-  left: 2em;
-  font-size: 200%;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5em;
+}
+
+.joystick .icon {
+  font-size: 1em;
+  color: #01688D;
+  margin-bottom: 0.3em;
+}
+
+.joystick.closed .icon {
+  margin: 0;
+  font-size: 1.2em;
+  color: white;
+}
+
+.joystick .virtualJoystick {
+  position: relative;
+  font-size: 100px;
+  /* Adjusted for smaller container */
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
+.joystick .virtualJoystick .icon-virtualJoystickIndicator {
+  position: absolute;
+  color: #01688D;
+  /* Match center blue dot */
+  top: 0;
+  left: 0;
+}
+
+.joystick .virtualJoystick .icon-virtualJoystick {
+  position: absolute;
+  color: #01688D;
+  /* Match center blue dot for consistency */
+  top: 0;
+  left: 0;
+}
+
+
+
+.joystick .keyboard {
+  position: absolute;
+  bottom: 0.5em;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  color: #666;
+}
+
+
+/* Hub Buttons - Expandable - TEMPORARILY HIDDEN */
+.hubButtons {
+  display: none !important;
+  /* Temporarily hide Brick Buttons */
+  position: absolute;
+  top: 9.5em;
+  /* Adjusted up */
+  left: 1em;
+
+  background-color: #01688D;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   user-select: none;
-  display: flex;
-  align-items: flex-start;
-  width: 6.5em;
-  height: 4.8em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s height, 0.5s color, 0.5s background-color;
+  font-size: 1.3em;
+  transition: all 0.5s ease;
+  z-index: 90;
+  /* overflow: hidden; Removed */
+  /* display: flex; */
+  align-items: center;
+  justify-content: center;
   outline: none;
 }
+
+.hubButtons.closed {
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: #01688D;
+}
+
+.hubButtons.closed .controls {
+  display: none;
+}
+
+.hubButtons:not(.closed) {
+  width: 11em;
+  height: 9em;
+  border-radius: 0.5em;
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5em;
+}
+
 .hubButtons .icon {
-  margin-right: 0.5em;
-  font-size: 120%;
+  font-size: 1em;
+  color: #01688D;
+  margin-bottom: 0.3em;
 }
+
+.hubButtons.closed .icon {
+  margin: 0;
+  font-size: 1.2em;
+  color: white;
+}
+
 .hubButtons .controls {
-  font-size: 135%;
-  color: #bbb;
+  font-size: 140%;
+  color: #999;
+  position: relative;
+  width: 7em;
+  height: 6em;
+  flex-shrink: 0;
 }
+
 .hubButtons .controls .icon-buttonsBackspace,
 .hubButtons .controls .icon-buttonsUp,
 .hubButtons .controls .icon-buttonsDown,
@@ -492,39 +689,40 @@ ul.menuDropDownRightAlign {
 .hubButtons .controls .icon-buttonsEnter {
   position: absolute;
 }
+
 .hubButtons .controls .pressed {
-  color: #888;
-}
-.hubButtons .controls .icon-buttonsBackspace {
-  left: 1.6em;
-  top: 0.2em;
-}
-.hubButtons .controls .icon-buttonsUp {
-  left: 2.7em;
-  top: 0.28em;
-}
-.hubButtons .controls .icon-buttonsDown {
-  left: 2.7em;
-  top: 2.5em;
-}
-.hubButtons .controls .icon-buttonsLeft {
-  top: 1.4em;
-  left: 1.6em;
-}
-.hubButtons .controls .icon-buttonsRight {
-  top: 1.4em;
-  left: 3.8em;
-}
-.hubButtons .controls .icon-buttonsEnter {
-  top: 1.4em;
-  left: 2.7em;
+  color: #333;
+  /* Higher contrast for pressed state */
 }
 
-.hubButtons.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
-  height: 1.3em;
+.hubButtons .controls .icon-buttonsBackspace {
+  left: 0.5em;
+  top: 1.2em;
+}
+
+.hubButtons .controls .icon-buttonsUp {
+  left: 2.8em;
+  top: 0.3em;
+}
+
+.hubButtons .controls .icon-buttonsDown {
+  left: 2.8em;
+  top: 3.8em;
+}
+
+.hubButtons .controls .icon-buttonsLeft {
+  top: 2em;
+  left: 1.6em;
+}
+
+.hubButtons .controls .icon-buttonsRight {
+  top: 2em;
+  left: 4em;
+}
+
+.hubButtons .controls .icon-buttonsEnter {
+  top: 2em;
+  left: 2.8em;
 }
 
 .console {
@@ -540,6 +738,7 @@ ul.menuDropDownRightAlign {
   overflow: hidden;
   transition: height 0.5s;
 }
+
 .console .chevron {
   position: absolute;
   right: 0;
@@ -547,9 +746,11 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
+
 .console .chevron::before {
   content: "⌃";
 }
+
 .console .clear {
   position: absolute;
   right: 0.15em;
@@ -558,6 +759,7 @@ ul.menuDropDownRightAlign {
   user-select: none;
   top: 1em;
 }
+
 .console .content {
   position: absolute;
   top: 0.5em;
@@ -570,6 +772,7 @@ ul.menuDropDownRightAlign {
   overflow-y: hidden;
   white-space: pre-wrap;
 }
+
 .console .content .error {
   color: red;
 }
@@ -577,12 +780,15 @@ ul.menuDropDownRightAlign {
 .console.open {
   height: 10em;
 }
+
 .console.open .chevron {
   top: -0.5em;
 }
+
 .console.open .chevron::before {
   content: "⌄";
 }
+
 .console.open .content {
   overflow-y: scroll;
 }
@@ -592,24 +798,29 @@ ul.menuDropDownRightAlign {
   border: solid 1px white;
   margin-top: 0.5em;
 }
+
 .dialogWindow .selectWorld .description .thumbnail {
   width: 200px;
   height: 200px;
 }
+
 .dialogWindow .selectWorld .description .text {
   border-left: solid 1px white;
   padding: 0 1em;
   flex-shrink: 1;
 }
+
 .dialogWindow .selectWorld .configurations {
   border: solid 1px white;
   margin-top: 0.5em;
   padding: 0 0.5em;
   overflow-x: hidden;
 }
+
 .dialogWindow .selectWorld .configurations .configuration {
   padding: 0.5em 0em;
 }
+
 .dialogWindow .selectWorld .configurations .configuration input[type=text],
 .dialogWindow .selectWorld .configurations .configuration input[type=file] {
   font-size: 100%;
@@ -617,20 +828,25 @@ ul.menuDropDownRightAlign {
   border: solid 1px white;
   color: white;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .configurationTitle {
   color: lightgray;
   margin-bottom: 0.1em;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .slider {
   display: flex;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .slider input[type=range] {
   flex-grow: 1;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .slider input[type=text] {
   width: 3em;
   text-align: right;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .text input[type=text] {
   width: 100%;
 }
@@ -641,18 +857,36 @@ ul.menuDropDownRightAlign {
   border-bottom: 1px dotted white;
 }
 
+/* Fix for simulation buttons using tooltip class */
+.runSim.tooltip,
+.startSim.tooltip,
+.stopSim.tooltip,
+.world.tooltip,
+.reset.tooltip,
+.sensors.tooltip,
+.cameraSelector.tooltip,
+.ruler.tooltip,
+.joystick.tooltip,
+.hubButtons.tooltip {
+  position: absolute;
+  display: flex;
+  border-bottom: none;
+}
+
 .tooltip .tooltiptext {
-  background-color: white;
-  color: black;
-  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
   padding: 0.2em 0.5em;
   position: absolute;
-  z-index: 1;
+  z-index: 1000;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s;
-  max-width: 18em;
   width: max-content;
+  max-width: 15rem;
+  font-size: 0.75rem;
+  pointer-events: none;
 }
 
 .tooltip .tooltiptext::after {
@@ -660,6 +894,8 @@ ul.menuDropDownRightAlign {
   position: absolute;
   border-width: 5px;
   border-style: solid;
+  border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+  /* Matching background */
 }
 
 .tooltip.bottom .tooltiptext {
@@ -667,11 +903,12 @@ ul.menuDropDownRightAlign {
   left: 50%;
   transform: translateX(-50%);
 }
+
 .tooltip.bottom .tooltiptext::after {
   margin-left: -5px;
   bottom: 100%;
   left: 50%;
-  border-color: transparent transparent white transparent;
+  border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
 }
 
 .tooltip.right .tooltiptext {
@@ -679,11 +916,12 @@ ul.menuDropDownRightAlign {
   left: 100%;
   transform: translate(0.5em, -50%);
 }
+
 .tooltip.right .tooltiptext::after {
   margin-top: -5px;
   right: 100%;
   top: 50%;
-  border-color: transparent white transparent transparent;
+  border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
 }
 
 .tooltip.left .tooltiptext {
@@ -691,11 +929,12 @@ ul.menuDropDownRightAlign {
   right: 100%;
   transform: translate(-0.5em, -50%);
 }
+
 .tooltip.left .tooltiptext::after {
   margin-top: -5px;
   left: 100%;
   top: 50%;
-  border-color: transparent transparent transparent white;
+  border-color: transparent transparent transparent rgba(0, 0, 0, 0.8);
 }
 
 .tooltip:hover .tooltiptext {
@@ -703,69 +942,82 @@ ul.menuDropDownRightAlign {
   opacity: 1;
 }
 
-.sensors {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 1.2em;
-  right: 3.5em;
-  font-size: 300%;
-  cursor: pointer;
-  user-select: none;
-}
+/* Sensors Button defined in Action Buttons block */
+/* .sensors { } */
 
+/* Redesigned Sensor Readings Panel */
 .sensorReadings {
   position: absolute;
-  color: black;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
+  right: 1em;
+  top: 3.5em;
+  /* Adjusted to avoid camera selector overlap */
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(5px);
   padding: 0.5em;
-  top: 9em;
-  right: 4em;
-  font-size: 100%;
-  width: 14em;
-  max-height: 70%;
-  overflow-y: auto;
-  opacity: 1;
-  transition: 0.5s opacity, 0.5s max-height, 0.5s padding;
-}
-.sensorReadings .sensorReading {
-  margin-bottom: 0.5em;
-}
-.sensorReadings .sensorReading .sensorType {
-  text-align: center;
-}
-.sensorReadings .sensorReading table.sensorValues {
-  width: 100%;
-  border-collapse: collapse;
-}
-.sensorReadings .sensorReading table.sensorValues td {
-  border: solid 2px #bbbbbb;
-  color: darkblue;
-}
-.sensorReadings .sensorReading table.sensorValues td.sensorValue {
-  text-align: right;
-  min-width: 2em;
+  border-radius: 0.5em;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: 0.9em;
+  /* Increased font size */
+  max-width: 200px;
+  z-index: 95;
+  /* Ensure above canvas but below tooltips/buttons if needed */
 }
 
 .sensorReadings.hide {
-  opacity: 0;
-  max-height: 0;
-  padding-top: 0;
+  display: none;
+}
+
+.sensorReadings .sensorReading {
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5em;
+}
+
+.sensorReadings .sensorReading:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
   padding-bottom: 0;
+}
+
+.sensorReadings .sensorType {
+  font-weight: bold;
+  color: #01688D;
+  margin-bottom: 0.2em;
+}
+
+.sensorReadings .sensorValues {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sensorReadings .sensorValueName {
+  color: #666;
+  text-align: left;
+  padding-right: 0.5em;
+  font-size: 0.9em;
+}
+
+.sensorReadings .sensorValue {
+  text-align: right;
+  font-family: monospace;
+  font-weight: bold;
+  color: #333;
 }
 
 @keyframes flash {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.5);
   }
+
   100% {
     transform: scale(1);
   }
 }
+
 .worldInfo {
   position: absolute;
   color: white;
@@ -780,39 +1032,50 @@ ul.menuDropDownRightAlign {
   max-height: 20%;
   overflow: hidden;
 }
+
 .worldInfo .row {
   display: flex;
   justify-content: space-between;
 }
+
 .worldInfo .mono {
   font-family: monospace;
 }
+
 .worldInfo .center {
   width: 100%;
   text-align: center;
 }
+
 .worldInfo .animate {
   animation-name: flash;
   animation-duration: 0.5s;
 }
+
 .worldInfo .red.animate {
   color: #ff0000;
 }
+
 .worldInfo .green.animate {
   color: #00ff00;
 }
+
 .worldInfo .p0.animate {
   color: #00ffff;
 }
+
 .worldInfo .p1.animate {
   color: #00ff00;
 }
+
 .worldInfo .p2.animate {
   color: #ffff00;
 }
+
 .worldInfo .p3.animate {
   color: #ff0000;
 }
+
 .worldInfo .warn {
   color: #ff0000;
 }
@@ -835,6 +1098,7 @@ ul.menuDropDownRightAlign {
   bottom: 3em;
   right: 0;
 }
+
 #plotter .close {
   color: white;
   border: solid 1px white;
@@ -848,6 +1112,7 @@ ul.menuDropDownRightAlign {
   background: rgba(255, 255, 255, 0.2666666667);
   cursor: pointer;
 }
+
 #plotter .position {
   height: 1em;
   position: absolute;
@@ -874,11 +1139,12 @@ ul.menuDropDownRightAlign {
   font-style: normal;
   font-display: block;
 }
+
 [class^=icon-],
 [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: "icomoon" !important;
-  speak: never;
+  /* speak: never; -- Deprecated */
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
@@ -1005,31 +1271,40 @@ ul.menuDropDownRightAlign {
   background-color: white;
   border: solid 40px;
 }
+
 #arenaFrame .row {
   padding: 1em;
   display: flex;
   align-items: center;
 }
+
 #arenaFrame .row.header {
   background-color: lightgray;
 }
+
 #arenaFrame #enable {
   margin-right: 1.5em;
 }
+
 #arenaFrame #player {
   font-size: 200%;
   font-weight: bold;
 }
+
 #arenaFrame #zip {
   visibility: hidden;
 }
+
 #arenaFrame #zipLabel {
   font-size: 16px;
 }
+
 #arenaFrame #zipLabel .fileSelector {
   margin-top: 0.5em;
 }
-#arenaFrame #zipLabel .fileSelector input, #arenaFrame #zipLabel .fileSelector label {
+
+#arenaFrame #zipLabel .fileSelector input,
+#arenaFrame #zipLabel .fileSelector label {
   font-size: 16px;
   border: solid 1px gray;
   box-sizing: border-box;
@@ -1038,11 +1313,13 @@ ul.menuDropDownRightAlign {
   outline: none;
   float: left;
 }
+
 #arenaFrame #zipLabel .fileSelector input {
   border-right: none;
   width: 14em;
   border-radius: 0.4em 0 0 0.4em;
 }
+
 #arenaFrame #zipLabel .fileSelector label {
   border-radius: 0 0.4em 0.4em 0;
   background: #4EB9D5;
@@ -1069,6 +1346,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot0.disabled {
   border-color: #446666;
 }
+
 #arenaFrame.bot0.disabled #player {
   color: gray;
 }
@@ -1076,6 +1354,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot1.disabled {
   border-color: #446644;
 }
+
 #arenaFrame.bot1.disabled #player {
   color: gray;
 }
@@ -1083,6 +1362,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot2.disabled {
   border-color: #666644;
 }
+
 #arenaFrame.bot2.disabled #player {
   color: gray;
 }
@@ -1090,6 +1370,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot3.disabled {
   border-color: #664444;
 }
+
 #arenaFrame.bot3.disabled #player {
   color: gray;
 }
@@ -1097,14 +1378,17 @@ ul.menuDropDownRightAlign {
 .botsPanel {
   background: white;
 }
+
 .botsPanel .botsRow {
   display: flex;
   width: 100%;
   height: 50%;
 }
+
 .botsPanel .botsRow .bot {
   width: 50%;
 }
+
 .botsPanel .botsRow .bot iframe {
   border: none;
   width: 100%;
@@ -1114,12 +1398,15 @@ ul.menuDropDownRightAlign {
 .console .player0 {
   color: #00FFFF;
 }
+
 .console .player1 {
   color: #00FF00;
 }
+
 .console .player2 {
   color: #FFFF00;
 }
+
 .console .player3 {
   color: #FF0000;
 }
@@ -1133,24 +1420,31 @@ ul.menuDropDownRightAlign {
   width: 100%;
   height: 100%;
 }
+
 .python #pythonCode {
   width: 100%;
   height: 100%;
   font-size: 120%;
 }
+
 .python #pythonCode.hide {
   display: none;
 }
+
 .python #filesRow {
   display: flex;
   align-items: center;
 }
+
 .python #filesRow #filesList {
   display: flex;
   overflow-x: scroll;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .python #filesRow #filesList .file {
   display: flex;
   background: #515251;
@@ -1161,21 +1455,28 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
-.python #filesRow #filesList .file .renameFile, .python #filesRow #filesList .file .deleteFile {
+
+.python #filesRow #filesList .file .renameFile,
+.python #filesRow #filesList .file .deleteFile {
   display: none;
   margin-left: 0.5em;
 }
+
 .python #filesRow #filesList .file.selected {
   background-color: #272822;
   color: rgb(255, 255, 255);
   font-weight: bold;
 }
-.python #filesRow #filesList .file.selected .renameFile, .python #filesRow #filesList .file.selected .deleteFile {
+
+.python #filesRow #filesList .file.selected .renameFile,
+.python #filesRow #filesList .file.selected .deleteFile {
   display: block;
 }
+
 .python #filesRow #filesList::-webkit-scrollbar {
   display: none;
 }
+
 .python #filesRow #addNewFile {
   padding: 0.3em 0.5em;
   color: white;
@@ -1183,7 +1484,8 @@ ul.menuDropDownRightAlign {
   user-select: none;
 }
 
-.componentsWindow, .objectsWindow {
+.componentsWindow,
+.objectsWindow {
   position: absolute;
   color: white;
   background-color: rgba(255, 255, 255, 0.2);
@@ -1197,43 +1499,71 @@ ul.menuDropDownRightAlign {
   display: flex;
   flex-direction: column;
 }
-.componentsWindow .buttons, .objectsWindow .buttons {
+
+.componentsWindow .buttons,
+.objectsWindow .buttons {
   display: flex;
   width: 100%;
   justify-content: space-between;
   box-sizing: border-box;
   font-size: 120%;
 }
-.componentsWindow .buttons div, .objectsWindow .buttons div {
+
+.componentsWindow .buttons div,
+.objectsWindow .buttons div {
   border: solid 2px #bbbbbb;
   padding: 0.3em 0.5em;
   border-radius: 0.5em;
   cursor: pointer;
   user-select: none;
 }
-.componentsWindow .componentsList, .componentsWindow .objectsList, .objectsWindow .componentsList, .objectsWindow .objectsList {
+
+.componentsWindow .componentsList,
+.componentsWindow .objectsList,
+.objectsWindow .componentsList,
+.objectsWindow .objectsList {
   font-size: 120%;
   overflow: auto;
   flex-grow: 1;
   white-space: nowrap;
   margin-bottom: 1em;
 }
-.componentsWindow .componentsList ul, .componentsWindow .objectsList ul, .objectsWindow .componentsList ul, .objectsWindow .objectsList ul {
+
+.componentsWindow .componentsList ul,
+.componentsWindow .objectsList ul,
+.objectsWindow .componentsList ul,
+.objectsWindow .objectsList ul {
   list-style-type: none;
   padding-inline-start: 0;
 }
-.componentsWindow .componentsList ul ul, .componentsWindow .objectsList ul ul, .objectsWindow .componentsList ul ul, .objectsWindow .objectsList ul ul {
+
+.componentsWindow .componentsList ul ul,
+.componentsWindow .objectsList ul ul,
+.objectsWindow .componentsList ul ul,
+.objectsWindow .objectsList ul ul {
   padding-inline-start: 1em;
   list-style-type: "˪ ";
 }
-.componentsWindow .componentsList li, .componentsWindow .objectsList li, .objectsWindow .componentsList li, .objectsWindow .objectsList li {
+
+.componentsWindow .componentsList li,
+.componentsWindow .objectsList li,
+.objectsWindow .componentsList li,
+.objectsWindow .objectsList li {
   cursor: pointer;
   user-select: none;
 }
-.componentsWindow .componentsList li.selected, .componentsWindow .objectsList li.selected, .objectsWindow .componentsList li.selected, .objectsWindow .objectsList li.selected {
+
+.componentsWindow .componentsList li.selected,
+.componentsWindow .objectsList li.selected,
+.objectsWindow .componentsList li.selected,
+.objectsWindow .objectsList li.selected {
   background-color: #bbbbbb;
 }
-.componentsWindow .componentsList li.ulHolder, .componentsWindow .objectsList li.ulHolder, .objectsWindow .componentsList li.ulHolder, .objectsWindow .objectsList li.ulHolder {
+
+.componentsWindow .componentsList li.ulHolder,
+.componentsWindow .objectsList li.ulHolder,
+.objectsWindow .componentsList li.ulHolder,
+.objectsWindow .objectsList li.ulHolder {
   list-style-type: none;
 }
 
@@ -1259,11 +1589,13 @@ ul.menuDropDownRightAlign {
   display: flex;
   flex-direction: column;
 }
+
 .settingsWindow .settingsArea {
   flex-grow: 1;
   overflow-y: auto;
   overflow-x: hidden;
 }
+
 .settingsWindow .buttons {
   display: flex;
   width: 100%;
@@ -1271,6 +1603,7 @@ ul.menuDropDownRightAlign {
   box-sizing: border-box;
   font-size: 90%;
 }
+
 .settingsWindow .buttons div {
   border: solid 2px #bbbbbb;
   padding: 0.3em 0.5em;
@@ -1278,45 +1611,61 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
+
 .settingsWindow .componentName {
   text-align: center;
   font-size: 120%;
   font-weight: bold;
 }
+
 .settingsWindow .configuration {
   padding: 0.5em 0;
 }
+
 .settingsWindow .configurationTitle {
   color: lightgray;
   margin-bottom: 0.1em;
 }
+
 .settingsWindow .slider {
   display: flex;
 }
+
 .settingsWindow .slider input[type=range] {
   flex-grow: 1;
 }
+
 .settingsWindow .slider input[type=text] {
   width: 3em;
   text-align: right;
 }
+
 .settingsWindow input[type=number] {
   width: 3em;
 }
+
 .settingsWindow .tooltip .tooltiptext {
   max-width: 10em;
 }
 
-.dialogWindow .selectImage, .dialogWindow .selectModel, .dialogWindow .editAnimationKeys {
+.dialogWindow .selectImage,
+.dialogWindow .selectModel,
+.dialogWindow .editAnimationKeys {
   max-height: 60vh;
   display: flex;
   flex-direction: column;
 }
-.dialogWindow .selectImage .search, .dialogWindow .selectModel .search, .dialogWindow .editAnimationKeys .search {
+
+.dialogWindow .selectImage .search,
+.dialogWindow .selectModel .search,
+.dialogWindow .editAnimationKeys .search {
   display: flex;
   margin-top: 0.5em;
 }
-.dialogWindow .selectImage .search input, .dialogWindow .selectModel .search input, .dialogWindow .editAnimationKeys .search input {
+
+.dialogWindow .selectImage .search input,
+.dialogWindow .selectModel .search input,
+.dialogWindow .editAnimationKeys .search input {
   font-size: 100%;
   width: 100%;
   background: none;
@@ -1325,43 +1674,92 @@ ul.menuDropDownRightAlign {
   padding: 0 0.2em;
   margin-left: 0.5em;
 }
-.dialogWindow .selectImage .images, .dialogWindow .selectImage .items, .dialogWindow .selectModel .images, .dialogWindow .selectModel .items, .dialogWindow .editAnimationKeys .images, .dialogWindow .editAnimationKeys .items {
+
+.dialogWindow .selectImage .images,
+.dialogWindow .selectImage .items,
+.dialogWindow .selectModel .images,
+.dialogWindow .selectModel .items,
+.dialogWindow .editAnimationKeys .images,
+.dialogWindow .editAnimationKeys .items {
   border: solid 1px white;
   margin-top: 0.5em;
   padding: 0.5em;
   overflow-y: auto;
   max-height: 20em;
 }
-.dialogWindow .selectImage .images .row, .dialogWindow .selectImage .items .row, .dialogWindow .selectModel .images .row, .dialogWindow .selectModel .items .row, .dialogWindow .editAnimationKeys .images .row, .dialogWindow .editAnimationKeys .items .row {
+
+.dialogWindow .selectImage .images .row,
+.dialogWindow .selectImage .items .row,
+.dialogWindow .selectModel .images .row,
+.dialogWindow .selectModel .items .row,
+.dialogWindow .editAnimationKeys .images .row,
+.dialogWindow .editAnimationKeys .items .row {
   display: flex;
 }
-.dialogWindow .selectImage .images .row .description, .dialogWindow .selectImage .items .row .description, .dialogWindow .selectModel .images .row .description, .dialogWindow .selectModel .items .row .description, .dialogWindow .editAnimationKeys .images .row .description, .dialogWindow .editAnimationKeys .items .row .description {
+
+.dialogWindow .selectImage .images .row .description,
+.dialogWindow .selectImage .items .row .description,
+.dialogWindow .selectModel .images .row .description,
+.dialogWindow .selectModel .items .row .description,
+.dialogWindow .editAnimationKeys .images .row .description,
+.dialogWindow .editAnimationKeys .items .row .description {
   border: solid 1px white;
   flex-grow: 1;
   padding: 0 0.5em;
 }
-.dialogWindow .selectImage .images .row .select, .dialogWindow .selectImage .items .row .select, .dialogWindow .selectModel .images .row .select, .dialogWindow .selectModel .items .row .select, .dialogWindow .editAnimationKeys .images .row .select, .dialogWindow .editAnimationKeys .items .row .select {
+
+.dialogWindow .selectImage .images .row .select,
+.dialogWindow .selectImage .items .row .select,
+.dialogWindow .selectModel .images .row .select,
+.dialogWindow .selectModel .items .row .select,
+.dialogWindow .editAnimationKeys .images .row .select,
+.dialogWindow .editAnimationKeys .items .row .select {
   border: solid 1px white;
   padding: 0.5em;
 }
-.dialogWindow .selectImage .images .row.hide, .dialogWindow .selectImage .items .row.hide, .dialogWindow .selectModel .images .row.hide, .dialogWindow .selectModel .items .row.hide, .dialogWindow .editAnimationKeys .images .row.hide, .dialogWindow .editAnimationKeys .items .row.hide {
+
+.dialogWindow .selectImage .images .row.hide,
+.dialogWindow .selectImage .items .row.hide,
+.dialogWindow .selectModel .images .row.hide,
+.dialogWindow .selectModel .items .row.hide,
+.dialogWindow .editAnimationKeys .images .row.hide,
+.dialogWindow .editAnimationKeys .items .row.hide {
   display: none;
 }
-.dialogWindow .selectImage table, .dialogWindow .selectModel table, .dialogWindow .editAnimationKeys table {
+
+.dialogWindow .selectImage table,
+.dialogWindow .selectModel table,
+.dialogWindow .editAnimationKeys table {
   border: solid 1px white;
 }
-.dialogWindow .selectImage table th, .dialogWindow .selectModel table th, .dialogWindow .editAnimationKeys table th {
+
+.dialogWindow .selectImage table th,
+.dialogWindow .selectModel table th,
+.dialogWindow .editAnimationKeys table th {
   border: solid 1px white;
 }
-.dialogWindow .selectImage table th, .dialogWindow .selectImage table td, .dialogWindow .selectModel table th, .dialogWindow .selectModel table td, .dialogWindow .editAnimationKeys table th, .dialogWindow .editAnimationKeys table td {
+
+.dialogWindow .selectImage table th,
+.dialogWindow .selectImage table td,
+.dialogWindow .selectModel table th,
+.dialogWindow .selectModel table td,
+.dialogWindow .editAnimationKeys table th,
+.dialogWindow .editAnimationKeys table td {
   width: 3em;
   text-align: center;
 }
-.dialogWindow .selectImage table th input, .dialogWindow .selectImage table td input, .dialogWindow .selectModel table th input, .dialogWindow .selectModel table td input, .dialogWindow .editAnimationKeys table th input, .dialogWindow .editAnimationKeys table td input {
+
+.dialogWindow .selectImage table th input,
+.dialogWindow .selectImage table td input,
+.dialogWindow .selectModel table th input,
+.dialogWindow .selectModel table td input,
+.dialogWindow .editAnimationKeys table th input,
+.dialogWindow .editAnimationKeys table td input {
   width: 100%;
   font-size: 100%;
   box-sizing: border-box;
 }
+
 .dialogWindow .searchCount {
   margin-right: auto;
 }

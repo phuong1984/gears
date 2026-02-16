@@ -1,4 +1,4 @@
-var simPanel = new function() {
+var simPanel = new function () {
   var self = this;
 
   this.sensors = [];
@@ -10,7 +10,7 @@ var simPanel = new function() {
   self.showFPS = false;
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     self.$console = $('.console');
     self.$consoleBtn = $('.console .chevron');
     self.$consoleContent = $('.console .content');
@@ -46,9 +46,9 @@ var simPanel = new function() {
     self.$consoleClear.click(self.clearConsole);
     self.$runSim.click(self.runSim);
     self.$world.click(self.selectWorld);
-    self.$reset.click(function() {
+    self.$reset.click(function () {
       if (babylon.cameraMode == 'follow') {
-        self.resetSim().then(function(){
+        self.resetSim().then(function () {
           babylon.resetCamera();
         });
       } else {
@@ -73,7 +73,7 @@ var simPanel = new function() {
       self.setupJoystickKeyControls();
     }
 
-    self.$ruler[0].addEventListener('pointerup', function(e){
+    self.$ruler[0].addEventListener('pointerup', function (e) {
       if (e.pointerType == 'touch') {
         self.touchDevice = true;
       } else {
@@ -84,13 +84,13 @@ var simPanel = new function() {
       e.preventDefault();
       e.stopPropagation();
     });
-    window.addEventListener('pointerdown', function(){
+    window.addEventListener('pointerdown', function () {
       self.drag = false;
     });
-    window.addEventListener('pointermove', function(){
+    window.addEventListener('pointermove', function () {
       self.drag = true;
     });
-    window.addEventListener('pointerup', function(e){
+    window.addEventListener('pointerup', function (e) {
       if (self.drag == false) {
         self.recordMeasurements();
       }
@@ -101,12 +101,12 @@ var simPanel = new function() {
   };
 
   // Close plotter window
-  this.closePlotter = function() {
+  this.closePlotter = function () {
     self.$plotter.addClass('hide');
   };
 
   // Draw plotter position
-  this.plotterDisplayPosition = function(e) {
+  this.plotterDisplayPosition = function (e) {
     let canvas = self.$plotterCanvas[0];
     let bounding = canvas.getBoundingClientRect();
     let x = e.clientX - bounding.left;
@@ -116,7 +116,7 @@ var simPanel = new function() {
     x = x / canvas.offsetWidth * w + canvas.minX;
     y = y / canvas.offsetHeight * h + canvas.minY;
     let angle = Math.atan2(y, x) / Math.PI * 180;
-    let dist = Math.sqrt(x**2 + y**2);
+    let dist = Math.sqrt(x ** 2 + y ** 2);
     x = Math.round(x);
     y = Math.round(y);
     angle = Math.round(angle);
@@ -126,22 +126,22 @@ var simPanel = new function() {
   };
 
   // Run when the simPanel in inactive
-  this.onInActive = function() {
-    if (! skulpt.running) {
+  this.onInActive = function () {
+    if (!skulpt.running) {
       babylon.engine.stopRenderLoop();
     }
   };
 
   // Run when the simPanel in active
-  this.onActive = function() {
+  this.onActive = function () {
     if (babylon.engine._activeRenderLoops.length == 0)
-    babylon.engine.runRenderLoop(function(){
-      babylon.scene.render();
-    });
+      babylon.engine.runRenderLoop(function () {
+        babylon.scene.render();
+      });
   };
 
   // Setup virtual joystick
-  this.setupJoystick = function() {
+  this.setupJoystick = function () {
     function moveSteering(steering, speed) {
       if (typeof babylon.world.manualMoved == 'function') {
         babylon.world.manualMoved();
@@ -177,7 +177,7 @@ var simPanel = new function() {
       robot.rightWheel.stop();
     }
 
-    self.$virtualJoystick[0].addEventListener('pointermove', function(e){
+    self.$virtualJoystick[0].addEventListener('pointermove', function (e) {
       if (e.buttons & 1) {
         var rect = e.target.getBoundingClientRect();
         var x = e.clientX - rect.left;
@@ -188,7 +188,7 @@ var simPanel = new function() {
         x = (x - 75) / 75;
 
         let steering = 1 - 2 * Math.abs(Math.atan2(y, x) / Math.PI);
-        let speed = Math.sqrt(y**2 + x**2);
+        let speed = Math.sqrt(y ** 2 + x ** 2);
         if (y < 0) {
           speed = -speed;
           steering = -steering;
@@ -208,7 +208,7 @@ var simPanel = new function() {
   };
 
   // Key controls for joystick
-  this.setupJoystickKeyControls = function() {
+  this.setupJoystickKeyControls = function () {
     let left, right, up, down;
 
     function moveTank(leftWheel, rightWheel) {
@@ -312,7 +312,7 @@ var simPanel = new function() {
   };
 
   // Help message for keyboard controls
-  self.keyboardHelp = function() {
+  self.keyboardHelp = function () {
     let options = {
       title: 'Keyboard Controls',
       message:
@@ -325,12 +325,12 @@ var simPanel = new function() {
   };
 
   // Toggle virtual joystick
-  this.toggleJoystick = function() {
+  this.toggleJoystick = function () {
     self.$joystick.toggleClass('closed');
   };
 
   // Setup hub buttons
-  this.setupHubButtons = function() {
+  this.setupHubButtons = function () {
     let backspace = 'backspace';
     let up = 'up';
     let down = 'down';
@@ -347,7 +347,7 @@ var simPanel = new function() {
     buttons[enter] = $('.hubButtons .icon-buttonsEnter');
 
     function setBtn(key, state) {
-      return function(evt) {
+      return function (evt) {
         if (state) {
           evt.target.classList.add('pressed');
         } else {
@@ -365,12 +365,12 @@ var simPanel = new function() {
   };
 
   // Toggle hub buttons
-  this.toggleHubButtons = function() {
+  this.toggleHubButtons = function () {
     self.$hubButtons.toggleClass('closed');
   };
 
   // toggle ruler
-  this.toggleRuler = function() {
+  this.toggleRuler = function () {
     if (self.$ruler.hasClass('closed')) {
       self.$ruler.removeClass('closed');
       self.rulerState = 1;
@@ -383,7 +383,7 @@ var simPanel = new function() {
   };
 
   // display ruler measurements
-  this.displayMeasurements = function(point) {
+  this.displayMeasurements = function (point) {
     if (self.rulerState == 0 || self.rulerState == 3) {
       return;
     }
@@ -441,7 +441,7 @@ var simPanel = new function() {
   };
 
   // Record ruler measurements
-  this.recordMeasurements = function() {
+  this.recordMeasurements = function () {
     if (self.rulerState == 0) {
       return;
     }
@@ -490,39 +490,39 @@ var simPanel = new function() {
   };
 
   // clear world info
-  this.clearWorldInfoPanel = function() {
+  this.clearWorldInfoPanel = function () {
     self.$worldInfoPanel.empty();
   };
 
   // draw world info
-  this.drawWorldInfo = function(html) {
+  this.drawWorldInfo = function (html) {
     self.$worldInfoPanel.append(html);
   };
 
   // show world info
-  this.showWorldInfoPanel = function() {
+  this.showWorldInfoPanel = function () {
     self.$worldInfoPanel.removeClass('hide');
   };
 
   // hide world info
-  this.hideWorldInfoPanel = function() {
+  this.hideWorldInfoPanel = function () {
     self.$worldInfoPanel.addClass('hide');
   };
 
   // init sensor panel
-  this.initSensorsPanel = function() {
+  this.initSensorsPanel = function () {
     function genDiv(sensorType, values) {
       let $div = $(
         '<div class="sensorReading">' +
-          '<div class="sensorType"></div>' +
-          '<table class="sensorValues"></table>' +
+        '<div class="sensorType"></div>' +
+        '<table class="sensorValues"></table>' +
         '</div>'
       );
 
       $div.find('.sensorType').text(sensorType);
       let $table = $div.find('.sensorValues');
       valuesElements = [];
-      values.forEach(function(value) {
+      values.forEach(function (value) {
         let $line = $('<tr><td class="sensorValueName">' + value + '</td><td class="sensorValue">-</td></tr>');
         valuesElements.push($line.find('.sensorValue'));
         $table.append($line);
@@ -580,16 +580,16 @@ var simPanel = new function() {
       } else if (sensor.type == 'CameraSensor') {
         tmp = $(
           '<div class="sensorReading">' +
-            '<div class="sensorType">' + sensor.port + ': ' + i18n.get('#sim-camera#') + '</div>' +
-            '<table class="sensorValues">' +
-              '<tr><td class="sensorValueName">' +
-                '<button class="showRttView">' + i18n.get('#sim-show#') + '</button><button class="hideRttView">' + i18n.get('#sim-hide#') + '</button>' +
-              '</td></tr>' +
-            '</table>' +
+          '<div class="sensorType">' + sensor.port + ': ' + i18n.get('#sim-camera#') + '</div>' +
+          '<table class="sensorValues">' +
+          '<tr><td class="sensorValueName">' +
+          '<button class="showRttView">' + i18n.get('#sim-show#') + '</button><button class="hideRttView">' + i18n.get('#sim-hide#') + '</button>' +
+          '</td></tr>' +
+          '</table>' +
           '</div>'
         );
-        let clickHandler = function(type, port) {
-          return function() {
+        let clickHandler = function (type, port) {
+          return function () {
             if (type == 'show') {
               babylon.rttViewMat.diffuseTexture = robot.getComponentByPort(port).renderTarget;
               babylon.rttView.setEnabled(true);
@@ -635,33 +635,33 @@ var simPanel = new function() {
         tmp = genDiv(
           motor.port + ': ' + i18n.get('#sim-arm#'),
           [i18n.get('#sim-position#')]
-          );
+        );
       } else if (motor.type == 'SwivelActuator') {
         tmp = genDiv(
           motor.port + ': ' + i18n.get('#sim-swivel#'),
           [i18n.get('#sim-position#')]
-          );
+        );
       } else if (motor.type == 'LinearActuator') {
         tmp = genDiv(
           motor.port + ': ' + i18n.get('#sim-linear#'),
           [i18n.get('#sim-position#')]
-          );
+        );
       } else if (motor.type == 'PaintballLauncherActuator') {
         tmp = genDiv(
           motor.port + ': ' + i18n.get('#sim-paintball#'),
           [i18n.get('#sim-position#')]
-          );
+        );
       } else if (motor.type == 'MagnetActuator') {
         tmp = genDiv(
           motor.port + ': ' + i18n.get('#sim-magnet#'),
           [i18n.get('#sim-magnet_power#')]
-          );
+        );
       } else if (motor.type == 'WheelActuator') {
         tmp = genDiv(
           motor.port + ': ' + i18n.get('#sim-wheel#'),
           [i18n.get('#sim-position#')]
-          );
-        }
+        );
+      }
 
       if (tmp) {
         self.$sensorsPanel.append(tmp[0]);
@@ -672,12 +672,12 @@ var simPanel = new function() {
   };
 
   // update sensor panel
-  this.updateSensorsPanel = function() {
+  this.updateSensorsPanel = function () {
     if (self.$sensorsPanel.hasClass('hide')) {
       return;
     }
 
-    self.sensors.forEach(function(sensor) {
+    self.sensors.forEach(function (sensor) {
       if (sensor[0].type == 'ColorSensor') {
         let rgb = sensor[0].getRGB();
         let hsv = Colors.toHSV(rgb);
@@ -718,7 +718,7 @@ var simPanel = new function() {
   };
 
   // toggle sensors panel
-  this.toggleSensorsPanel = function() {
+  this.toggleSensorsPanel = function () {
     if (self.sensors.length == 0) {
       self.initSensorsPanel();
     }
@@ -726,7 +726,7 @@ var simPanel = new function() {
   };
 
   // switch camera
-  this.switchCamera = function(e) {
+  this.switchCamera = function (e) {
     if (e.currentTarget.classList.contains('cameraArc')) {
       babylon.setCameraMode('arc');
       self.$camera.html('<span class="icon-cameraArc"></span>');
@@ -749,7 +749,7 @@ var simPanel = new function() {
   };
 
   // Toggle camera selector
-  this.toggleCameraSelector = function() {
+  this.toggleCameraSelector = function () {
     let current = self.$camera.children()[0].className.replace('icon-', '');
     self.$cameraSelector.children().removeClass('hide');
     self.$cameraSelector.find('.' + current).addClass('hide');
@@ -757,7 +757,7 @@ var simPanel = new function() {
   };
 
   // Select world map
-  this.selectWorld = function() {
+  this.selectWorld = function () {
     let $body = $('<div class="selectWorld"></div>');
     let $select = $('<select></select>');
     let $description = $('<div class="description"><img class="thumbnail" width="200" height="200"><div class="text"></div></div>');
@@ -789,7 +789,7 @@ var simPanel = new function() {
       let currentVal = currentOptions[opt.option];
       worldOptionsSetting[opt.option] = currentVal;
 
-      opt.options.forEach(function(option){
+      opt.options.forEach(function (option) {
         let $opt = $('<option></option>');
         $opt.prop('value', option[1]);
         $opt.text(option[0]);
@@ -800,7 +800,7 @@ var simPanel = new function() {
         $select.append($opt);
       });
 
-      $select.change(function(){
+      $select.change(function () {
         worldOptionsSetting[opt.option] = $select.val();
       });
 
@@ -817,7 +817,7 @@ var simPanel = new function() {
       let currentVal = currentOptions[opt.option];
       worldOptionsSetting[opt.option] = currentVal;
 
-      opt.options.forEach(function(option){
+      opt.options.forEach(function (option) {
         let $opt = $('<option></option>');
         $opt.prop('value', option[1]);
         $opt.text(option[0]);
@@ -829,7 +829,7 @@ var simPanel = new function() {
         $select.append($opt);
       });
 
-      $select.change(function(){
+      $select.change(function () {
         worldOptionsSetting[opt.option] = $select.val();
         $html.html(opt.optionsHTML[$select.val()]);
       });
@@ -856,7 +856,7 @@ var simPanel = new function() {
       } else {
         worldOptionsSetting[opt.option] = false;
       }
-      $checkbox.change(function(){
+      $checkbox.change(function () {
         worldOptionsSetting[opt.option] = $checkbox.prop('checked');
       });
 
@@ -871,8 +871,8 @@ var simPanel = new function() {
       let $div = $('<div class="configuration"></div>');
       let $sliderBox = $(
         '<div class="slider">' +
-          '<input type="range">' +
-          '<input type="text">' +
+        '<input type="range">' +
+        '<input type="text">' +
         '</div>'
       );
       let $slider = $sliderBox.find('input[type=range]');
@@ -886,11 +886,11 @@ var simPanel = new function() {
       $slider.attr('value', currentVal);
       $input.val(currentVal);
 
-      $slider.on('input', function(){
+      $slider.on('input', function () {
         worldOptionsSetting[opt.option] = parseInt($slider.val());
         $input.val($slider.val());
       });
-      $input.change(function(){
+      $input.change(function () {
         worldOptionsSetting[opt.option] = parseInt($input.val());
         $slider.val($input.val());
       });
@@ -910,7 +910,7 @@ var simPanel = new function() {
 
       $input.val(currentVal);
 
-      $input.change(function(){
+      $input.change(function () {
         worldOptionsSetting[opt.option] = $input.val();
       });
 
@@ -929,7 +929,7 @@ var simPanel = new function() {
 
       $input.val(currentVal);
 
-      $input.change(function(){
+      $input.change(function () {
         if (isNaN($input.val())) {
           worldOptionsSetting[opt.option] = $input.val();
         } else {
@@ -952,7 +952,7 @@ var simPanel = new function() {
 
       $input.val(currentVal);
 
-      $input.change(function(){
+      $input.change(function () {
         if (isNaN($input.val())) {
           worldOptionsSetting[opt.option] = $input.val();
         } else {
@@ -971,7 +971,7 @@ var simPanel = new function() {
       let $file = $('<input type="file">');
       $file.attr('accept', opt.accept);
 
-      $file.change(function(){
+      $file.change(function () {
         if (this.files.length) {
           worldOptionsSetting[opt.option] = URL.createObjectURL(this.files[0]);
         }
@@ -1016,7 +1016,7 @@ var simPanel = new function() {
       }
     }
 
-    worlds.forEach(function(world){
+    worlds.forEach(function (world) {
       let $world = $('<option></option>');
       $world.prop('value', world.name);
       $world.text(world.shortDescription);
@@ -1031,7 +1031,7 @@ var simPanel = new function() {
     $body.append($description);
     $body.append($configurations);
 
-    $select.change(function(){
+    $select.change(function () {
       let world = worlds.find(world => world.name == $select.val());
       displayWorldOptions(world, world.options);
     });
@@ -1046,7 +1046,7 @@ var simPanel = new function() {
 
     let $dialog = dialog(i18n.get('#sim-select_world#'), $body, $buttons);
 
-    $buttons.siblings('.save').click(function() {
+    $buttons.siblings('.save').click(function () {
       let world = worlds.find(world => world.name == $select.val());
       let saveObj = {
         worldName: $select.val(),
@@ -1061,14 +1061,14 @@ var simPanel = new function() {
       hiddenElement.download = $select.val() + 'Map_config.json';
       hiddenElement.dispatchEvent(new MouseEvent('click'));
     });
-    $buttons.siblings('.load').click(function() {
+    $buttons.siblings('.load').click(function () {
       var hiddenElement = document.createElement('input');
       hiddenElement.type = 'file';
       hiddenElement.accept = 'application/json,.json';
       hiddenElement.dispatchEvent(new MouseEvent('click'));
-      hiddenElement.addEventListener('change', function(e){
+      hiddenElement.addEventListener('change', function (e) {
         var reader = new FileReader();
-        reader.onload = function() {
+        reader.onload = function () {
           let loadedSave = JSON.parse(this.result);
           let world = worlds.find(world => world.name == loadedSave.worldName);
 
@@ -1084,18 +1084,18 @@ var simPanel = new function() {
         reader.readAsText(e.target.files[0]);
       });
     });
-    $buttons.siblings('.default').click(function() {
+    $buttons.siblings('.default').click(function () {
       let world = worlds.find(world => world.name == $select.val());
       world.options = {};
       Object.assign(world.options, world.defaultOptions);
       displayWorldOptions(world, world.options);
       // displayWorldOptions(world, world.defaultOptions);
     });
-    $buttons.siblings('.cancel').click(function() { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function(){
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(function () {
       babylon.world = worlds.find(world => world.name == $select.val());
       self.worldOptionsSetting = worldOptionsSetting;
-      self.resetSim().then(function(){
+      self.resetSim().then(function () {
         babylon.resetCamera();
         babylon.setCameraMode('follow');
         self.$camera.html('<span class="icon-cameraFollow"></span>');
@@ -1105,7 +1105,7 @@ var simPanel = new function() {
   };
 
   // Load world
-  this.loadWorld = function(json) {
+  this.loadWorld = function (json) {
     try {
       let loadedSave = JSON.parse(json);
 
@@ -1127,7 +1127,7 @@ var simPanel = new function() {
       if (typeof babylon.world.setOptions == 'function') {
         babylon.world.setOptions(self.worldOptionsSetting);
       }
-      self.resetSim().then(function(){
+      self.resetSim().then(function () {
         babylon.resetCamera();
         babylon.setCameraMode('follow');
         self.$camera.html('<span class="icon-cameraFollow"></span>');
@@ -1138,14 +1138,14 @@ var simPanel = new function() {
   };
 
   // Load from local file
-  this.loadWorldLocal = function() {
+  this.loadWorldLocal = function () {
     var hiddenElement = document.createElement('input');
     hiddenElement.type = 'file';
     hiddenElement.accept = 'application/json,.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
-    hiddenElement.addEventListener('change', function(e){
+    hiddenElement.addEventListener('change', function (e) {
       var reader = new FileReader();
-      reader.onload = function() {
+      reader.onload = function () {
         self.loadWorld(this.result);
       };
       reader.readAsText(e.target.files[0]);
@@ -1153,9 +1153,9 @@ var simPanel = new function() {
   };
 
   // Load from URL
-  this.loadWorldURL = function(url) {
+  this.loadWorldURL = function (url) {
     return fetch(url)
-      .then(function(response) {
+      .then(function (response) {
         if (response.ok) {
           return response.text();
         } else {
@@ -1163,13 +1163,13 @@ var simPanel = new function() {
           return Promise.reject(new Error('invalid_map'));
         }
       })
-      .then(function(response) {
+      .then(function (response) {
         self.loadWorld(response);
       });
   };
 
   // Save to file
-  this.saveWorld = function() {
+  this.saveWorld = function () {
     let world = babylon.world;
     let saveObj = {
       worldName: world.name,
@@ -1184,7 +1184,7 @@ var simPanel = new function() {
   };
 
   // Stop the simulator
-  this.stopSim = function(stopRobot) {
+  this.stopSim = function (stopRobot) {
     if (typeof stopRobot == 'undefined') {
       let stopRobot = false;
     }
@@ -1201,7 +1201,7 @@ var simPanel = new function() {
       function repeatedReset(count) {
         if (count > 0) {
           robot.reset();
-          setTimeout(function() { repeatedReset(count - 1) }, 100);
+          setTimeout(function () { repeatedReset(count - 1) }, 100);
         }
       }
       repeatedReset(15);
@@ -1209,11 +1209,11 @@ var simPanel = new function() {
   };
 
   // Run the simulator
-  this.runSim = function() {
+  this.runSim = function () {
     if (skulpt.running) {
       self.stopSim();
     } else {
-      if (! filesManager.modified) {
+      if (!filesManager.modified) {
         pythonPanel.loadPythonFromBlockly();
       }
       robot.reset();
@@ -1226,49 +1226,66 @@ var simPanel = new function() {
   };
 
   // Set run icon
-  this.setRunIcon = function(type) {
+  this.setRunIcon = function (type) {
+    let $icon = self.$runSim.find('span[class^="icon-"]');
+    let $tooltip = self.$runSim.find('.tooltiptext');
+
     if (type == 'run') {
-      self.$runSim.html('<span class="icon-play"></span>');
+      if ($icon.length) {
+        $icon.removeClass('icon-stop').addClass('icon-play');
+      } else {
+        self.$runSim.prepend('<span class="icon-play"></span>');
+      }
+      if ($tooltip.length) {
+        $tooltip.text('Run Simulation');
+      }
     } else {
-      self.$runSim.html('<span class="icon-stop"></span>');
+      if ($icon.length) {
+        $icon.removeClass('icon-play').addClass('icon-stop');
+      } else {
+        self.$runSim.prepend('<span class="icon-stop"></span>');
+      }
+      if ($tooltip.length) {
+        $tooltip.text('Stop Simulation');
+      }
     }
   };
 
   // Reset simulator
-  this.resetSim = function(resetPython) {
+  this.resetSim = function (resetPython) {
     if (typeof resetPython == 'undefined') {
       resetPython = true;
     }
 
-    return babylon.world.setOptions(self.worldOptionsSetting).then(function(){
+    return babylon.world.setOptions(self.worldOptionsSetting).then(function () {
       self.clearWorldInfoPanel();
       self.hideWorldInfoPanel();
       if (resetPython) {
         skulpt.hardInterrupt = true;
         self.setRunIcon('run');
       }
-      return babylon.resetScene().then(function(){
+      return babylon.resetScene().then(function () {
         self.initSensorsPanel();
       });
     });
   };
 
   // Strip html tags
-  this.stripHTML = function(text) {
+  this.stripHTML = function (text) {
     const regex = /</g;
     const regex2 = />/g;
     return text.replace(regex, '&lt;').replace(regex2, '&gt;');
   }
 
   // write to console
-  this.consoleWrite = function(text) {
+  this.consoleWrite = function (text) {
     text = self.$consoleContent.html() + self.stripHTML(text);
     self.$consoleContent.html(text);
     self.scrollConsoleToBottom();
   };
 
   // write to console
-  this.consoleWriteErrors = function(text) {
+  this.consoleWriteErrors = function (text) {
     text = '<span class="error">' + self.stripHTML(text) + '</span>\n';
     text = self.$consoleContent.html() + text;
     self.$consoleContent.html(text);
@@ -1276,26 +1293,26 @@ var simPanel = new function() {
   };
 
   // clear all content
-  this.clearConsole = function() {
+  this.clearConsole = function () {
     self.$consoleContent.html('');
   };
 
   // Toggle opening and closing of console
-  this.toggleConsole = function() {
+  this.toggleConsole = function () {
     self.$console.toggleClass('open');
   };
 
   // Scroll console to bottom
-  this.scrollConsoleToBottom = function() {
+  this.scrollConsoleToBottom = function () {
     var pre = self.$consoleContent[0];
     pre.scrollTop = pre.scrollHeight - pre.clientHeight
   };
 
   // Toggle FPS display
-  this.toggleFPS = function() {
-    self.showFPS = ! self.showFPS;
+  this.toggleFPS = function () {
+    self.showFPS = !self.showFPS;
 
-    if (! self.showFPS) {
+    if (!self.showFPS) {
       self.$fps.text('');
     }
   };
