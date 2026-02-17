@@ -1,4 +1,4 @@
-var builder = new function() {
+var builder = new function () {
   var self = this;
 
   this.worldOptions = JSON.parse(JSON.stringify(worlds[0].defaultOptions));
@@ -726,8 +726,9 @@ var builder = new function() {
       },
       {
         option: 'modelURL',
-        type: 'selectModel',
-        reset: true
+        type: 'selectModelFile',
+        reset: true,
+        help: 'Select a 3D model (.glb/.gltf) from your computer or from the built-in library.'
       },
       {
         option: 'modelURL',
@@ -933,7 +934,7 @@ var builder = new function() {
 
   this.objectDefault = {
     ...world_Custom.objectDefault,
-    position: [0,0,20],
+    position: [0, 0, 20],
   };
 
   this.boxDefault = {
@@ -968,9 +969,9 @@ var builder = new function() {
   this.hingeDefault = {
     type: 'hinge',
     objects: [],
-    position: [0,0,20],
-    rotation: [0,0,0],
-    size: [10,2,0],
+    position: [0, 0, 20],
+    rotation: [0, 0, 0],
+    size: [10, 2, 0],
     hide: true,
     speed: 0,
     maxForce: 0,
@@ -979,14 +980,14 @@ var builder = new function() {
   this.ballJointDefault = {
     type: 'ballJoint',
     objects: [],
-    position: [0,0,20],
-    rotation: [0,0,0],
+    position: [0, 0, 20],
+    rotation: [0, 0, 0],
     size: 2,
     hide: true,
   };
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     if (typeof babylon.scene == 'undefined') {
       setTimeout(self.init, 500);
       return;
@@ -1031,7 +1032,7 @@ var builder = new function() {
   };
 
   // Setup drag
-  this.setupDrag = function() {
+  this.setupDrag = function () {
     let dragBody;
     let dragBodyPos;
     let selected;
@@ -1101,8 +1102,8 @@ var builder = new function() {
       }
     };
 
-    self.pointerDragPlaneNormal = new BABYLON.Vector3(0,1,0);
-    self.pointerDragBehavior = new BABYLON.PointerDragBehavior({dragPlaneNormal: this.pointerDragPlaneNormal});
+    self.pointerDragPlaneNormal = new BABYLON.Vector3(0, 1, 0);
+    self.pointerDragBehavior = new BABYLON.PointerDragBehavior({ dragPlaneNormal: this.pointerDragPlaneNormal });
     self.pointerDragBehavior.useObjectOrientationForDragging = false;
     self.pointerDragBehavior.moveAttached = false;
 
@@ -1112,7 +1113,7 @@ var builder = new function() {
   }
 
   // Runs every frame
-  this.render = function(delta) {
+  this.render = function (delta) {
     let camera = babylon.scene.activeCamera;
     let dir = camera.getTarget().subtract(camera.position);
     let x2 = dir.x ** 2;
@@ -1133,7 +1134,7 @@ var builder = new function() {
   }
 
   // Select animation from model
-  this.selectAnimation = function(opt, objectOptions, $div) {
+  this.selectAnimation = function (opt, objectOptions, $div) {
     let currentVal = objectOptions.modelAnimation;
 
     let selected = self.$objectsList.find('li.selected');
@@ -1146,7 +1147,7 @@ var builder = new function() {
 
     if (mesh == null) {
       // model not loaded yet
-      setTimeout(function(){
+      setTimeout(function () {
         self.selectAnimation(opt, objectOptions, $div);
       }, 200);
     } else {
@@ -1155,7 +1156,7 @@ var builder = new function() {
         let $opt = $('<option>None</option>');
         $select.append($opt);
 
-        mesh.animations.forEach(function(animation){
+        mesh.animations.forEach(function (animation) {
           $opt = $('<option></option>');
           $opt.text(animation);
           $select.append($opt);
@@ -1170,7 +1171,7 @@ var builder = new function() {
           $select.val(currentVal);
         }
 
-        $select.change(function(){
+        $select.change(function () {
           self.saveHistory();
           objectOptions.modelAnimation = $select.val();
           self.resetScene(false);
@@ -1190,12 +1191,12 @@ var builder = new function() {
   };
 
   // Set custom physics options
-  this.setPhysicsOptions = function(opt, objectOptions) {
-    function genSelect (opt, currentVal, setter) {
+  this.setPhysicsOptions = function (opt, objectOptions) {
+    function genSelect(opt, currentVal, setter) {
       let $div = $('<div class="configuration"></div>');
       let $select = $('<select></select>');
 
-      opt.options.forEach(function(option){
+      opt.options.forEach(function (option) {
         let $opt = $('<option></option>');
         $opt.prop('value', option[1]);
         $opt.text(option[0]);
@@ -1206,7 +1207,7 @@ var builder = new function() {
         $select.append($opt);
       });
 
-      $select.change(function(){
+      $select.change(function () {
         self.saveHistory();
         setter($select.val());
         if (opt.reset) {
@@ -1225,7 +1226,7 @@ var builder = new function() {
 
       $input.val(currentVal);
 
-      $input.change(function(){
+      $input.change(function () {
         let trimmed = $input.val().trim();
         if (trimmed == '') {
           self.saveHistory();
@@ -1257,7 +1258,7 @@ var builder = new function() {
       if (typeof objectOptions.physicsOptions == 'object') {
         currentVal = 'custom';
       }
-      return genSelect(opt, currentVal, function(val){
+      return genSelect(opt, currentVal, function (val) {
         if (val == 'custom') {
           objectOptions[opt.option] = {};
         } else {
@@ -1270,7 +1271,7 @@ var builder = new function() {
       }
 
       let option = opt.option.replace('physics_', '');
-      return genFloatText(opt, objectOptions.physicsOptions[option], function(val){
+      return genFloatText(opt, objectOptions.physicsOptions[option], function (val) {
         if (val == '') {
           delete objectOptions.physicsOptions[option];
         } else {
@@ -1282,7 +1283,7 @@ var builder = new function() {
 
 
   // Set custom animation keys options
-  this.setAnimationKeys = function(opt, objectOptions) {
+  this.setAnimationKeys = function (opt, objectOptions) {
     if (objectOptions.animationMode == 'none') {
       return '';
     }
@@ -1304,21 +1305,21 @@ var builder = new function() {
       let $body = $('<div class="editAnimationKeys"></div>');
       let $table = $(
         '<table class="animationKeys">' +
-          '<thead>' +
-            '<tr>' +
-              '<th>Time</th>' +
-              '<th colspan="3">Position</th>' +
-              '<th colspan="3">Rotation</th>' +
-            '</tr>' +
-          '</thead>' +
-          '<tbody></tbody>' +
+        '<thead>' +
+        '<tr>' +
+        '<th>Time</th>' +
+        '<th colspan="3">Position</th>' +
+        '<th colspan="3">Rotation</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody></tbody>' +
         '</table>'
       );
       let $tbody = $table.find('tbody');
 
-      objectOptions.animationKeys.forEach(function(animationKey){
+      objectOptions.animationKeys.forEach(function (animationKey) {
         function round(input) {
-          return Math.round(input*100) / 100;
+          return Math.round(input * 100) / 100;
         }
         let $row = $('<tr></tr>');
         $row[0].animationKey = animationKey;
@@ -1333,7 +1334,7 @@ var builder = new function() {
         let $delete = $('<button class="delete">Delete</button>')
         $row.append($('<td></td>').append($delete));
 
-        $delete.click(function(){
+        $delete.click(function () {
           $row.remove();
         });
 
@@ -1348,18 +1349,18 @@ var builder = new function() {
 
       let $dialog = dialog('Edit animation keys', $body, $buttons);
 
-      $buttons.siblings('.cancel').click(function() {
+      $buttons.siblings('.cancel').click(function () {
         $dialog.close();
       });
-      $buttons.siblings('.ok').click(function() {
+      $buttons.siblings('.ok').click(function () {
         let animationKeys = [];
-        $tbody.children().each(function(i, ele){
+        $tbody.children().each(function (i, ele) {
           let animationKey = ele.animationKey;
           animationKey.time = parseFloat(ele.children[0].children[0].value);
           animationKeys.push(animationKey);
         });
         let valid = true;
-        animationKeys.sort(function(a, b){
+        animationKeys.sort(function (a, b) {
           if (b.time == a.time) {
             toastMsg('Invalid animation (Duplicate key timing)');
             valid = false;
@@ -1411,7 +1412,7 @@ var builder = new function() {
       };
 
       objectOptions.animationKeys.push(key);
-      objectOptions.animationKeys.sort(function(a, b){
+      objectOptions.animationKeys.sort(function (a, b) {
         if (b.time > a.time) {
           return -1;
         } else {
@@ -1454,7 +1455,7 @@ var builder = new function() {
   };
 
   // Apply pointerDragBehavior to selected mesh
-  this.applyDragToSelected = function() {
+  this.applyDragToSelected = function () {
     let selected = self.$objectsList.find('li.selected');
     if (typeof selected[0].objectIndex != 'undefined') {
       let id = 'worldBaseObject_' + selected[0].name + selected[0].objectIndex;
@@ -1471,7 +1472,7 @@ var builder = new function() {
   };
 
   // Save history
-  this.saveHistory = function() {
+  this.saveHistory = function () {
     if (typeof self.editHistory == 'undefined') {
       self.editHistory = [];
     }
@@ -1480,14 +1481,14 @@ var builder = new function() {
   };
 
   // Clear history
-  this.clearHistory = function() {
+  this.clearHistory = function () {
     if (typeof self.editHistory != 'undefined') {
       self.editHistory = [];
     }
   };
 
   // Undo
-  this.undo = function() {
+  this.undo = function () {
     if (typeof self.editHistory != 'undefined' && self.editHistory.length > 0) {
       var lastDesign = self.editHistory.pop();
       self.worldOptions = JSON.parse(lastDesign);
@@ -1496,7 +1497,7 @@ var builder = new function() {
   };
 
   // Drop object to ground level
-  this.moveToGround = function(opt, objectOptions) {
+  this.moveToGround = function (opt, objectOptions) {
     let selected = self.$objectsList.find('li.selected');
     if (typeof selected[0].objectIndex != 'undefined') {
       let id = 'worldBaseObject_' + selected[0].name + selected[0].objectIndex;
@@ -1521,8 +1522,8 @@ var builder = new function() {
 
       } else if (selected[0].name == 'cylinder') {
         let quad = mesh.absoluteRotationQuaternion;
-        let origVec = new BABYLON.Vector3(0,1,0);
-        let rotVec =  new BABYLON.Vector3();
+        let origVec = new BABYLON.Vector3(0, 1, 0);
+        let rotVec = new BABYLON.Vector3();
         rotVec = origVec.rotateByQuaternionToRef(quad, rotVec);
 
         let angle = Math.acos(BABYLON.Vector3.Dot(origVec, rotVec));
@@ -1539,7 +1540,7 @@ var builder = new function() {
   };
 
   // Show options
-  this.showObjectOptions = function(li) {
+  this.showObjectOptions = function (li) {
     let name = li.name;
 
     let OBJECTS = ['box', 'cylinder', 'sphere', 'model', 'hinge', 'ballJoint']
@@ -1580,8 +1581,8 @@ var builder = new function() {
   };
 
   // Setup picking ray
-  this.setupPickingRay = function() {
-    babylon.scene.onPointerUp = function(e, hit) {
+  this.setupPickingRay = function () {
+    babylon.scene.onPointerUp = function (e, hit) {
       if (e.button != 0) {
         return;
       }
@@ -1605,9 +1606,9 @@ var builder = new function() {
   };
 
   // Reset scene
-  this.resetScene = function(reloadComponents=true) {
+  this.resetScene = function (reloadComponents = true) {
     simPanel.hideWorldInfoPanel();
-    worlds[0].setOptions(self.worldOptions).then(function(){
+    worlds[0].setOptions(self.worldOptions).then(function () {
       babylon.resetScene();
       babylon.scene.physicsEnabled = false;
       self.setupPickingRay();
@@ -1632,14 +1633,14 @@ var builder = new function() {
   }
 
   // Add a new object to selected
-  this.addObject = function() {
+  this.addObject = function () {
     let $body = $('<div class="selectObject"></div>');
     let $select = $('<select></select>');
     let $description = $('<div class="description"><div class="text"></div></div>');
 
     let objectTypes = ['Box', 'Cylinder', 'Sphere', 'Model', 'Compound', 'Hinge', 'Ball Joint'];
 
-    objectTypes.forEach(function(type){
+    objectTypes.forEach(function (type) {
       let $object = $('<option></option>');
       $object.prop('value', type);
       $object.text(type);
@@ -1656,8 +1657,8 @@ var builder = new function() {
 
     let $dialog = dialog('Select Object Type', $body, $buttons);
 
-    $buttons.siblings('.cancel').click(function() { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function(){
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(function () {
       self.saveHistory();
 
       let selected = self.getSelectedComponent()[0];
@@ -1680,9 +1681,9 @@ var builder = new function() {
 
       if ($select.val() == 'Compound') {
         if (selected.name == 'compound' && selected.object.objects.length == 0) {
-            toastMsg('First object in a compound cannot be another compound');
-            $dialog.close();
-            return;
+          toastMsg('First object in a compound cannot be another compound');
+          $dialog.close();
+          return;
         }
       }
 
@@ -1738,7 +1739,7 @@ var builder = new function() {
   };
 
   // Clone selected object
-  this.cloneObject = function() {
+  this.cloneObject = function () {
     let $selected = self.getSelectedComponent();
     let VALID_OBJECTS = ['box', 'cylinder', 'sphere', 'model', 'compound', 'hinge', 'ballJoint'];
     if (VALID_OBJECTS.indexOf($selected[0].name) == -1) {
@@ -1754,11 +1755,11 @@ var builder = new function() {
   };
 
   // Find the parent of a child object
-  this.findParentCompound = function(objectIndex) {
+  this.findParentCompound = function (objectIndex) {
     let currentIndex = -1;
 
     function findParent(parent) {
-      for (let i=0; i<parent.objects.length; i++) {
+      for (let i = 0; i < parent.objects.length; i++) {
         currentIndex++;
         if (currentIndex == objectIndex) {
           return parent;
@@ -1776,7 +1777,7 @@ var builder = new function() {
   };
 
   // Delete selected object
-  this.deleteObject = function() {
+  this.deleteObject = function () {
     let $selected = self.getSelectedComponent();
     let VALID_OBJECTS = ['box', 'cylinder', 'sphere', 'model', 'compound', 'hinge', 'ballJoint']
     if (VALID_OBJECTS.indexOf($selected[0].name) == -1) {
@@ -1797,12 +1798,12 @@ var builder = new function() {
   };
 
   // Get selected component
-  this.getSelectedComponent = function() {
+  this.getSelectedComponent = function () {
     return self.$objectsList.find('li.selected');
   };
 
   // Select list item on click
-  this.objectSelect = function(target) {
+  this.objectSelect = function (target) {
     if (target.nodeName != 'LI') {
       return;
     }
@@ -1824,7 +1825,7 @@ var builder = new function() {
   };
 
   // Highlight selected component
-  this.highlightSelected = function() {
+  this.highlightSelected = function () {
     let $selected = self.$objectsList.find('li.selected');
     if ($selected.length < 1) {
       return;
@@ -1891,7 +1892,7 @@ var builder = new function() {
   }
 
   // Load world into objects window
-  this.loadIntoObjectsWindow = function(options) {
+  this.loadIntoObjectsWindow = function (options) {
     let objectIndex = 0;
 
     let $ul = $('<ul></ul>');
@@ -1940,7 +1941,7 @@ var builder = new function() {
       $item[0].objectIndex = objectIndex++;
       if (object.type == 'compound' || object.type == 'hinge' || object.type == 'ballJoint') {
         let $subList = $('<ul></ul>');
-        object.objects.forEach(function(object){
+        object.objects.forEach(function (object) {
           let $subItem = listObject(object);
           $subItem[0].child = true;
           $subList.append($subItem);
@@ -1952,7 +1953,7 @@ var builder = new function() {
     }
 
     let $list = $('<ul></ul>');
-    options.objects.forEach(function(object){
+    options.objects.forEach(function (object) {
       $list.append(listObject(object));
     });
 
@@ -1960,7 +1961,7 @@ var builder = new function() {
       $ul.append($('<li class="ulHolder"></li>').append($list));
     }
 
-    $ul.find('li').click(function(e) {
+    $ul.find('li').click(function (e) {
       self.objectSelect(e.target);
       e.stopPropagation();
     });
@@ -1970,7 +1971,7 @@ var builder = new function() {
   };
 
   // Save world to json file
-  this.saveWorld = function() {
+  this.saveWorld = function () {
     let world = {
       worldName: 'custom',
       options: self.worldOptions
@@ -1984,14 +1985,14 @@ var builder = new function() {
   };
 
   // Load object from json file
-  this.loadObjectLocal = function() {
+  this.loadObjectLocal = function () {
     var hiddenElement = document.createElement('input');
     hiddenElement.type = 'file';
     hiddenElement.accept = 'application/json,.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
-    hiddenElement.addEventListener('change', function(e){
+    hiddenElement.addEventListener('change', function (e) {
       var reader = new FileReader();
-      reader.onload = function() {
+      reader.onload = function () {
         let objects = JSON.parse(this.result).objects;
 
         self.saveHistory();
@@ -2013,7 +2014,7 @@ var builder = new function() {
   };
 
   // Save selected object to json file
-  this.saveObject = function() {
+  this.saveObject = function () {
     let $selected = self.getSelectedComponent();
 
     let save = {
@@ -2030,11 +2031,11 @@ var builder = new function() {
   };
 
   // New world using defaults
-  this.newWorld = function() {
+  this.newWorld = function () {
     let options = {
       message: 'Create a new empty world? You will lose all unsaved changes.',
     };
-    confirmDialog(options, function(){
+    confirmDialog(options, function () {
       self.worldOptions = JSON.parse(JSON.stringify(worlds[0].defaultOptions));
       self.clearHistory();
       self.saveHistory();
@@ -2043,14 +2044,14 @@ var builder = new function() {
   };
 
   // Load world from json file
-  this.loadWorldLocal = function() {
+  this.loadWorldLocal = function () {
     var hiddenElement = document.createElement('input');
     hiddenElement.type = 'file';
     hiddenElement.accept = 'application/json,.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
-    hiddenElement.addEventListener('change', function(e){
+    hiddenElement.addEventListener('change', function (e) {
       var reader = new FileReader();
-      reader.onload = function() {
+      reader.onload = function () {
         let loadedJson = JSON.parse(this.result);
 
         if (loadedJson.worldName != 'custom') {
@@ -2071,26 +2072,26 @@ var builder = new function() {
   };
 
   // Toggle filemenu
-  this.toggleFileMenu = function(e) {
+  this.toggleFileMenu = function (e) {
     if ($('.fileMenuDropDown').length == 0) {
       $('.menuDropDown').remove();
       e.stopPropagation();
 
       let menuItems = [
-        {html: 'New World', line: true, callback: self.newWorld},
-        {html: 'Load world from file', line: false, callback: self.loadWorldLocal},
-        {html: 'Save world to file', line: true, callback: self.saveWorld},
-        {html: 'Load object from file', line: false, callback: self.loadObjectLocal},
-        {html: 'Save object to file', line: false, callback: self.saveObject},
+        { html: 'New World', line: true, callback: self.newWorld },
+        { html: 'Load world from file', line: false, callback: self.loadWorldLocal },
+        { html: 'Save world to file', line: true, callback: self.saveWorld },
+        { html: 'Load object from file', line: false, callback: self.loadObjectLocal },
+        { html: 'Save object to file', line: false, callback: self.saveObject },
 
       ];
 
-      menuDropDown(self.$fileMenu, menuItems, {className: 'fileMenuDropDown'});
+      menuDropDown(self.$fileMenu, menuItems, { className: 'fileMenuDropDown' });
     }
   };
 
   // Toggle worldmenu
-  this.toggleWorldMenu = function(e) {
+  this.toggleWorldMenu = function (e) {
     if ($('.worldMenuDropDown').length == 0) {
       $('.menuDropDown').remove();
       e.stopPropagation();
@@ -2104,19 +2105,19 @@ var builder = new function() {
       }
 
       let menuItems = [
-        {html: i18n.get('Animate'), line: false, callback: toggleAnimate }
+        { html: i18n.get('Animate'), line: false, callback: toggleAnimate }
       ];
       if (babylon.world.animate) {
         menuItems[0].html = '<span class="tick">&#x2713;</span> ' + menuItems[0].html;
       }
 
-      menuDropDown(self.$worldMenu, menuItems, {className: 'worldMenuDropDown'});
+      menuDropDown(self.$worldMenu, menuItems, { className: 'worldMenuDropDown' });
     }
   };
 
   // Snapping
   this.snapStep = [0, 0, 0];
-  this.roundToSnap = function(value, snap) {
+  this.roundToSnap = function (value, snap) {
     if (snap == 0) {
       return value;
     }
@@ -2125,7 +2126,7 @@ var builder = new function() {
   }
 
   // Toggle snapmenu
-  this.toggleSnapMenu = function(e) {
+  this.toggleSnapMenu = function (e) {
     if ($('.snapMenuDropDown').length == 0) {
       $('.menuDropDown').remove();
       e.stopPropagation();
@@ -2153,13 +2154,13 @@ var builder = new function() {
       }
 
       let menuItems = [
-        {html: 'No Snapping', line: false, callback: snapNone},
-        {html: 'Snap to 0.2cm', line: false, callback: snap02},
-        {html: 'Snap to 0.4cm (Lego Technic)', line: false, callback: snapTechnic},
-        {html: 'Snap to Lego (xy: 0.4, z: 0.48)', line: false, callback: snapLego},
-        {html: 'Snap to 0.5cm', line: false, callback: snap05},
-        {html: 'Snap to 1cm', line: false, callback: snap10},
-        {html: 'Snap to 5cm', line: false, callback: snap50},
+        { html: 'No Snapping', line: false, callback: snapNone },
+        { html: 'Snap to 0.2cm', line: false, callback: snap02 },
+        { html: 'Snap to 0.4cm (Lego Technic)', line: false, callback: snapTechnic },
+        { html: 'Snap to Lego (xy: 0.4, z: 0.48)', line: false, callback: snapLego },
+        { html: 'Snap to 0.5cm', line: false, callback: snap05 },
+        { html: 'Snap to 1cm', line: false, callback: snap10 },
+        { html: 'Snap to 5cm', line: false, callback: snap50 },
       ];
       var tickIndex = 0;
       if (self.snapStep[2] == 0) {
@@ -2179,12 +2180,12 @@ var builder = new function() {
       }
       menuItems[tickIndex].html = '<span class="tick">&#x2713;</span> ' + menuItems[tickIndex].html;
 
-      menuDropDown(self.$snapMenu, menuItems, {className: 'snapMenuDropDown'});
+      menuDropDown(self.$snapMenu, menuItems, { className: 'snapMenuDropDown' });
     }
   };
 
   // Clicked on tab
-  this.tabClicked = function(tabNav) {
+  this.tabClicked = function (tabNav) {
   };
 }
 

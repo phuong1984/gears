@@ -1,46 +1,155 @@
-.componentsWindow, .objectsWindow {
+// ============================================================
+// Configurator & World Builder — Premium Dark Design
+// ============================================================
+// Syncs with app's design variables: $primary (Ocean Blue),
+// $primary-dark (Deep Sea), $secondary (Sunset Orange), Poppins font.
+
+// --- Design tokens for dark panels ---
+$panel-bg: rgba(20, 30, 48, 0.92);
+$panel-bg-hover: rgba(20, 30, 48, 0.96);
+$panel-border: rgba(9, 195, 219, 0.2);
+$panel-text: #e8edf3;
+$panel-text-muted: #8fa3b8;
+$panel-item-bg: rgba(255, 255, 255, 0.05);
+$panel-item-hover: rgba(9, 195, 219, 0.12);
+$panel-input-bg: rgba(255, 255, 255, 0.08);
+$panel-input-border: rgba(255, 255, 255, 0.15);
+$panel-input-focus: rgba(9, 195, 219, 0.4);
+$panel-shadow: 0 12px 48px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.2);
+$accent-gradient: linear-gradient(135deg, $primary, $secondary);
+
+// --- Shared panel glass effect (dark) ---
+@mixin glass-panel {
+  background: $panel-bg;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 1px solid $panel-border;
+  border-radius: 1em;
+  box-shadow: $panel-shadow;
+}
+
+// --- Custom scrollbar mixin ---
+@mixin dark-scrollbar {
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba($primary, 0.35);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba($primary, 0.55);
+    }
+  }
+}
+
+// --- Left sidebar: Objects / Components window ---
+.componentsWindow,
+.objectsWindow {
+  @include glass-panel;
   position: absolute;
-  color: white;
-  background-color: rgba(255,255,255,0.2);
-  border-radius: 0.5em;
-  padding: 1em;
-  top: 2em;
+  color: $panel-text;
+  padding: 0.9em;
+  top: 1em;
   left: 1em;
   font-size: 100%;
-  width: 15em;
-  height: 90%;
+  width: 16em;
+  height: calc(100% - 2em);
   display: flex;
   flex-direction: column;
+  font-family: $font-stack;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 
+  &:hover {
+    box-shadow:
+      0 16px 56px rgba(0, 0, 0, 0.4),
+      0 6px 20px rgba(0, 0, 0, 0.25);
+    border-color: rgba($primary, 0.35);
+  }
+
+  // --- Action button row (Add / Clone / Delete / Undo) ---
   .buttons {
     display: flex;
     width: 100%;
     justify-content: space-between;
     box-sizing: border-box;
-    font-size: 120%;
+    font-size: 100%;
+    gap: 0.4em;
+    margin-bottom: 0.7em;
 
     div {
-      border: solid 2px #bbbbbb;
-      padding: 0.3em 0.5em;
+      flex: 1;
+      text-align: center;
+      background: linear-gradient(135deg, $primary, darken($primary, 12%));
+      color: $white;
+      border: none;
+      padding: 0.45em 0.5em;
       border-radius: 0.5em;
       cursor: pointer;
       user-select: none;
+      font-weight: 600;
+      font-size: 0.85em;
+      letter-spacing: 0.03em;
+      font-family: $font-stack;
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 10px rgba($primary, 0.25);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transition: left 0.4s ease;
+      }
+
+      &:hover {
+        background: linear-gradient(135deg, lighten($primary, 5%), $primary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba($primary, 0.35);
+
+        &::before {
+          left: 100%;
+        }
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba($primary, 0.2);
+      }
     }
   }
 
-  .componentsList, .objectsList {
-    font-size: 120%;
+  // --- Object / Component list ---
+  .componentsList,
+  .objectsList {
+    font-size: 100%;
     overflow: auto;
     flex-grow: 1;
     white-space: nowrap;
-    margin-bottom: 1em;
+    margin-bottom: 0.6em;
+    padding: 0.4em;
+    border-radius: 0.6em;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    @include dark-scrollbar;
 
     ul {
       list-style-type: none;
       padding-inline-start: 0;
+      margin: 0;
 
       ul {
-        padding-inline-start: 1em;
+        padding-inline-start: 1.2em;
         list-style-type: "˪ ";
       }
     }
@@ -48,10 +157,28 @@
     li {
       cursor: pointer;
       user-select: none;
+      padding: 0.35em 0.6em;
+      border-radius: 0.4em;
+      margin-bottom: 2px;
+      transition: all 0.15s ease;
+      font-size: 0.95em;
+      color: $panel-text;
+      font-family: $font-stack;
+      border-left: 3px solid transparent;
+
+      &:hover {
+        background: $panel-item-hover;
+        color: lighten($primary, 15%);
+        border-left-color: rgba($primary, 0.4);
+      }
     }
 
     li.selected {
-      background-color: #bbbbbb;
+      background: rgba($primary, 0.18);
+      color: lighten($primary, 20%);
+      font-weight: 600;
+      border-left: 3px solid $primary;
+      box-shadow: inset 0 0 12px rgba($primary, 0.08);
     }
 
     li.ulHolder {
@@ -60,32 +187,58 @@
   }
 }
 
+// --- Object ID label (centered above canvas) ---
 .objectID {
   position: absolute;
-  top: 0.5em;
-  right: 2em;
-  width: 20em;
-  color: white;
+  top: 0.6em;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 24em;
+  color: $panel-text;
+  font-size: 0.85em;
+  background: $panel-bg;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 0.35em 1.2em;
+  border-radius: 2em;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+  font-family: $font-stack;
+  border: 1px solid $panel-border;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 5;
 }
 
+// --- Right sidebar: Settings window ---
 .settingsWindow {
+  @include glass-panel;
   position: absolute;
-  color: white;
-  background-color: rgba(255,255,255,0.2);
-  border-radius: 0.5em;
-  padding: 1em;
-  top: 2em;
+  color: $panel-text;
+  padding: 0.9em;
+  top: 1em;
   right: 1em;
   font-size: 100%;
-  width: 20em;
-  height: 90%;
+  width: 22em;
+  height: calc(100% - 2em);
   display: flex;
   flex-direction: column;
+  font-family: $font-stack;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+
+  &:hover {
+    box-shadow:
+      0 16px 56px rgba(0, 0, 0, 0.4),
+      0 6px 20px rgba(0, 0, 0, 0.25);
+    border-color: rgba($primary, 0.35);
+  }
 
   .settingsArea {
     flex-grow: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-right: 0.3em;
+    @include dark-scrollbar;
   }
 
   .buttons {
@@ -94,92 +247,396 @@
     justify-content: flex-start;
     box-sizing: border-box;
     font-size: 90%;
+    gap: 0.4em;
 
     div {
-      border: solid 2px #bbbbbb;
-      padding: 0.3em 0.5em;
+      background: linear-gradient(135deg, $primary, darken($primary, 10%));
+      color: $white;
+      border: none;
+      padding: 0.4em 0.65em;
       border-radius: 0.5em;
       cursor: pointer;
       user-select: none;
+      font-weight: 600;
+      font-size: 0.85em;
+      font-family: $font-stack;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba($primary, 0.2);
+
+      &:hover {
+        background: linear-gradient(135deg, lighten($primary, 5%), $primary);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba($primary, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
     }
   }
 
   .componentName {
     text-align: center;
-    font-size: 120%;
-    font-weight: bold;
+    font-size: 1.1em;
+    font-weight: 700;
+    color: lighten($primary, 15%);
+    margin-bottom: 0.6em;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid rgba($primary, 0.25);
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
   }
 
   .configuration {
-    padding: 0.5em 0;
+    padding: 0.55em 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 
   .configurationTitle {
-    color: lightgray;
-    margin-bottom: 0.1em;
+    color: $panel-text-muted;
+    margin-bottom: 0.25em;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-transform: capitalize;
+    letter-spacing: 0.03em;
   }
 
   .slider {
     display: flex;
+    align-items: center;
+    gap: 0.3em;
 
     input[type=range] {
       flex-grow: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 2px;
+      outline: none;
+
+      &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: $primary;
+        cursor: pointer;
+        box-shadow: 0 0 8px rgba($primary, 0.5);
+        transition: all 0.15s ease;
+
+        &:hover {
+          transform: scale(1.25);
+          box-shadow: 0 0 14px rgba($primary, 0.6);
+        }
+      }
+
+      &::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: $primary;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 8px rgba($primary, 0.5);
+      }
     }
+
     input[type=text] {
-      width: 3em;
+      width: 3.5em;
       text-align: right;
+      font-size: 0.85em;
+      padding: 0.25em 0.35em;
+      border: 1px solid $panel-input-border;
+      border-radius: 0.35em;
+      background: $panel-input-bg;
+      color: $panel-text;
+      font-family: $font-stack;
+      transition: all 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 2px $panel-input-focus;
+        background: rgba(255, 255, 255, 0.1);
+      }
     }
   }
 
   input[type=number] {
-    width: 3em;
+    width: 3.5em;
+    font-size: 0.85em;
+    padding: 0.25em 0.35em;
+    border: 1px solid $panel-input-border;
+    border-radius: 0.35em;
+    background: $panel-input-bg;
+    color: $panel-text;
+    font-family: $font-stack;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px $panel-input-focus;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  input[type=text] {
+    font-size: 0.9em;
+    padding: 0.3em 0.45em;
+    border: 1px solid $panel-input-border;
+    border-radius: 0.35em;
+    background: $panel-input-bg;
+    color: $panel-text;
+    font-family: $font-stack;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px $panel-input-focus;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  input[type=checkbox] {
+    accent-color: $primary;
+    width: 1.1em;
+    height: 1.1em;
+    cursor: pointer;
+  }
+
+  select {
+    font-size: 0.9em;
+    padding: 0.3em 0.45em;
+    border: 1px solid $panel-input-border;
+    border-radius: 0.35em;
+    background: $panel-input-bg;
+    color: $panel-text;
+    font-family: $font-stack;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    option {
+      background: #1a2a3e;
+      color: $panel-text;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px $panel-input-focus;
+    }
+  }
+
+  button {
+    background: linear-gradient(135deg, $primary, darken($primary, 8%));
+    color: $white;
+    border: none;
+    padding: 0.4em 0.8em;
+    border-radius: 0.4em;
+    cursor: pointer;
+    font-family: $font-stack;
+    font-weight: 500;
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba($primary, 0.2);
+
+    &:hover {
+      background: linear-gradient(135deg, lighten($primary, 5%), $primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba($primary, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .color {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+
+    input[type=color] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: 1px solid $panel-input-border;
+      border-radius: 0.35em;
+      width: 2.5em;
+      height: 2em;
+      padding: 2px;
+      cursor: pointer;
+      background: $panel-input-bg;
+
+      &::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      &::-webkit-color-swatch {
+        border: none;
+        border-radius: 0.2em;
+      }
+    }
   }
 
   .tooltip .tooltiptext {
-    max-width: 10em;
+    max-width: 12em;
+    font-size: 0.85em;
+    background: #1a2a3e;
+    color: $panel-text;
+    padding: 0.45em 0.7em;
+    border-radius: 0.35em;
+    border: 1px solid $panel-border;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 }
 
+// --- Dialogs: selectImage, selectModel, editAnimationKeys ---
 .dialogWindow {
-  .selectImage, .selectModel, .editAnimationKeys {
+
+  .selectImage,
+  .selectModel,
+  .editAnimationKeys {
     max-height: 60vh;
     display: flex;
     flex-direction: column;
 
-    .search {
+    .filter {
       display: flex;
-      margin-top: 0.5em;
+      align-items: center;
+      gap: 0.5em;
+      font-weight: 500;
+      color: $text-muted;
 
-      input {
-        font-size: 100%;
-        width: 100%;
-        background: none;
-        color: white;
-        border: solid 1px white;
-        padding: 0 0.2em;
-        margin-left: 0.5em;
+      select {
+        flex-grow: 1;
+        font-size: 0.95em;
+        padding: 0.4em 0.55em;
+        border: 1px solid rgba($border, 0.5);
+        border-radius: 0.4em;
+        background: $white;
+        color: $text-main;
+        font-family: $font-stack;
+        transition: border-color 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: $primary;
+          box-shadow: 0 0 0 2px rgba($primary, 0.15);
+        }
       }
     }
 
-    .images, .items {
-      border: solid 1px white;
+    .search {
+      display: flex;
+      align-items: center;
       margin-top: 0.5em;
-      padding: 0.5em;
+      gap: 0.5em;
+      font-weight: 500;
+      color: $text-muted;
+
+      input {
+        font-size: 0.95em;
+        width: 100%;
+        background: $white;
+        color: $text-main;
+        border: 1px solid rgba($border, 0.5);
+        padding: 0.4em 0.55em;
+        border-radius: 0.4em;
+        font-family: $font-stack;
+        transition: border-color 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: $primary;
+          box-shadow: 0 0 0 2px rgba($primary, 0.15);
+        }
+      }
+    }
+
+    .images,
+    .items {
+      border: 1px solid rgba($border, 0.3);
+      margin-top: 0.5em;
+      padding: 0.4em;
       overflow-y: auto;
-      max-height: 20em;
+      max-height: 22em;
+      border-radius: 0.5em;
+      background: rgba($bg-light, 0.5);
+
+      // Custom scrollbar
+      &::-webkit-scrollbar {
+        width: 5px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba($primary, 0.3);
+        border-radius: 3px;
+      }
 
       .row {
         display: flex;
+        align-items: center;
+        border-radius: 0.4em;
+        margin-bottom: 2px;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: rgba($primary, 0.08);
+          transform: translateX(2px);
+        }
 
         .description {
-          border: solid 1px white;
           flex-grow: 1;
-          padding: 0 0.5em;
+          padding: 0.35em 0.65em;
+          border: none;
+          border-right: 1px solid rgba($border, 0.2);
+
+          p {
+            margin: 0.1em 0;
+            font-size: 0.9em;
+          }
+
+          .bold {
+            font-weight: 600;
+            color: $text-main;
+          }
         }
 
         .select {
-          border: solid 1px white;
-          padding: 0.5em;
+          border: none;
+          padding: 0.4em 0.65em;
+
+          button {
+            background: linear-gradient(135deg, $primary, darken($primary, 8%));
+            color: $white;
+            border: none;
+            padding: 0.35em 0.9em;
+            border-radius: 0.35em;
+            cursor: pointer;
+            font-family: $font-stack;
+            font-weight: 500;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba($primary, 0.2);
+
+            &:hover {
+              background: linear-gradient(135deg, lighten($primary, 5%), $primary);
+              transform: translateY(-1px);
+              box-shadow: 0 3px 10px rgba($primary, 0.3);
+            }
+          }
         }
       }
 
@@ -189,26 +646,129 @@
     }
 
     table {
-      border: solid 1px white;
+      border: 1px solid rgba($border, 0.3);
+      border-collapse: collapse;
+      border-radius: 0.3em;
+      overflow: hidden;
+      margin-top: 0.5em;
+      width: 100%;
 
       th {
-        border: solid 1px white;
+        border: 1px solid rgba($border, 0.3);
+        background: rgba($primary, 0.08);
+        font-weight: 600;
+        font-size: 0.85em;
+        padding: 0.35em;
+        color: $primary-dark;
       }
 
-      th, td {
+      th,
+      td {
         width: 3em;
         text-align: center;
+        padding: 0.25em;
 
         input {
           width: 100%;
           font-size: 100%;
           box-sizing: border-box;
+          border: 1px solid rgba($border, 0.3);
+          border-radius: 0.25em;
+          padding: 0.2em;
+          font-family: $font-stack;
+          transition: border-color 0.2s ease;
+
+          &:focus {
+            outline: none;
+            border-color: $primary;
+          }
         }
+      }
+
+      td {
+        border: 1px solid rgba($border, 0.15);
       }
     }
   }
 
   .searchCount {
     margin-right: auto;
+    font-size: 0.85em;
+    color: $text-muted;
+    font-weight: 500;
+  }
+}
+
+// --- Ruler widget ---
+.ruler {
+  @include glass-panel;
+  position: absolute;
+  z-index: 10;
+  font-size: 0.85em;
+  color: $panel-text;
+  min-width: 8em;
+  cursor: move;
+
+  .icon {
+    text-align: center;
+    padding: 0.35em;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 1.2em;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $primary;
+      text-shadow: 0 0 8px rgba($primary, 0.4);
+    }
+  }
+
+  .measurements {
+    padding: 0.4em 0.65em;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+
+      td {
+        padding: 0.15em 0.3em;
+        font-size: 0.9em;
+        color: $panel-text;
+        white-space: nowrap;
+        font-family: $font-stack;
+      }
+    }
+  }
+
+  &.closed .measurements {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+  }
+}
+
+// --- World info overlay ---
+.worldInfo {
+  position: absolute;
+  top: 1em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: $panel-bg;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 0.45em 1.1em;
+  border-radius: 0.6em;
+  color: $panel-text;
+  font-size: 0.9em;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+  border: 1px solid $panel-border;
+  font-family: $font-stack;
+
+  &.hide {
+    display: none;
   }
 }

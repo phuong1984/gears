@@ -456,10 +456,13 @@ function GenConfig(caller, $settingsArea) {
         // Update display
         $currentFile.text('Current: ' + file.name);
 
-        // Update component name in sidebar list
-        let $selectedLi = caller.$componentList.find('li.selected');
-        if ($selectedLi.length > 0) {
-          $selectedLi.text(file.name);
+        // Update component name in sidebar list (works in both configurator and builder)
+        let $sidebarList = caller.$componentList || caller.$objectsList;
+        if ($sidebarList) {
+          let $selectedLi = $sidebarList.find('li.selected');
+          if ($selectedLi.length > 0) {
+            $selectedLi.text(file.name);
+          }
         }
 
         if (opt.reset) {
@@ -543,10 +546,13 @@ function GenConfig(caller, $settingsArea) {
           let newName = e.target.url.split('/').pop();
           $currentFile.text('Current: ' + newName);
 
-          // Update component name in sidebar list
-          let $selectedLi = caller.$componentList.find('li.selected');
-          if ($selectedLi.length > 0) {
-            $selectedLi.text(newName);
+          // Update component name in sidebar list (works in both configurator and builder)
+          let $sidebarList = caller.$componentList || caller.$objectsList;
+          if ($sidebarList) {
+            let $selectedLi = $sidebarList.find('li.selected');
+            if ($selectedLi.length > 0) {
+              $selectedLi.text(newName);
+            }
           }
 
           if (opt.reset) {

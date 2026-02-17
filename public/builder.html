@@ -1,14 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="GearsBot World Builder — Create and customize 3D worlds with objects, models, physics, and animations for your robot simulations.">
 
   <link rel="icon" href="favicon-32.png" sizes="32x32">
   <link rel="icon" href="favicon-128.png" sizes="128x128">
   <link rel="icon" href="favicon-167.png" sizes="167x167">
   <link rel="icon" href="favicon-192.png" sizes="192x192">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/main.css?v=1d6f38da">
   <link rel="stylesheet" href="css/widgets.css?v=101e46c3">
@@ -30,7 +37,7 @@
 
 <body>
   <header>
-    <img class="gearsIcon" src="favicon-32.png">
+    <img class="gearsIcon" src="favicon-32.png" alt="GearsBot Icon">
     <div>GearsBot World Builder</div>
   </header>
 
@@ -64,24 +71,7 @@
         <div class="settingsWindow">
           <div class="settingsArea"></div>
         </div>
-        <div class="ruler closed" style="top: 1em; left: 10em;">
-          <div class="icon">
-            <span class="icon-ruler"></span>
-          </div>
-          <div class="measurements">
-            <table>
-              <tr>
-                <td class="x">X:</td>
-                <td class="y">Y:</td>
-                <td class="alt">Alt:</td>
-              </tr>
-              <tr>
-                <td class="dist" colspan="2">Distance:</td>
-                <td class="angle">Angle:</td>
-              </tr>
-            </table>
-          </div>
-        </div>
+
       </div>
     </div>
   </main>
@@ -108,4 +98,5 @@
   <script src="js/builder.js?v=0aba6272"></script>
 
 </body>
+
 </html>
