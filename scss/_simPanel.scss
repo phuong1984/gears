@@ -87,20 +87,7 @@
   border-bottom: none;
 }
 
-// --- White translucent widget panel mixin (open state) ---
-@mixin sim-widget-panel-open {
-  position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  overflow: hidden;
-}
+// (sim-widget-panel-open mixin removed - no longer used)
 
 // --- Camera Selector ---
 // Open state: horizontal pill bar with dark teal theme
@@ -285,7 +272,9 @@
 .joystick {
   position: absolute;
   color: white;
-  background: rgba(0, 40, 55, 0.92); // Dark teal background
+  background: rgba(0, 40, 55, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 8px;
   padding: 8px;
   padding-bottom: 10px;
@@ -660,7 +649,9 @@
 .sensorReadings {
   position: absolute;
   color: white; // White labels
-  background: rgba(0, 40, 55, 0.92); // Dark teal
+  background: rgba(0, 40, 55, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 8px;
   padding: 10px;
   top: 62px; // Below Camera+Sensors row (10px + 44px + 8px gap)
