@@ -23,9 +23,48 @@ var configurator = new function () {
       bodyFriction: 0,
       casterFriction: 0,
       casterOffsetZ: 0,
-      color: '#F09C0D'
+      color: '#F09C0D',
+      bodyModelURL: '',
+      bodyModelScale: 1,
+      bodyModelRotation: [0, 0, 0],
+      bodyModelPosition: [0, 0, 0],
+      _bodyModelFileName: '',
     },
     optionsConfigurations: [
+      {
+        option: 'bodyModelURL',
+        type: 'selectModelFile',
+        reset: true,
+        help: 'Select a 3D model file (.glb or .gltf) to replace the default box body. Leave empty to use default box.'
+      },
+      {
+        option: 'bodyModelScale',
+        type: 'slider',
+        min: '0.1',
+        max: '50',
+        step: '0.1',
+        reset: true,
+        help: 'Scale of the 3D body model'
+      },
+      {
+        option: 'bodyModelRotation',
+        type: 'vectors',
+        min: '-180',
+        max: '180',
+        step: '5',
+        deg2rad: true,
+        reset: true,
+        help: 'Rotation of the 3D body model (X, Y, Z in degrees)'
+      },
+      {
+        option: 'bodyModelPosition',
+        type: 'vectors',
+        min: '-20',
+        max: '20',
+        step: '0.5',
+        reset: true,
+        help: 'Position offset of the 3D body model (X, Y, Z)'
+      },
       {
         option: 'bodyHeight',
         type: 'slider',
@@ -1275,6 +1314,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1329,6 +1369,12 @@ var configurator = new function () {
           max: '1',
           step: '0.05',
           help: 'Bounciness of the model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
         },
       ]
     },
@@ -1346,6 +1392,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1400,6 +1447,12 @@ var configurator = new function () {
           max: '1',
           step: '0.05',
           help: 'Bounciness of the model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
         },
       ]
     },
@@ -1417,6 +1470,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1471,6 +1525,12 @@ var configurator = new function () {
           max: '1',
           step: '0.05',
           help: 'Bounciness of the model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
         },
       ]
     },
@@ -1488,6 +1548,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1542,6 +1603,12 @@ var configurator = new function () {
           max: '1',
           step: '0.05',
           help: 'Bounciness of the model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
         },
       ]
     },
@@ -1559,6 +1626,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1613,6 +1681,12 @@ var configurator = new function () {
           max: '1',
           step: '0.05',
           help: 'Bounciness of the model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
         },
       ]
     },
@@ -1630,6 +1704,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1685,6 +1760,12 @@ var configurator = new function () {
           step: '0.05',
           help: 'Bounciness of the model'
         },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
+        },
       ]
     },
     {
@@ -1701,6 +1782,7 @@ var configurator = new function () {
           restitution: 0.4,
           friction: 0.1,
           modelAnimation: 'None',
+          modelColor: '#A3CF0D',
         }
       },
       optionsConfigurations: [
@@ -1755,6 +1837,12 @@ var configurator = new function () {
           max: '1',
           step: '0.05',
           help: 'Bounciness of the model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model',
+          reset: true
         },
       ]
     },
@@ -2200,7 +2288,7 @@ var configurator = new function () {
     let $selected = self.getSelectedComponent();
     let COMPATIBLE_TYPES = ['ArmActuator', 'SwivelActuator', 'LinearActuator', 'WheelActuator', 'WheelPassive'];
     if (
-      $selected.text() != 'Body'
+      typeof $selected[0].component.bodyMass == 'undefined'
       && COMPATIBLE_TYPES.indexOf($selected[0].component.type) == -1
     ) {
       toastMsg('Components can only be added to Body and Actuators.');
@@ -2487,11 +2575,15 @@ var configurator = new function () {
       '<ul>' + sensors + '</ul>';
 
     robot.options.thumbnail = '';
+    let jsonStr = JSON.stringify(robot.options, null, 2);
+    let blob = new Blob([jsonStr], { type: 'application/json' });
+    let downloadURL = URL.createObjectURL(blob);
     var hiddenElement = document.createElement('a');
-    hiddenElement.href = 'data:application/json;base64,' + btoa(JSON.stringify(robot.options, null, 2));
+    hiddenElement.href = downloadURL;
     hiddenElement.target = '_blank';
     hiddenElement.download = robot.options.name + '.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
+    setTimeout(function () { URL.revokeObjectURL(downloadURL); }, 1000);
   };
 
   // Load robot from json file

@@ -104,11 +104,15 @@ var main = new function () {
 
   // Save robot to json file
   this.saveRobot = function () {
+    let jsonStr = JSON.stringify(robot.options, null, 2);
+    let blob = new Blob([jsonStr], { type: 'application/json' });
+    let downloadURL = URL.createObjectURL(blob);
     var hiddenElement = document.createElement('a');
-    hiddenElement.href = 'data:application/json;charset=UTF-8,' + encodeURIComponent(JSON.stringify(robot.options, null, 2));
+    hiddenElement.href = downloadURL;
     hiddenElement.target = '_blank';
     hiddenElement.download = robot.options.name + 'Robot.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
+    setTimeout(function () { URL.revokeObjectURL(downloadURL); }, 1000);
   };
 
   // Load robot

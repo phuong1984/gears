@@ -143,6 +143,72 @@ function Robot() {
       body.rotate(BABYLON.Axis.X, startRot.x, BABYLON.Space.LOCAL);
       body.rotate(BABYLON.Axis.Z, startRot.z, BABYLON.Space.LOCAL);
 
+      // Load 3D model for body if specified
+      if (options.bodyModelURL && options.bodyModelURL !== '') {
+        try {
+          // Determine plugin extension for blob/data URLs (they have no file extension)
+          let pluginExtension = null;
+          if (options.bodyModelURL.startsWith('blob:') || options.bodyModelURL.startsWith('data:')) {
+            let fileName = options._bodyModelFileName || '';
+            if (fileName.toLowerCase().endsWith('.gltf')) {
+              pluginExtension = '.gltf';
+            } else {
+              pluginExtension = '.glb';
+            }
+          }
+
+          let modelResults = await BABYLON.SceneLoader.ImportMeshAsync(
+            null, '', options.bodyModelURL, scene, null, pluginExtension
+          );
+          let modelMeshes = modelResults.meshes;
+
+          // Make body box invisible (used for physics only)
+          body.visibility = 0;
+
+          // Scale the model
+          let modelScale = options.bodyModelScale || 1;
+          modelMeshes[0].scaling.x = modelScale;
+          modelMeshes[0].scaling.y = modelScale;
+          modelMeshes[0].scaling.z = -modelScale;
+
+          // Apply model rotation
+          // glTF models set rotationQuaternion by default, which overrides .rotation
+          // Must clear it to use Euler angles from sliders
+          modelMeshes[0].rotationQuaternion = null;
+          if (options.bodyModelRotation) {
+            modelMeshes[0].rotation.x = options.bodyModelRotation[0];
+            modelMeshes[0].rotation.y = options.bodyModelRotation[1];
+            modelMeshes[0].rotation.z = options.bodyModelRotation[2];
+          }
+          // Apply model position offset
+          if (options.bodyModelPosition) {
+            modelMeshes[0].position.x = options.bodyModelPosition[0];
+            modelMeshes[0].position.y = options.bodyModelPosition[1];
+            modelMeshes[0].position.z = options.bodyModelPosition[2];
+          }
+
+          // Parent model to body so it moves with physics
+          modelMeshes[0].parent = body;
+
+          // Make imported meshes unpickable and apply body color
+          for (let i = 0; i < modelMeshes.length; i++) {
+            modelMeshes[i].isPickable = false;
+            // Apply body color to submeshes that have a material
+            if (modelMeshes[i].material) {
+              modelMeshes[i].material = bodyMat;
+            }
+          }
+
+          // Add shadow for model
+          scene.shadowGenerator.addShadowCaster(modelMeshes[0]);
+
+          self.bodyModel = modelMeshes;
+        } catch (err) {
+          console.log('Failed to load body model: ' + options.bodyModelURL + '. Using default box.');
+          body.visibility = 1;
+        }
+      }
+
       // Add label
       self.addLabel();
 

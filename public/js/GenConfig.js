@@ -421,7 +421,7 @@ function GenConfig(caller, $settingsArea) {
     let currentVal = currentOptions[opt.option] || '';
     let displayName = '';
     if (currentVal) {
-      if (currentVal.startsWith('blob:')) {
+      if (currentVal.startsWith('blob:') || currentVal.startsWith('data:')) {
         displayName = currentOptions._modelFileName || 'Uploaded file';
       } else {
         displayName = currentVal.split('/').pop();
@@ -445,29 +445,28 @@ function GenConfig(caller, $settingsArea) {
       let file = e.target.files[0];
       if (!file) return;
 
-      // Revoke old blob URL if exists
-      if (currentOptions[opt.option] && currentOptions[opt.option].startsWith('blob:')) {
-        URL.revokeObjectURL(currentOptions[opt.option]);
-      }
+      // Read the file as a data URL (base64) so it persists in saved JSON
+      let reader = new FileReader();
+      reader.onload = function () {
+        let dataURL = reader.result;
+        caller.saveHistory();
+        currentOptions[opt.option] = dataURL;
+        currentOptions._modelFileName = file.name;
 
-      // Create blob URL from the selected file
-      let blobURL = URL.createObjectURL(file);
-      caller.saveHistory();
-      currentOptions[opt.option] = blobURL;
-      currentOptions._modelFileName = file.name;
+        // Update display
+        $currentFile.text('Current: ' + file.name);
 
-      // Update display
-      $currentFile.text('Current: ' + file.name);
+        // Update component name in sidebar list
+        let $selectedLi = caller.$componentList.find('li.selected');
+        if ($selectedLi.length > 0) {
+          $selectedLi.text(file.name);
+        }
 
-      // Update component name in sidebar list
-      let $selectedLi = caller.$componentList.find('li.selected');
-      if ($selectedLi.length > 0) {
-        $selectedLi.text(file.name);
-      }
-
-      if (opt.reset) {
-        caller.resetScene(false);
-      }
+        if (opt.reset) {
+          caller.resetScene(false);
+        }
+      };
+      reader.readAsDataURL(file);
     });
 
     // Built-in models button (reuses selectModel dialog logic)

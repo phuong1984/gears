@@ -3627,9 +3627,9 @@ function ModelBlock(scene, parent, pos, rot, options) {
     // Load 3D model
     let results;
     try {
-      // Determine plugin extension for blob URLs (they have no file extension)
+      // Determine plugin extension for blob/data URLs (they have no file extension)
       let pluginExtension = null;
-      if (self.options.modelURL.startsWith('blob:')) {
+      if (self.options.modelURL.startsWith('blob:') || self.options.modelURL.startsWith('data:')) {
         // Use stored filename to determine extension, default to .glb
         let fileName = self.options._modelFileName || '';
         if (fileName.toLowerCase().endsWith('.gltf')) {
@@ -3675,7 +3675,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       meshes[i].isPickable = false;
     }
 
-    // Calculate overall bounding box across all submeshes
+    // Calculate overall bounding box across all submeshes (use local bounds)
     let min = null;
     let max = null;
     for (let i = 1; i < meshes.length; i++) {
@@ -3683,8 +3683,8 @@ function ModelBlock(scene, parent, pos, rot, options) {
       let meshBounds = meshes[i].getBoundingInfo().boundingBox;
 
       if (meshBounds.extendSize.x != 0 && meshBounds.extendSize.y != 0 && meshBounds.extendSize.z != 0) {
-        let meshMin = meshBounds.minimumWorld;
-        let meshMax = meshBounds.maximumWorld;
+        let meshMin = meshBounds.minimum;
+        let meshMax = meshBounds.maximum;
 
         if (min === null) {
           min = meshMin.clone();
@@ -3735,6 +3735,8 @@ function ModelBlock(scene, parent, pos, rot, options) {
     body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
 
     // Scale and attach model visual to the bounding box
+    // glTF models set rotationQuaternion by default, must clear for Euler rotation
+    meshes[0].rotationQuaternion = null;
     meshes[0].scaling.x = self.options.modelScale;
     meshes[0].scaling.y = self.options.modelScale;
     meshes[0].scaling.z = -self.options.modelScale;
@@ -3748,6 +3750,22 @@ function ModelBlock(scene, parent, pos, rot, options) {
     // Parent the model root to the bounding box so it moves together
     meshes[0].parent = body;
     meshes[0].visibility = 0; // Root node invisible, submeshes remain visible
+
+    // Apply model color to submeshes
+    if (self.options.modelColor && self.options.modelColor !== '') {
+      // gen.color stores as #RRGGBBaa, truncate to #RRGGBB for Color3
+      let colorHex = self.options.modelColor;
+      if (colorHex[0] !== '#') colorHex = '#' + colorHex;
+      colorHex = colorHex.substring(0, 7);
+      let color3 = BABYLON.Color3.FromHexString(colorHex);
+      for (let i = 1; i < meshes.length; i++) {
+        if (meshes[i].material) {
+          let newMat = new BABYLON.StandardMaterial('modelColor_' + i, scene);
+          newMat.diffuseColor = color3;
+          meshes[i].material = newMat;
+        }
+      }
+    }
 
     // Add shadow
     scene.shadowGenerator.addShadowCaster(meshes[0]);
@@ -3770,6 +3788,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       restitution: 0.4,
       friction: 0.1,
       color: 'A3CF0D',
+      modelColor: '',
       modelAnimation: 'None',
       _modelFileName: '',
     };
