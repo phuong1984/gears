@@ -5,82 +5,130 @@
   height: 100%;
 }
 
-.runSim {
+// --- Shared mixin for toolbar icon buttons (closed state / standalone) ---
+@mixin sim-icon-btn {
   position: absolute;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 2em;
-  font-size: 200%;
+  font-size: 24px; // Icon size inside circle
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+
+  &:hover {
+    background: rgba(9, 195, 219, 0.9);
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Toolbar buttons: stacked VERTICALLY on the left
+// Button=44px, spacing=50px (44+6 gap)
+.runSim {
+  @include sim-icon-btn;
+  top: 10px;
+  left: 10px;
 }
 
 .startSim {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 1.5em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+  @include sim-icon-btn;
+  top: 10px;
+  left: 10px;
 }
 
 .stopSim {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 2.5em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+  @include sim-icon-btn;
+  top: 10px;
+  left: 10px;
 }
 
 .world {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 4em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
+  @include sim-icon-btn;
+  top: 60px;
+  left: 10px;
 }
 
 .reset {
+  @include sim-icon-btn;
+  top: 110px;
+  left: 10px;
+}
+
+// Override tooltip styles for sim toolbar items
+// .tooltip sets position: relative + display: inline-block which
+// breaks absolute positioning on toolbar buttons
+.runSim.tooltip,
+.startSim.tooltip,
+.stopSim.tooltip,
+.world.tooltip,
+.reset.tooltip,
+.sensors.tooltip,
+.cameraSelector.tooltip,
+.cameraSelectorShort.tooltip,
+.ruler.tooltip,
+.joystick.tooltip,
+.hubButtons.tooltip {
   position: absolute;
-  color: white;
+  display: flex;
+  border-bottom: none;
+}
+
+// --- White translucent widget panel mixin (open state) ---
+@mixin sim-widget-panel-open {
+  position: absolute;
+  color: black;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0.5em;
+  padding: 0.2em;
   opacity: 0.8;
-  top: 2em;
-  left: 6em;
   font-size: 200%;
   cursor: pointer;
   user-select: none;
+  display: flex;
+  overflow: hidden;
 }
 
+// --- Camera Selector ---
+// Open state: horizontal pill bar with dark teal theme
 .cameraSelector,
 .cameraSelectorShort {
   position: absolute;
   overflow: hidden;
-  color: #444;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
+  color: #00e5ff; // Cyan icons
+  background: rgba(0, 40, 55, 0.92); // Dark teal background
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 22px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  opacity: 0.8;
-  top: 1em;
-  right: 1.5em;
-  height: 6.2em;
-  font-size: 300%;
-  transition: 0.3s height, 0.3s color, 0.3s background-color;
+  flex-direction: row;
+  align-items: center;
+  top: 10px;
+  right: 62px;
+  font-size: 22px;
+  transition: 0.3s all;
   cursor: pointer;
   user-select: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  padding: 4px 8px;
+  gap: 2px;
+  z-index: 2;
 
   >div {
-    margin: 0.2em;
+    margin: 2px;
   }
 
   .hide {
@@ -88,243 +136,303 @@
   }
 }
 
-.cameraSelectorShort {
-  height: 3.5em;
-}
-
+// Camera closed: circle icon, positioned to left of Sensors
 .cameraSelector.closed,
 .cameraSelectorShort.closed {
-  color: white;
-  background: none;
-  height: 1.3em !important;
+  @include sim-icon-btn;
+  top: 10px;
+  right: 62px;
+  opacity: 1;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  font-size: 24px; // Bigger camera icon inside circle
+
+  .cameraOptions {
+    display: none;
+  }
+
+  .camera {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
 }
 
+// --- Sensors (same row as Camera, top-right corner) ---
+.sensors {
+  @include sim-icon-btn;
+  top: 10px;
+  right: 10px;
+}
+
+// --- Ruler ---
+// Open state: dark teal info panel
 .ruler {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 4em;
-  left: 2em;
-  font-size: 200%;
+  color: white;
+  background: rgba(0, 40, 55, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
   cursor: pointer;
   user-select: none;
   display: flex;
+  top: 160px;
+  left: 10px;
   align-items: center;
-  width: 13em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s color, 0.5s background-color;
+  width: auto;
+  max-width: 360px;
+  flex-direction: row;
+  transition: 0.3s all;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 
   .icon {
-    margin-right: 0.5em;
-    font-size: 120%;
+    margin-right: 8px;
+    font-size: 22px;
+    color: #00e5ff; // Cyan icon
+    flex-shrink: 0;
+  }
+
+  // Label/value color separation
+  .label {
+    color: white;
+  }
+
+  .value {
+    color: #00e5ff;
+  }
+
+  // Text content in a column next to the icon
+  .measurements {
+    font-size: 13px;
+    white-space: nowrap;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    line-height: 1.5;
+    color: white; // Default white for labels
+
+    .row {
+      display: flex;
+      gap: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 2px 6px;
+      text-align: left;
+      color: white; // Labels white
+
+      .value {
+        color: #00e5ff; // Values cyan
+      }
+    }
   }
 
   .row1,
   .row2 {
-    font-size: 50%;
+    font-size: 13px;
     white-space: nowrap;
-  }
-
-  .measurements {
-    font-size: 50%;
-    white-space: nowrap;
-    flex-grow: 1;
-
-    table {
-      width: 100%;
-    }
-
-    td {
-      width: 33%;
-    }
+    color: white; // Labels white by default, .value overrides to cyan
   }
 }
 
+// Ruler closed: circle icon (fixed px size)
 .ruler.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
+  @include sim-icon-btn;
+  top: 160px;
+  left: 10px;
+  opacity: 1;
+  padding: 0 !important;
+  overflow: visible !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  min-width: 0 !important;
+
+  .icon {
+    margin: 0;
+    color: white;
+    font-size: 24px; // Bigger icon inside circle
+  }
+
+  .measurements,
+  .row1,
+  .row2,
+  .label,
+  .value {
+    display: none;
+  }
 }
 
+// --- Joystick / Manual Control ---
+// Open state: dark teal panel with D-pad circle control
 .joystick {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 6em;
-  left: 2em;
-  font-size: 200%;
+  color: white;
+  background: rgba(0, 40, 55, 0.92); // Dark teal background
+  border-radius: 8px;
+  padding: 8px;
+  padding-bottom: 10px;
+  font-size: 14px;
   cursor: pointer;
   user-select: none;
   display: flex;
-  align-items: flex-start;
-  width: 7em;
-  height: 4.8em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s height, 0.5s color, 0.5s background-color;
+  flex-direction: column;
+  align-items: center;
+  top: 210px;
+  left: 10px;
+  width: 150px;
+  height: auto;
+  transition: 0.3s all;
   outline: none;
+  overflow: visible;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 
   .icon {
-    margin-right: 0.5em;
-    font-size: 120%;
+    margin: 0 auto 4px auto;
+    font-size: 24px; // Bigger person icon
+    color: #00e5ff; // Cyan icon
+    align-self: center;
   }
-
-  // .row1, .row2 {
-  //   font-size: 50%;
-  //   white-space: nowrap;
-  // }
 
   .virtualJoystick {
     position: relative;
-    font-size: 150px;
-    height: 150px;
+    font-size: 110px;
+    height: 110px;
+    width: 110px;
+    align-self: center;
 
     .icon-virtualJoystickIndicator {
       position: absolute;
-      color: #ddd;
+      color: #00e5ff; // Cyan indicator
       top: 0;
       left: 0;
+      z-index: 3;
     }
 
+    // Background circle with cyan border
     .icon-virtualJoystick {
       position: absolute;
-      color: #bbb;
+      color: rgba(255, 255, 255, 0.1);
       top: 0;
       left: 0;
+      border: 2.5px solid #00e5ff;
+      border-radius: 50%;
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
     }
   }
 
   .keyboard {
-    position: absolute;
-    top: 4em;
-    left: 0.5em;
+    position: relative;
+    margin-top: 6px;
+    color: #00e5ff;
+    font-size: 22px; // Bigger keyboard icon
+    width: 100%;
+    text-align: center;
   }
 }
 
-.joystick.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
-  height: 1.3em;
+// Directional arrows inside joystick circle
+.joystick .virtualJoystick::after {
+  content: "▲";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00e5ff; // Cyan arrows
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
 }
 
-.hubButtons {
+.joystick .virtualJoystick::before {
+  content: "▼";
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 8em;
-  left: 2em;
-  font-size: 200%;
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: flex-start;
-  width: 6.5em;
-  height: 4.8em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s height, 0.5s color, 0.5s background-color;
-  outline: none;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00e5ff; // Cyan arrows
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.joystick .virtualJoystick .icon-virtualJoystick::before {
+  content: "◄";
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  color: #00e5ff; // Cyan arrows
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.joystick .virtualJoystick .icon-virtualJoystick::after {
+  content: "►";
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  color: #00e5ff; // Cyan arrows
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+// Joystick closed: circle icon (fixed px size)
+.joystick.closed {
+  @include sim-icon-btn;
+  top: 210px;
+  left: 10px;
+  opacity: 1;
+  padding: 0 !important;
+  overflow: visible !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  min-width: 0 !important;
 
   .icon {
-    margin-right: 0.5em;
-    font-size: 120%;
+    color: white; // White icon when closed (uniform with other buttons)
+    font-size: 24px; // Bigger icon inside circle
   }
 
-  .controls {
-    font-size: 135%;
-    color: #bbb;
-
-    .icon-buttonsBackspace,
-    .icon-buttonsUp,
-    .icon-buttonsDown,
-    .icon-buttonsLeft,
-    .icon-buttonsRight,
-    .icon-buttonsEnter {
-      position: absolute;
-    }
-
-    .pressed {
-      color: #888;
-    }
-
-    .icon-buttonsBackspace {
-      left: 1.6em;
-      top: 0.2em;
-    }
-
-    .icon-buttonsUp {
-      left: 2.7em;
-      top: 0.28em;
-    }
-
-    .icon-buttonsDown {
-      left: 2.7em;
-      top: 2.5em;
-    }
-
-    .icon-buttonsLeft {
-      top: 1.4em;
-      left: 1.6em;
-    }
-
-    .icon-buttonsRight {
-      top: 1.4em;
-      left: 3.8em;
-    }
-
-    .icon-buttonsEnter {
-      top: 1.4em;
-      left: 2.7em;
-    }
+  .virtualJoystick,
+  .keyboard {
+    display: none;
   }
-
-  // .row1, .row2 {
-  //   font-size: 50%;
-  //   white-space: nowrap;
-  // }
-
-  // .virtualJoystick {
-  //   position: relative;
-  //   font-size: 150px;
-  //   height: 150px;
-
-  //   .icon-virtualJoystickIndicator {
-  //     position: absolute;
-  //     color: #ddd;
-  //     top: 0;
-  //     left: 0;
-  //   }
-
-  //   .icon-virtualJoystick {
-  //     position: absolute;
-  //     color: #bbb;
-  //     top: 0;
-  //     left: 0;
-  //   }
-  // }
-
-  // .keyboard {
-  //   position: absolute;
-  //   top: 4em;
-  //   left: 0.5em;
-  // }
 }
 
+// --- Hub Buttons (Brick Button) - Hidden ---
+.hubButtons,
 .hubButtons.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
-  height: 1.3em;
+  display: none !important;
 }
 
+
+// --- Console ---
 .console {
   position: absolute;
   bottom: 0;
@@ -463,24 +571,29 @@
   }
 }
 
+// --- Modified Tooltip Style for Simulator (Dark & Compact) ---
 .tooltip {
   position: relative;
   display: inline-block;
-  border-bottom: 1px dotted white;
+  // border-bottom: 1px dotted white; // Remove dotted line for icons
 }
 
 .tooltip .tooltiptext {
-  background-color: white;
-  color: black;
-  border-radius: 6px;
-  padding: 0.2em 0.5em;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 4px;
+  padding: 4px 10px;
   position: absolute;
-  z-index: 1;
+  z-index: 100;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s;
-  max-width: 18em;
+  transition: opacity 0.2s;
   width: max-content;
+  max-width: 20em;
+  font-size: 13px; // Fixed readable size
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tooltip .tooltiptext::after {
@@ -492,7 +605,7 @@
 
 .tooltip.bottom {
   .tooltiptext {
-    top: 125%;
+    top: 130%;
     left: 50%;
     transform: translateX(-50%);
   }
@@ -501,37 +614,37 @@
     margin-left: -5px;
     bottom: 100%;
     left: 50%;
-    border-color: transparent transparent white transparent;
+    border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent; // Dark arrow
   }
 }
 
 .tooltip.right {
   .tooltiptext {
     top: 50%;
-    left: 100%;
-    transform: translate(0.5em, -50%);
+    left: 120%;
+    transform: translate(0, -50%);
   }
 
   .tooltiptext::after {
     margin-top: -5px;
     right: 100%;
     top: 50%;
-    border-color: transparent white transparent transparent;
+    border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent; // Dark arrow
   }
 }
 
 .tooltip.left {
   .tooltiptext {
     top: 50%;
-    right: 100%;
-    transform: translate(-0.5em, -50%);
+    right: 120%;
+    transform: translate(0, -50%);
   }
 
   .tooltiptext::after {
     margin-top: -5px;
     left: 100%;
     top: 50%;
-    border-color: transparent transparent transparent white;
+    border-color: transparent transparent transparent rgba(0, 0, 0, 0.9); // Dark arrow
   }
 }
 
@@ -541,37 +654,35 @@
   opacity: 1;
 }
 
-.sensors {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 1.2em;
-  right: 3.5em;
-  font-size: 300%;
-  cursor: pointer;
-  user-select: none;
-}
+// Sensors button is now defined above (same row as Camera, top-right)
 
+// --- Sensor Readings Panel (dark teal theme) ---
 .sensorReadings {
   position: absolute;
-  color: black;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.5em;
-  top: 9em;
-  right: 4em;
-  font-size: 100%;
-  width: 14em;
-  max-height: 70%;
+  color: white; // White labels
+  background: rgba(0, 40, 55, 0.92); // Dark teal
+  border-radius: 8px;
+  padding: 10px;
+  top: 62px; // Below Camera+Sensors row (10px + 44px + 8px gap)
+  right: 10px;
+  font-size: 13px;
+  width: 220px;
+  max-height: calc(100% - 80px); // Extend to near bottom of page
   overflow-y: auto;
   opacity: 1;
   transition: 0.5s opacity, 0.5s max-height, 0.5s padding;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 
   .sensorReading {
-    margin-bottom: 0.5em;
+    margin-bottom: 8px;
 
     .sensorType {
       text-align: center;
+      color: #00e5ff; // Cyan group name
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
     }
 
     table.sensorValues {
@@ -579,13 +690,17 @@
       border-collapse: collapse;
 
       td {
-        border: solid 2px #bbbbbb;
-        color: darkblue;
+        border: solid 1px rgba(0, 228, 255, 0.2); // Subtle cyan border
+        color: white; // White labels
+        padding: 3px 6px;
+        font-size: 12px;
       }
 
       td.sensorValue {
         text-align: right;
-        min-width: 2em;
+        min-width: 3em;
+        color: #00e5ff; // Cyan values
+        font-weight: 500;
       }
     }
   }

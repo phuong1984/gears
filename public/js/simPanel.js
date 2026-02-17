@@ -433,11 +433,11 @@ var simPanel = new function () {
     }
     angle = Math.round(angle / Math.PI * 180 * 10) / 10;
 
-    self.$ruler.find('.x').text('X: ' + x + ' cm');
-    self.$ruler.find('.y').text('Y: ' + z + ' cm');
-    self.$ruler.find('.alt').text(i18n.get('#sim-alt#') + ': ' + y + ' cm');
-    self.$ruler.find('.dist').text(i18n.get('#sim-distance#') + ': ' + dist + ' cm');
-    self.$ruler.find('.angle').text(i18n.get('#sim-angle#') + ': ' + angle + '°');
+    self.$ruler.find('.x').html('<span class="label">X: </span><span class="value">' + x + ' cm</span>');
+    self.$ruler.find('.y').html('<span class="label">Y: </span><span class="value">' + z + ' cm</span>');
+    self.$ruler.find('.alt').html('<span class="label">' + i18n.get('#sim-alt#') + ': </span><span class="value">' + y + ' cm</span>');
+    self.$ruler.find('.dist').html('<span class="label">' + i18n.get('#sim-distance#') + ': </span><span class="value">' + dist + ' cm</span>');
+    self.$ruler.find('.angle').html('<span class="label">' + i18n.get('#sim-angle#') + ': </span><span class="value">' + angle + '°</span>');
   };
 
   // Record ruler measurements

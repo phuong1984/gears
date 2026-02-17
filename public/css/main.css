@@ -266,265 +266,580 @@ ul.menuDropDownRightAlign {
 .runSim {
   position: absolute;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 2em;
-  font-size: 200%;
+  font-size: 24px;
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.runSim:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.runSim:active {
+  transform: scale(0.95);
+}
+.runSim {
+  top: 10px;
+  left: 10px;
 }
 
 .startSim {
   position: absolute;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 1.5em;
-  font-size: 200%;
+  font-size: 24px;
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.startSim:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.startSim:active {
+  transform: scale(0.95);
+}
+.startSim {
+  top: 10px;
+  left: 10px;
 }
 
 .stopSim {
   position: absolute;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 2.5em;
-  font-size: 200%;
+  font-size: 24px;
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.stopSim:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.stopSim:active {
+  transform: scale(0.95);
+}
+.stopSim {
+  top: 10px;
+  left: 10px;
 }
 
 .world {
   position: absolute;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 4em;
-  font-size: 200%;
+  font-size: 24px;
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.world:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.world:active {
+  transform: scale(0.95);
+}
+.world {
+  top: 60px;
+  left: 10px;
 }
 
 .reset {
   position: absolute;
   color: white;
-  opacity: 0.8;
-  top: 2em;
-  left: 6em;
-  font-size: 200%;
+  font-size: 24px;
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.reset:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.reset:active {
+  transform: scale(0.95);
+}
+.reset {
+  top: 110px;
+  left: 10px;
+}
+
+.runSim.tooltip,
+.startSim.tooltip,
+.stopSim.tooltip,
+.world.tooltip,
+.reset.tooltip,
+.sensors.tooltip,
+.cameraSelector.tooltip,
+.cameraSelectorShort.tooltip,
+.ruler.tooltip,
+.joystick.tooltip,
+.hubButtons.tooltip {
+  position: absolute;
+  display: flex;
+  border-bottom: none;
 }
 
 .cameraSelector,
 .cameraSelectorShort {
   position: absolute;
   overflow: hidden;
-  color: #444;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
+  color: #00e5ff;
+  background: rgba(0, 40, 55, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 22px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  opacity: 0.8;
-  top: 1em;
-  right: 1.5em;
-  height: 6.2em;
-  font-size: 300%;
-  transition: 0.3s height, 0.3s color, 0.3s background-color;
+  flex-direction: row;
+  align-items: center;
+  top: 10px;
+  right: 62px;
+  font-size: 22px;
+  transition: 0.3s all;
   cursor: pointer;
   user-select: none;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  padding: 4px 8px;
+  gap: 2px;
+  z-index: 2;
 }
 .cameraSelector > div,
 .cameraSelectorShort > div {
-  margin: 0.2em;
+  margin: 2px;
 }
 .cameraSelector .hide,
 .cameraSelectorShort .hide {
   display: none;
 }
 
-.cameraSelectorShort {
-  height: 3.5em;
-}
-
 .cameraSelector.closed,
 .cameraSelectorShort.closed {
+  position: absolute;
   color: white;
-  background: none;
-  height: 1.3em !important;
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.cameraSelector.closed:hover,
+.cameraSelectorShort.closed:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.cameraSelector.closed:active,
+.cameraSelectorShort.closed:active {
+  transform: scale(0.95);
+}
+.cameraSelector.closed,
+.cameraSelectorShort.closed {
+  top: 10px;
+  right: 62px;
+  opacity: 1;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  font-size: 24px;
+}
+.cameraSelector.closed .cameraOptions,
+.cameraSelectorShort.closed .cameraOptions {
+  display: none;
+}
+.cameraSelector.closed .camera,
+.cameraSelectorShort.closed .camera {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.sensors {
+  position: absolute;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.sensors:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.sensors:active {
+  transform: scale(0.95);
+}
+.sensors {
+  top: 10px;
+  right: 10px;
 }
 
 .ruler {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 4em;
-  left: 2em;
-  font-size: 200%;
+  color: white;
+  background: rgba(0, 40, 55, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
   cursor: pointer;
   user-select: none;
   display: flex;
+  top: 160px;
+  left: 10px;
   align-items: center;
-  width: 13em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s color, 0.5s background-color;
+  width: auto;
+  max-width: 360px;
+  flex-direction: row;
+  transition: 0.3s all;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 .ruler .icon {
-  margin-right: 0.5em;
-  font-size: 120%;
+  margin-right: 8px;
+  font-size: 22px;
+  color: #00e5ff;
+  flex-shrink: 0;
 }
-.ruler .row1,
-.ruler .row2 {
-  font-size: 50%;
-  white-space: nowrap;
+.ruler .label {
+  color: white;
+}
+.ruler .value {
+  color: #00e5ff;
 }
 .ruler .measurements {
-  font-size: 50%;
+  font-size: 13px;
   white-space: nowrap;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.5;
+  color: white;
+}
+.ruler .measurements .row {
+  display: flex;
+  gap: 14px;
 }
 .ruler .measurements table {
   width: 100%;
+  border-collapse: collapse;
 }
 .ruler .measurements td {
-  width: 33%;
+  padding: 2px 6px;
+  text-align: left;
+  color: white;
+}
+.ruler .measurements td .value {
+  color: #00e5ff;
+}
+.ruler .row1,
+.ruler .row2 {
+  font-size: 13px;
+  white-space: nowrap;
+  color: white;
 }
 
 .ruler.closed {
+  position: absolute;
   color: white;
-  background: none;
-  width: 1.3em;
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
+}
+.ruler.closed:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
+}
+.ruler.closed:active {
+  transform: scale(0.95);
+}
+.ruler.closed {
+  top: 160px;
+  left: 10px;
+  opacity: 1;
+  padding: 0 !important;
+  overflow: visible !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  min-width: 0 !important;
+}
+.ruler.closed .icon {
+  margin: 0;
+  color: white;
+  font-size: 24px;
+}
+.ruler.closed .measurements,
+.ruler.closed .row1,
+.ruler.closed .row2,
+.ruler.closed .label,
+.ruler.closed .value {
+  display: none;
 }
 
 .joystick {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 6em;
-  left: 2em;
-  font-size: 200%;
+  color: white;
+  background: rgba(0, 40, 55, 0.92);
+  border-radius: 8px;
+  padding: 8px;
+  padding-bottom: 10px;
+  font-size: 14px;
   cursor: pointer;
   user-select: none;
   display: flex;
-  align-items: flex-start;
-  width: 7em;
-  height: 4.8em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s height, 0.5s color, 0.5s background-color;
+  flex-direction: column;
+  align-items: center;
+  top: 210px;
+  left: 10px;
+  width: 150px;
+  height: auto;
+  transition: 0.3s all;
   outline: none;
+  overflow: visible;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 .joystick .icon {
-  margin-right: 0.5em;
-  font-size: 120%;
+  margin: 0 auto 4px auto;
+  font-size: 24px;
+  color: #00e5ff;
+  align-self: center;
 }
 .joystick .virtualJoystick {
   position: relative;
-  font-size: 150px;
-  height: 150px;
+  font-size: 110px;
+  height: 110px;
+  width: 110px;
+  align-self: center;
 }
 .joystick .virtualJoystick .icon-virtualJoystickIndicator {
   position: absolute;
-  color: #ddd;
+  color: #00e5ff;
   top: 0;
   left: 0;
+  z-index: 3;
 }
 .joystick .virtualJoystick .icon-virtualJoystick {
   position: absolute;
-  color: #bbb;
+  color: rgba(255, 255, 255, 0.1);
   top: 0;
   left: 0;
+  border: 2.5px solid #00e5ff;
+  border-radius: 50%;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
 }
 .joystick .keyboard {
+  position: relative;
+  margin-top: 6px;
+  color: #00e5ff;
+  font-size: 22px;
+  width: 100%;
+  text-align: center;
+}
+
+.joystick .virtualJoystick::after {
+  content: "▲";
   position: absolute;
-  top: 4em;
-  left: 0.5em;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00e5ff;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.joystick .virtualJoystick::before {
+  content: "▼";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00e5ff;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.joystick .virtualJoystick .icon-virtualJoystick::before {
+  content: "◄";
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  color: #00e5ff;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.joystick .virtualJoystick .icon-virtualJoystick::after {
+  content: "►";
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  color: #00e5ff;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .joystick.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
-  height: 1.3em;
-}
-
-.hubButtons {
   position: absolute;
-  color: black;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.2em;
-  opacity: 0.8;
-  top: 8em;
-  left: 2em;
-  font-size: 200%;
+  color: white;
+  font-size: 24px;
   cursor: pointer;
   user-select: none;
+  width: 44px;
+  height: 44px;
   display: flex;
-  align-items: flex-start;
-  width: 6.5em;
-  height: 4.8em;
-  overflow: hidden;
-  transition: 0.5s width, 0.5s height, 0.5s color, 0.5s background-color;
-  outline: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(1, 104, 141, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  z-index: 2;
 }
-.hubButtons .icon {
-  margin-right: 0.5em;
-  font-size: 120%;
+.joystick.closed:hover {
+  background: rgba(9, 195, 219, 0.9);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
-.hubButtons .controls {
-  font-size: 135%;
-  color: #bbb;
+.joystick.closed:active {
+  transform: scale(0.95);
 }
-.hubButtons .controls .icon-buttonsBackspace,
-.hubButtons .controls .icon-buttonsUp,
-.hubButtons .controls .icon-buttonsDown,
-.hubButtons .controls .icon-buttonsLeft,
-.hubButtons .controls .icon-buttonsRight,
-.hubButtons .controls .icon-buttonsEnter {
-  position: absolute;
+.joystick.closed {
+  top: 210px;
+  left: 10px;
+  opacity: 1;
+  padding: 0 !important;
+  overflow: visible !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  min-width: 0 !important;
 }
-.hubButtons .controls .pressed {
-  color: #888;
+.joystick.closed .icon {
+  color: white;
+  font-size: 24px;
 }
-.hubButtons .controls .icon-buttonsBackspace {
-  left: 1.6em;
-  top: 0.2em;
-}
-.hubButtons .controls .icon-buttonsUp {
-  left: 2.7em;
-  top: 0.28em;
-}
-.hubButtons .controls .icon-buttonsDown {
-  left: 2.7em;
-  top: 2.5em;
-}
-.hubButtons .controls .icon-buttonsLeft {
-  top: 1.4em;
-  left: 1.6em;
-}
-.hubButtons .controls .icon-buttonsRight {
-  top: 1.4em;
-  left: 3.8em;
-}
-.hubButtons .controls .icon-buttonsEnter {
-  top: 1.4em;
-  left: 2.7em;
+.joystick.closed .virtualJoystick,
+.joystick.closed .keyboard {
+  display: none;
 }
 
+.hubButtons,
 .hubButtons.closed {
-  color: white;
-  background: none;
-  width: 1.3em;
-  height: 1.3em;
+  display: none !important;
 }
 
 .console {
@@ -638,21 +953,24 @@ ul.menuDropDownRightAlign {
 .tooltip {
   position: relative;
   display: inline-block;
-  border-bottom: 1px dotted white;
 }
 
 .tooltip .tooltiptext {
-  background-color: white;
-  color: black;
-  border-radius: 6px;
-  padding: 0.2em 0.5em;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 4px;
+  padding: 4px 10px;
   position: absolute;
-  z-index: 1;
+  z-index: 100;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s;
-  max-width: 18em;
+  transition: opacity 0.2s;
   width: max-content;
+  max-width: 20em;
+  font-size: 13px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .tooltip .tooltiptext::after {
@@ -663,7 +981,7 @@ ul.menuDropDownRightAlign {
 }
 
 .tooltip.bottom .tooltiptext {
-  top: 125%;
+  top: 130%;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -671,31 +989,31 @@ ul.menuDropDownRightAlign {
   margin-left: -5px;
   bottom: 100%;
   left: 50%;
-  border-color: transparent transparent white transparent;
+  border-color: transparent transparent rgba(0, 0, 0, 0.9) transparent;
 }
 
 .tooltip.right .tooltiptext {
   top: 50%;
-  left: 100%;
-  transform: translate(0.5em, -50%);
+  left: 120%;
+  transform: translate(0, -50%);
 }
 .tooltip.right .tooltiptext::after {
   margin-top: -5px;
   right: 100%;
   top: 50%;
-  border-color: transparent white transparent transparent;
+  border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
 }
 
 .tooltip.left .tooltiptext {
   top: 50%;
-  right: 100%;
-  transform: translate(-0.5em, -50%);
+  right: 120%;
+  transform: translate(0, -50%);
 }
 .tooltip.left .tooltiptext::after {
   margin-top: -5px;
   left: 100%;
   top: 50%;
-  border-color: transparent transparent transparent white;
+  border-color: transparent transparent transparent rgba(0, 0, 0, 0.9);
 }
 
 .tooltip:hover .tooltiptext {
@@ -703,49 +1021,48 @@ ul.menuDropDownRightAlign {
   opacity: 1;
 }
 
-.sensors {
-  position: absolute;
-  color: white;
-  opacity: 0.8;
-  top: 1.2em;
-  right: 3.5em;
-  font-size: 300%;
-  cursor: pointer;
-  user-select: none;
-}
-
 .sensorReadings {
   position: absolute;
-  color: black;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5em;
-  padding: 0.5em;
-  top: 9em;
-  right: 4em;
-  font-size: 100%;
-  width: 14em;
-  max-height: 70%;
+  color: white;
+  background: rgba(0, 40, 55, 0.92);
+  border-radius: 8px;
+  padding: 10px;
+  top: 62px;
+  right: 10px;
+  font-size: 13px;
+  width: 220px;
+  max-height: calc(100% - 80px);
   overflow-y: auto;
   opacity: 1;
   transition: 0.5s opacity, 0.5s max-height, 0.5s padding;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 .sensorReadings .sensorReading {
-  margin-bottom: 0.5em;
+  margin-bottom: 8px;
 }
 .sensorReadings .sensorReading .sensorType {
   text-align: center;
+  color: #00e5ff;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 .sensorReadings .sensorReading table.sensorValues {
   width: 100%;
   border-collapse: collapse;
 }
 .sensorReadings .sensorReading table.sensorValues td {
-  border: solid 2px #bbbbbb;
-  color: darkblue;
+  border: solid 1px rgba(0, 228, 255, 0.2);
+  color: white;
+  padding: 3px 6px;
+  font-size: 12px;
 }
 .sensorReadings .sensorReading table.sensorValues td.sensorValue {
   text-align: right;
-  min-width: 2em;
+  min-width: 3em;
+  color: #00e5ff;
+  font-weight: 500;
 }
 
 .sensorReadings.hide {
@@ -1914,54 +2231,6 @@ ul.menuDropDownRightAlign {
   font-size: 0.85em;
   color: #7F8C8D;
   font-weight: 500;
-}
-
-.ruler {
-  background: rgba(20, 30, 48, 0.92);
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  border: 1px solid rgba(9, 195, 219, 0.2);
-  border-radius: 1em;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.2);
-  position: absolute;
-  z-index: 10;
-  font-size: 0.85em;
-  color: #e8edf3;
-  min-width: 8em;
-  cursor: move;
-}
-.ruler .icon {
-  text-align: center;
-  padding: 0.35em;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 1.2em;
-  transition: color 0.2s ease;
-}
-.ruler .icon:hover {
-  color: #09C3DB;
-  text-shadow: 0 0 8px rgba(9, 195, 219, 0.4);
-}
-.ruler .measurements {
-  padding: 0.4em 0.65em;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  overflow: hidden;
-}
-.ruler .measurements table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.ruler .measurements table td {
-  padding: 0.15em 0.3em;
-  font-size: 0.9em;
-  color: #e8edf3;
-  white-space: nowrap;
-  font-family: "Poppins", sans-serif;
-}
-.ruler.closed .measurements {
-  max-height: 0;
-  opacity: 0;
-  padding: 0;
 }
 
 .worldInfo {

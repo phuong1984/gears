@@ -699,55 +699,7 @@ $accent-gradient: linear-gradient(135deg, $primary, $secondary);
   }
 }
 
-// --- Ruler widget ---
-.ruler {
-  @include glass-panel;
-  position: absolute;
-  z-index: 10;
-  font-size: 0.85em;
-  color: $panel-text;
-  min-width: 8em;
-  cursor: move;
-
-  .icon {
-    text-align: center;
-    padding: 0.35em;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: 1.2em;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: $primary;
-      text-shadow: 0 0 8px rgba($primary, 0.4);
-    }
-  }
-
-  .measurements {
-    padding: 0.4em 0.65em;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
-    overflow: hidden;
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-
-      td {
-        padding: 0.15em 0.3em;
-        font-size: 0.9em;
-        color: $panel-text;
-        white-space: nowrap;
-        font-family: $font-stack;
-      }
-    }
-  }
-
-  &.closed .measurements {
-    max-height: 0;
-    opacity: 0;
-    padding: 0;
-  }
-}
+// --- Ruler widget ---\n// Ruler is styled in _simPanel.scss (Simulator-only widget)\n// Removed duplicate definition that was overriding sim panel styles
 
 // --- World info overlay ---
 .worldInfo {
