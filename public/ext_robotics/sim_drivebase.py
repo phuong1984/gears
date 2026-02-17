@@ -224,7 +224,7 @@ class DriveBase:
                 
                 speed = self._calc_speed(driven, distance)
                 self.run(dir_slide, speed)
-                time.sleep(0.02)
+                time.sleep(0.001)
         else: # CM
             distance = amount * 10 # to mm
             target_ticks = (distance / self._wheel_circ) * 1.414 * self._ticks_per_rev
@@ -248,11 +248,11 @@ class DriveBase:
                 # Final precision pulse: if very close, force a split second brake
                 if (target_ticks - driven) < 15:
                     self.brake()
-                    time.sleep(0.005)
+                    time.sleep(0.001)
                     speed = self._min_speed
 
                 self.run(dir_slide, speed)
-                time.sleep(0.01)
+                time.sleep(0.001)
         
         self.stop_then(then)
 
@@ -273,7 +273,7 @@ class DriveBase:
                 speed = self._calc_speed(driven, distance)
                 l_sp, r_sp = self._calib_speed(speed * speed_dir)
                 self.run_speed(l_sp, r_sp)
-                time.sleep(0.02)
+                time.sleep(0.001)
         
         elif unit == CM:
             distance_mm = amount * 10
@@ -297,12 +297,12 @@ class DriveBase:
                 # Final precision pulse
                 if (target_ticks - driven) < 15:
                     self.brake()
-                    time.sleep(0.005)
+                    time.sleep(0.001)
                     speed = self._min_speed
 
                 l_sp, r_sp = self._calib_speed(speed * speed_dir)
                 self.run_speed(l_sp, r_sp)
-                time.sleep(0.01)
+                time.sleep(0.001)
         
         self.stop_then(then)
 
@@ -351,7 +351,7 @@ class DriveBase:
                     speed = self._calc_speed(driven, target_angle)
                     l_sp, r_sp = self._calc_steering(speed, steering)
                     self.run_speed(l_sp, r_sp)
-                    time.sleep(0.01)
+                    time.sleep(0.001)
             else:
                 m_l = self.left[0] if self.left else None
                 m_r = self.right[0] if self.right else None
@@ -375,7 +375,7 @@ class DriveBase:
                     speed = self._calc_speed(driven_ticks, target_dist_ticks)
                     l_sp, r_sp = self._calc_steering(speed, steering)
                     self.run_speed(l_sp, r_sp)
-                    time.sleep(0.01)
+                    time.sleep(0.001)
 
         elif unit == SECOND:
             time_start = time.time() * 1000
@@ -389,7 +389,7 @@ class DriveBase:
                 speed = self._calc_speed(driven, target_ms)
                 l_sp, r_sp = self._calc_steering(speed, steering)
                 self.run_speed(l_sp, r_sp)
-                time.sleep(0.02)
+                time.sleep(0.001)
 
         self.stop_then(then)
 
@@ -481,13 +481,13 @@ class DriveBase:
     def stop_then(self, then):
         if then == BRAKE:
             self.brake()
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.stop()
         elif then == STOP:
             self.stop()
         elif then == BRAKE_NOW:
             self.brake()
-            time.sleep(0.005)
+            time.sleep(0.001)
 
     # ====================== Measuring ======================
 
