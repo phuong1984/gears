@@ -49,19 +49,19 @@ function Robot() {
   };
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
   };
 
   // Create the scene
   this.load = function (scene, robotStart) {
-    var options = {...self.defaultOptions};
+    var options = { ...self.defaultOptions };
     self.processedOptions = options;
     Object.assign(options, self.options);
     self.scene = scene;
 
-    return new Promise(function(resolve, reject) {
-      var startPos = new BABYLON.Vector3(0,0,0);
-      var startRot = new BABYLON.Vector3(0,0,0);
+    return new Promise(async function (resolve, reject) {
+      var startPos = new BABYLON.Vector3(0, 0, 0);
+      var startRot = new BABYLON.Vector3(0, 0, 0);
       if (typeof robotStart != 'undefined') {
         if (typeof robotStart.position != 'undefined') {
           startPos = robotStart.position;
@@ -79,7 +79,7 @@ function Robot() {
       }
 
       function setCustomColors() {
-        let VALID_IMAGETYPES = ['top','front','repeat','all','cylinder','sphere'];
+        let VALID_IMAGETYPES = ['top', 'front', 'repeat', 'all', 'cylinder', 'sphere'];
         if (VALID_IMAGETYPES.indexOf(options.imageType) != -1 && options.imageURL != '') {
           if (options.imageType == 'top') {
             faceUV[4] = new BABYLON.Vector4(0, 0, 1, 1);
@@ -90,12 +90,12 @@ function Robot() {
               faceUV[i] = new BABYLON.Vector4(0, 0, 1, 1);
             }
           } else if (options.imageType == 'all') {
-            faceUV[0] = new BABYLON.Vector4(0,   0,   1/3, 1/2);
-            faceUV[1] = new BABYLON.Vector4(1/3, 0,   2/3, 1/2);
-            faceUV[2] = new BABYLON.Vector4(2/3, 0,   1,   1/2);
-            faceUV[3] = new BABYLON.Vector4(0,   1/2, 1/3, 1);
-            faceUV[4] = new BABYLON.Vector4(1/3, 1/2, 2/3, 1);
-            faceUV[5] = new BABYLON.Vector4(2/3, 1/2, 1,   1);
+            faceUV[0] = new BABYLON.Vector4(0, 0, 1 / 3, 1 / 2);
+            faceUV[1] = new BABYLON.Vector4(1 / 3, 0, 2 / 3, 1 / 2);
+            faceUV[2] = new BABYLON.Vector4(2 / 3, 0, 1, 1 / 2);
+            faceUV[3] = new BABYLON.Vector4(0, 1 / 2, 1 / 3, 1);
+            faceUV[4] = new BABYLON.Vector4(1 / 3, 1 / 2, 2 / 3, 1);
+            faceUV[5] = new BABYLON.Vector4(2 / 3, 1 / 2, 1, 1);
           }
 
           bodyMat.diffuseTexture = new BABYLON.Texture(options.imageURL, scene);
@@ -192,7 +192,7 @@ function Robot() {
       self.motorCount = options.wheels ? 2 : 0;
 
       self.componentIndex = 0;
-      self.loadComponents(self.options.components, self.components, self.body);
+      await self.loadComponents(self.options.components, self.components, self.body);
 
       // Add Physics
       body.physicsImpostor = new BABYLON.PhysicsImpostor(
@@ -209,12 +209,12 @@ function Robot() {
       // Hold position if speed is too low
       var origin = body.physicsImpostor.physicsBody.getWorldTransform().getOrigin();
       var lastOrigin = [
-          origin.x(),
-          origin.y(),
-          origin.z()
+        origin.x(),
+        origin.y(),
+        origin.z()
       ];
 
-      body.physicsImpostor.registerBeforePhysicsStep(function(){
+      body.physicsImpostor.registerBeforePhysicsStep(function () {
         if (body.physicsImpostor.getLinearVelocity().lengthSquared() < 0.1) {
           origin.setX(lastOrigin[0]);
           origin.setY(lastOrigin[1]);
@@ -243,7 +243,7 @@ function Robot() {
         tireDownwardsForce: options.wheelTireDownwardsForce
       };
 
-      if (options.wheels){
+      if (options.wheels) {
         self.leftWheel = new Wheel(
           scene,
           body,
@@ -252,7 +252,7 @@ function Robot() {
             -(options.bodyHeight / 2) + options.bodyEdgeToWheelCenterY,
             (options.bodyLength / 2) - options.bodyEdgeToWheelCenterZ
           ],
-          [0,0,0],
+          [0, 0, 0],
           'outA',
           driveWheelOptions
         );
@@ -267,7 +267,7 @@ function Robot() {
             -(options.bodyHeight / 2) + options.bodyEdgeToWheelCenterY,
             (options.bodyLength / 2) - options.bodyEdgeToWheelCenterZ
           ],
-          [0,0,0],
+          [0, 0, 0],
           'outB',
           driveWheelOptions
         );
@@ -279,7 +279,7 @@ function Robot() {
   };
 
   // Add label
-  this.addLabel = function() {
+  this.addLabel = function () {
     if (typeof babylon.gui != 'undefined' && self.name) {
       self.nameLabel = new BABYLON.GUI.Rectangle();
       self.nameLabel.height = '30px';
@@ -307,29 +307,29 @@ function Robot() {
   };
 
   // Hide label
-  this.hideLabel = function() {
+  this.hideLabel = function () {
     if (typeof self.nameLabel != 'undefined') {
       self.nameLabel.isVisible = false;
     }
   };
 
   // Show label
-  this.showLabel = function() {
+  this.showLabel = function () {
     if (typeof self.nameLabel != 'undefined') {
       self.nameLabel.isVisible = true;
     }
   };
 
   // Paintball collide function. Used to notify world of hit for score keeping.
-  this.paintballCollide = function(thisImpostor, otherImpostor, hit) {
-    if (typeof babylon.world.paintBallHit == 'function'){
+  this.paintballCollide = function (thisImpostor, otherImpostor, hit) {
+    if (typeof babylon.world.paintBallHit == 'function') {
       babylon.world.paintBallHit(self, otherImpostor, hit);
     }
   };
 
   // Add joints
-  this.loadJoints = function(components) {
-    components.forEach(function(component) {
+  this.loadJoints = function (components) {
+    components.forEach(function (component) {
       if (typeof component.components != 'undefined') {
         self.loadJoints(component.components);
       }
@@ -340,10 +340,10 @@ function Robot() {
   };
 
   // Load components
-  this.loadComponents = function(componentsConfig, components, parent) {
+  this.loadComponents = async function (componentsConfig, components, parent) {
     let PORT_LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    componentsConfig.forEach(function(componentConfig){
+    for (const componentConfig of componentsConfig) {
       let component = null;
       if (componentConfig.type == 'ColorSensor') {
         component = new ColorSensor(
@@ -491,6 +491,14 @@ function Robot() {
           componentConfig.rotation,
           'in' + (++self.sensorCount),
           componentConfig.options);
+      } else if (componentConfig.type == 'Model') {
+        component = new ModelBlock(
+          self.scene,
+          parent,
+          componentConfig.position,
+          componentConfig.rotation,
+          componentConfig.options);
+        await component.init();
       } else {
         console.log('Unrecognized component type: ' + componentConfig.type);
       }
@@ -499,20 +507,20 @@ function Robot() {
       }
       if (component) {
         if (typeof componentConfig.components != 'undefined') {
-          self.loadComponents(componentConfig.components, component.components, component.end);
+          await self.loadComponents(componentConfig.components, component.components, component.end);
         }
         if (typeof component.loadImpostor == 'function') {
           component.loadImpostor();
         }
         components.push(component);
       }
-    });
+    }
   };
 
   // Load meshes for components that needs it
-  this.loadMeshes = function(meshes) {
+  this.loadMeshes = function (meshes) {
     function loadMeshes(components) {
-      components.forEach(function(component) {
+      components.forEach(function (component) {
         if (component.components) {
           loadMeshes(component.components);
         }
@@ -525,12 +533,12 @@ function Robot() {
   };
 
   // Get component based on port name
-  this.getComponentByPort = function(port) {
+  this.getComponentByPort = function (port) {
     return self._getComponentByPort(port, self.components);
   };
 
-  this._getComponentByPort = function(port, components) {
-    for (let i=0; i<components.length; i++) {
+  this._getComponentByPort = function (port, components) {
+    for (let i = 0; i < components.length; i++) {
       if (components[i].port == port) {
         return components[i];
       } else if (components[i].components) {
@@ -543,12 +551,12 @@ function Robot() {
   };
 
   // Get component based on componentIndex
-  this.getComponentByIndex = function(index) {
+  this.getComponentByIndex = function (index) {
     return self._getComponentByIndex(index, self.components);
   };
 
-  this._getComponentByIndex = function(index, components) {
-    for (let i=0; i<components.length; i++) {
+  this._getComponentByIndex = function (index, components) {
+    for (let i = 0; i < components.length; i++) {
       if (components[i].componentIndex == index) {
         return components[i];
       } else if (components[i].components) {
@@ -561,14 +569,14 @@ function Robot() {
   };
 
   // Reset robot
-  this.reset = function() {
+  this.reset = function () {
     if (self.leftWheel) {
       self.leftWheel.reset();
     }
     if (self.rightWheel) {
       self.rightWheel.reset();
     }
-    self.components.forEach(function(component) {
+    self.components.forEach(function (component) {
       if (typeof component.reset == 'function') {
         component.reset();
       }
@@ -576,7 +584,7 @@ function Robot() {
   };
 
   // Render loop
-  this.render = function(delta) {
+  this.render = function (delta) {
     if (self.leftWheel != null) {
       self.leftWheel.render(delta);
     }
@@ -584,7 +592,7 @@ function Robot() {
       self.rightWheel.render(delta);
     }
 
-    self.components.forEach(function(component) {
+    self.components.forEach(function (component) {
       if (typeof component.render == 'function') {
         component.render(delta);
       }
@@ -592,14 +600,14 @@ function Robot() {
   };
 
   // Force all motors to stop
-  this.stopAll = function() {
+  this.stopAll = function () {
     if (self.leftWheel) {
       self.leftWheel.stop();
     }
     if (self.rightWheel) {
       self.rightWheel.stop();
     }
-    self.components.forEach(function(component){
+    self.components.forEach(function (component) {
       if (typeof component.stop == 'function') {
         component.stop();
       }
@@ -607,7 +615,7 @@ function Robot() {
   };
 
   // Send a message
-  this.radioSend = function(dest, mailbox, value) {
+  this.radioSend = function (dest, mailbox, value) {
     const TEAM_MATES = [
       [1],
       [0],
@@ -628,7 +636,7 @@ function Robot() {
       dest = [dest];
     }
 
-    dest.forEach(function(d){
+    dest.forEach(function (d) {
       if (d == self.player) {
         return;
       }
@@ -645,7 +653,7 @@ function Robot() {
   };
 
   // Check if messages available
-  this.radioAvailable = function(mailbox) {
+  this.radioAvailable = function (mailbox) {
     if (typeof self.mailboxes[mailbox] == 'undefined') {
       return 0;
     }
@@ -654,7 +662,7 @@ function Robot() {
   };
 
   // Read message
-  this.radioRead = function(mailbox) {
+  this.radioRead = function (mailbox) {
     if (typeof self.mailboxes[mailbox] == 'undefined') {
       return null;
     }
@@ -667,7 +675,7 @@ function Robot() {
   };
 
   // Empty mailbox
-  this.radioEmpty = function(mailbox) {
+  this.radioEmpty = function (mailbox) {
     if (typeof mailbox == 'undefined') {
       self.mailboxes = {};
     } else if (typeof self.mailboxes[mailbox] != 'undefined') {
@@ -676,53 +684,53 @@ function Robot() {
   };
 
   // Set button
-  this.setHubButton = function(btn, state) {
+  this.setHubButton = function (btn, state) {
     self.hubButtons[btn] = state;
   };
 
   // Get buttons
-  this.getHubButtons = function() {
+  this.getHubButtons = function () {
     return self.hubButtons;
   };
 
-  this.objectTrackerGetByName = function(name){
-    if ([0,1,2,3,'team','opponent1','opponent2','self'].includes(name)){
-      if (self.player == 'single' && name != 'self'){
+  this.objectTrackerGetByName = function (name) {
+    if ([0, 1, 2, 3, 'team', 'opponent1', 'opponent2', 'self'].includes(name)) {
+      if (self.player == 'single' && name != 'self') {
         return null;
       }
 
       let player_num = 0;
-      if (typeof name == 'number'){
+      if (typeof name == 'number') {
         player_num = name;
       }
-      else if (name == 'team'){
-        const TEAM_MATES = [1,0,3,2];
+      else if (name == 'team') {
+        const TEAM_MATES = [1, 0, 3, 2];
         player_num = TEAM_MATES[self.player];
       }
-      else if (name == 'opponent1'){
-        const OPP1 = [2,2,0,0];
+      else if (name == 'opponent1') {
+        const OPP1 = [2, 2, 0, 0];
         player_num = OPP1[self.player];
       }
-      else if (name == 'opponent2'){
-        const OPP2 = [3,3,1,1];
+      else if (name == 'opponent2') {
+        const OPP2 = [3, 3, 1, 1];
         player_num = OPP2[self.player];
       }
-      else{
-        if (self.player == 'single'){
+      else {
+        if (self.player == 'single') {
           player_num = 0;
         }
-        else{
+        else {
           player_num = self.player;
         }
       }
       let robot = robots[player_num];
-      if (robot != null && robot.body != null){
-          return robot.body;
+      if (robot != null && robot.body != null) {
+        return robot.body;
       }
       return null;
-    } else if (typeof name == 'string'){
-      for (mesh of self.scene.meshes){
-        if (mesh.objectTrackerLabel == name){
+    } else if (typeof name == 'string') {
+      for (mesh of self.scene.meshes) {
+        if (mesh.objectTrackerLabel == name) {
           return mesh;
         }
       }
@@ -730,18 +738,18 @@ function Robot() {
     return null;
   };
 
-  this.objectTrackerPosition = function(name){
+  this.objectTrackerPosition = function (name) {
     let temp = self.objectTrackerGetByName(name);
-    if (temp != null){
+    if (temp != null) {
       let pos = temp.absolutePosition;
       return [pos.x, pos.y, pos.z];
     }
     return null;
   };
 
-  this.objectTrackerVelocity = function(name){
+  this.objectTrackerVelocity = function (name) {
     let temp = self.objectTrackerGetByName(name);
-    if (temp != null && temp.physicsImpostor != null){
+    if (temp != null && temp.physicsImpostor != null) {
       let vel = temp.physicsImpostor.getLinearVelocity();
       return [vel.x, vel.y, vel.z];
     }

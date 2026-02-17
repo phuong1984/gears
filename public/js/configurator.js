@@ -1,4 +1,4 @@
-var configurator = new function() {
+var configurator = new function () {
   var self = this;
 
   this.savedRobot = null;
@@ -1261,12 +1261,509 @@ var configurator = new function() {
         }
       ]
     },
+    {
+      name: 'Robot Character',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: 'models/Kenny.nl - Characters/robot.glb',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf)'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
+    {
+      name: 'Robot 2',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: 'models/Kenny.nl - Characters/robot2.glb',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf)'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
+    {
+      name: 'Robot 3',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: 'models/Kenny.nl - Characters/robot3.glb',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf)'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
+    {
+      name: 'Race Car',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: 'models/Kenny.nl - Cars/race.glb',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf)'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
+    {
+      name: 'Fire Truck',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: 'models/Kenny.nl - Cars/firetruck.glb',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf)'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
+    {
+      name: 'Dog',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: 'models/Quaternius - Animals/Dog.glb',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf)'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
+    {
+      name: 'Custom 3D Model',
+      category: 'Models',
+      defaultConfig: {
+        type: 'Model',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        options: {
+          modelURL: '',
+          modelScale: 5,
+          mass: 1,
+          restitution: 0.4,
+          friction: 0.1,
+          modelAnimation: 'None',
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.glb or .gltf) from your computer or from the built-in library.'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'Mass of the model. Set to 0 for static (immovable).'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+        },
+        {
+          option: 'restitution',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'Bounciness of the model'
+        },
+      ]
+    },
   ];
 
-  this.pointerDragPlaneNormal = new BABYLON.Vector3(0,1,0);
+  this.pointerDragPlaneNormal = new BABYLON.Vector3(0, 1, 0);
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     if (typeof babylon.scene == 'undefined') {
       setTimeout(self.init, 500);
       return;
@@ -1308,7 +1805,7 @@ var configurator = new function() {
   };
 
   // Apply pointerDragBehavior to selected mesh
-  this.applyDragToSelected = function() {
+  this.applyDragToSelected = function () {
     let selected = self.$componentList.find('li.selected');
     if (selected.length < 1) {
       return;
@@ -1384,7 +1881,7 @@ var configurator = new function() {
         self.resetScene(false);
       };
 
-      let pointerDragBehavior = new BABYLON.PointerDragBehavior({dragPlaneNormal: self.pointerDragPlaneNormal});
+      let pointerDragBehavior = new BABYLON.PointerDragBehavior({ dragPlaneNormal: self.pointerDragPlaneNormal });
       pointerDragBehavior.useObjectOrientationForDragging = false;
       pointerDragBehavior.moveAttached = false;
 
@@ -1398,7 +1895,7 @@ var configurator = new function() {
   };
 
   // Runs every frame
-  this.render = function(delta) {
+  this.render = function (delta) {
     let camera = babylon.scene.activeCamera;
     let dir = camera.getTarget().subtract(camera.position);
     let x2 = dir.x ** 2;
@@ -1423,7 +1920,7 @@ var configurator = new function() {
   }
 
   // Save history
-  this.saveHistory = function() {
+  this.saveHistory = function () {
     if (typeof self.editHistory == 'undefined') {
       self.editHistory = [];
     }
@@ -1432,14 +1929,14 @@ var configurator = new function() {
   };
 
   // Clear history
-  this.clearHistory = function() {
+  this.clearHistory = function () {
     if (typeof self.editHistory != 'undefined') {
       self.editHistory = [];
     }
   };
 
   // Undo
-  this.undo = function() {
+  this.undo = function () {
     if (typeof self.editHistory != 'undefined' && self.editHistory.length > 0) {
       var lastDesign = self.editHistory.pop();
       robot.options = JSON.parse(lastDesign);
@@ -1448,23 +1945,23 @@ var configurator = new function() {
   };
 
   // Save robot options
-  this.saveRobotOptions = function() {
+  this.saveRobotOptions = function () {
     self.savedRobot = JSON.parse(JSON.stringify(robot.options));
   };
 
   // Load robot options
-  this.loadRobotOptions = function() {
+  this.loadRobotOptions = function () {
     robot.options = JSON.parse(JSON.stringify(self.savedRobot));
     self.resetScene();
   };
 
   // Set the robot name
-  this.setRobotName = function() {
+  this.setRobotName = function () {
     robot.options.name = self.$robotName.val();
   };
 
   // Show options
-  this.showComponentOptions = function(component) {
+  this.showComponentOptions = function (component) {
     self.$settingsArea.empty();
 
     let genConfig = new GenConfig(self, self.$settingsArea);
@@ -1477,7 +1974,15 @@ var configurator = new function() {
       genConfig.displayOptionsConfigurations(self.bodyTemplate, component);
     } else {
       let componentTemplate = self.componentTemplates.find(componentTemplate => componentTemplate.name == component.type);
-      componentTemplate.optionsConfigurations.forEach(function(optionConfiguration){
+      // Fallback: for Model components, name differs from type. Try matching by defaultConfig.type
+      if (!componentTemplate) {
+        componentTemplate = self.componentTemplates.find(ct => ct.defaultConfig && ct.defaultConfig.type == component.type);
+      }
+      if (!componentTemplate) {
+        console.log('No template found for component type: ' + component.type);
+        return;
+      }
+      componentTemplate.optionsConfigurations.forEach(function (optionConfiguration) {
         let options = component.options;
         if (optionConfiguration.option == 'position' || optionConfiguration.option == 'rotation') {
           options = component;
@@ -1495,24 +2000,24 @@ var configurator = new function() {
   };
 
   // Select built in images
-  this.selectImage = function(opt, objectOptions) {
+  this.selectImage = function (opt, objectOptions) {
     let $body = $('<div class="selectImage"></div>');
     let $filter = $(
       '<div class="filter">Filter by Type: ' +
-        '<select>' +
-          '<option selected value="any">Any</option>' +
-          '<option value="box">Box</option>' +
-          '<option value="cylinder">Cylinder</option>' +
-          '<option value="sphere">Sphere</option>' +
-          '<option value="ground">Ground</option>' +
-          '<option value="robot">Robot</option>' +
-        '</select>' +
+      '<select>' +
+      '<option selected value="any">Any</option>' +
+      '<option value="box">Box</option>' +
+      '<option value="cylinder">Cylinder</option>' +
+      '<option value="sphere">Sphere</option>' +
+      '<option value="ground">Ground</option>' +
+      '<option value="robot">Robot</option>' +
+      '</select>' +
       '</div>'
     );
     let $select = $filter.find('select');
     let $imageList = $('<div class="images"></div>');
 
-    BUILT_IN_IMAGES.forEach(function(image){
+    BUILT_IN_IMAGES.forEach(function (image) {
       let basename = image.url.split('/').pop();
 
       let $row = $('<div class="row"></div>');
@@ -1528,7 +2033,7 @@ var configurator = new function() {
       let $select = $selectBox.find('button');
       $select.prop('url', image.url);
 
-      $select.click(function(e){
+      $select.click(function (e) {
         objectOptions.imageURL = e.target.url;
         self.resetScene(false);
         $dialog.close();
@@ -1542,7 +2047,7 @@ var configurator = new function() {
     $body.append($filter);
     $body.append($imageList);
 
-    $select.change(function(){
+    $select.change(function () {
       let filter = $select.val();
 
       $imageList.find('.row').removeClass('hide');
@@ -1557,13 +2062,13 @@ var configurator = new function() {
 
     let $dialog = dialog('Select Built-In Image', $body, $buttons);
 
-    $buttons.click(function() { $dialog.close(); });
+    $buttons.click(function () { $dialog.close(); });
   };
 
   // Special case for the pen, add some buttons to move it to useful locations
-  this.penSpecialCaseSetup = function(component) {
+  this.penSpecialCaseSetup = function (component) {
 
-    function moveTo(x,z) {
+    function moveTo(x, z) {
       let $posDiv = self.$settingsArea.find("div.configurationTitle:contains('position')")
       // Get the input boxes for x/y/z so value changes can be made visible
       let $inputX = $posDiv.next().find('input[type=text]');
@@ -1572,21 +2077,21 @@ var configurator = new function() {
       // change only X and Z vals, Y is height from ground
       self.saveHistory();
       $inputX.val(x)
-      component.position[0]=x
+      component.position[0] = x
       $inputZ.val(z)
-      component.position[2]=z
+      component.position[2] = z
       self.resetScene(false);
     };
 
     let $centerWheelAxisBtn = $('<div class="btn_pen">Center On Wheel Axis</div>');
-    $centerWheelAxisBtn.click(function(){
+    $centerWheelAxisBtn.click(function () {
       // move the pen to the center of the wheel axis
-      wheelAxisCenter = robot.leftWheel.mesh.position.add(robot.rightWheel.mesh.position).scale(1/2.0)
+      wheelAxisCenter = robot.leftWheel.mesh.position.add(robot.rightWheel.mesh.position).scale(1 / 2.0)
       moveTo(wheelAxisCenter.x, wheelAxisCenter.z)
     });
     let $centerWheelBtn = $('<div class="btn_pen">Center On Wheel</div>');
     let nextWheelCenter = 'L';
-    $centerWheelBtn.click(function(){
+    $centerWheelBtn.click(function () {
       // move the pen to the center of a wheel.
       // Alternate between L and R wheels (and castor?)
       if (nextWheelCenter == 'L') {
@@ -1600,7 +2105,7 @@ var configurator = new function() {
     });
     let $centerCSBtn = $('<div class="btn_pen">Center On Color Sensor</div>');
     let nextColorSensor = 0;
-    $centerCSBtn.click(function(){
+    $centerCSBtn.click(function () {
       // Move the pen to the center of the color sensor.  If there is more
       // than one color sensor, move to the next one
       var colorSensors = []
@@ -1628,8 +2133,8 @@ var configurator = new function() {
   }
 
   // Setup picking ray
-  this.setupPickingRay = function() {
-    babylon.scene.onPointerUp = function(e, hit) {
+  this.setupPickingRay = function () {
+    babylon.scene.onPointerUp = function (e, hit) {
       if (e.button != 0) {
         return;
       }
@@ -1669,13 +2174,13 @@ var configurator = new function() {
   };
 
   // Reset scene
-  this.resetScene = function(reloadComponents=true) {
+  this.resetScene = async function (reloadComponents = true) {
     if (typeof self.cameraRadius == 'undefined') {
       self.cameraRadius = 40;
     } else {
       self.cameraRadius = babylon.scene.cameras[0].radius;
     }
-    babylon.resetScene();
+    await babylon.resetScene();
     babylon.scene.physicsEnabled = false;
     self.setupPickingRay();
     babylon.scene.cameras[0].radius = self.cameraRadius;
@@ -1691,7 +2196,7 @@ var configurator = new function() {
   }
 
   // Add a new component to selected
-  this.addComponent = function() {
+  this.addComponent = function () {
     let $selected = self.getSelectedComponent();
     let COMPATIBLE_TYPES = ['ArmActuator', 'SwivelActuator', 'LinearActuator', 'WheelActuator', 'WheelPassive'];
     if (
@@ -1707,15 +2212,15 @@ var configurator = new function() {
     let $description = $('<div class="description"><div class="text"></div></div>');
 
     let groups = [];
-    self.componentTemplates.forEach(function(componentTemplate){
+    self.componentTemplates.forEach(function (componentTemplate) {
       if (groups.indexOf(componentTemplate.category) == -1) {
         groups.push(componentTemplate.category);
       }
     });
 
-    groups.forEach(function(group){
+    groups.forEach(function (group) {
       let $group = $('<optgroup label="' + group + '"></optgroup>');
-      self.componentTemplates.forEach(function(componentTemplate){
+      self.componentTemplates.forEach(function (componentTemplate) {
         if (componentTemplate.category != group) {
           return;
         }
@@ -1737,8 +2242,8 @@ var configurator = new function() {
 
     let $dialog = dialog('Select Component', $body, $buttons);
 
-    $buttons.siblings('.cancel').click(function() { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function(){
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(function () {
       self.saveHistory();
       let component = self.componentTemplates.find(componentTemplate => componentTemplate.name == $select.val())
       if (typeof $selected[0].component.components == 'undefined') {
@@ -1751,7 +2256,7 @@ var configurator = new function() {
   };
 
   // Delete selected component
-  this.deleteComponent = function() {
+  this.deleteComponent = function () {
     let $selected = self.getSelectedComponent();
     if ($selected.text() == 'Body') {
       toastMsg('Cannot delete main body');
@@ -1765,12 +2270,12 @@ var configurator = new function() {
   };
 
   // Get selected component
-  this.getSelectedComponent = function() {
+  this.getSelectedComponent = function () {
     return self.$componentList.find('li.selected');
   };
 
   // Select list item on click
-  this.componentSelect = function(e) {
+  this.componentSelect = function (e) {
     if (typeof e.target.component != 'undefined') {
       self.$componentList.find('li').removeClass('selected');
       e.target.classList.add('selected');
@@ -1783,7 +2288,7 @@ var configurator = new function() {
   };
 
   // Highlight selected component
-  this.highlightSelected = function() {
+  this.highlightSelected = function () {
     let $selected = self.$componentList.find('li.selected');
     if ($selected.length < 1) {
       return;
@@ -1847,10 +2352,10 @@ var configurator = new function() {
   }
 
   // Load robot into components window
-  this.loadIntoComponentsWindow = function(options) {
+  this.loadIntoComponentsWindow = function (options) {
     let PORT_LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let ACTUATORS = ['MagnetActuator', 'ArmActuator', 'SwivelActuator', 'LinearActuator', 'PaintballLauncherActuator','WheelActuator'];
-    let DUMB_BLOCKS = ['Box', 'Cylinder', 'Sphere', 'WheelPassive'];
+    let ACTUATORS = ['MagnetActuator', 'ArmActuator', 'SwivelActuator', 'LinearActuator', 'PaintballLauncherActuator', 'WheelActuator'];
+    let DUMB_BLOCKS = ['Box', 'Cylinder', 'Sphere', 'WheelPassive', 'Model'];
     let motorCount = options.wheels ? 2 : 0;
     let sensorCount = 0;
     let componentIndex = 0;
@@ -1862,12 +2367,21 @@ var configurator = new function() {
 
     function addComponents(components) {
       let $list = $('<ul></ul>');
-      components.forEach(function(component){
+      components.forEach(function (component) {
         let $item = $('<li></li>');
         $item.attr('componentIndex', componentIndex);
         let text = component.type;
 
-        if (DUMB_BLOCKS.indexOf(text) != -1) {
+        // For Model components, show filename instead of generic "Model"
+        if (component.type == 'Model' && component.options) {
+          if (component.options._modelFileName) {
+            text = component.options._modelFileName;
+          } else if (component.options.modelURL && component.options.modelURL !== '') {
+            text = component.options.modelURL.split('/').pop();
+          }
+        }
+
+        if (DUMB_BLOCKS.indexOf(component.type) != -1) {
           ;
         } else if (ACTUATORS.indexOf(text) != -1) {
           text += ' (out' + PORT_LETTERS[(++motorCount)] + ')';
@@ -1902,7 +2416,7 @@ var configurator = new function() {
   };
 
   // Save robot to json file
-  this.saveRobot = function() {
+  this.saveRobot = function () {
     if (robotTemplates.findIndex(r => r.name == robot.options.name) != -1) {
       robot.options.name = robot.options.name + ' (Custom)';
       self.$robotName.val(robot.options.name);
@@ -1964,13 +2478,13 @@ var configurator = new function() {
     robot.options.longerDescription =
       '<h3>#robot-dimensions#</h3>' +
       '<ul>' +
-        '<li>#robot-wheelDiameter#: ' + robot.options.wheelDiameter + ' cm</li>' +
-        '<li>#robot-wheelSpacing#: ' + wheelSpacing + ' cm</li>' +
+      '<li>#robot-wheelDiameter#: ' + robot.options.wheelDiameter + ' cm</li>' +
+      '<li>#robot-wheelSpacing#: ' + wheelSpacing + ' cm</li>' +
       '</ul>' +
       '<h3>#robot-actuators#</h3>' +
       '<ul>' + ports + '</ul>' +
       '<h3>#robot-sensors#</h3>' +
-      '<ul>' + sensors +'</ul>';
+      '<ul>' + sensors + '</ul>';
 
     robot.options.thumbnail = '';
     var hiddenElement = document.createElement('a');
@@ -1981,14 +2495,14 @@ var configurator = new function() {
   };
 
   // Load robot from json file
-  this.loadRobotLocal = function() {
+  this.loadRobotLocal = function () {
     var hiddenElement = document.createElement('input');
     hiddenElement.type = 'file';
     hiddenElement.accept = 'application/json,.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
-    hiddenElement.addEventListener('change', function(e){
+    hiddenElement.addEventListener('change', function (e) {
       var reader = new FileReader();
-      reader.onload = function() {
+      reader.onload = function () {
         robot.options = JSON.parse(this.result);
         self.clearHistory();
         self.saveHistory();
@@ -1999,7 +2513,7 @@ var configurator = new function() {
   };
 
   // Select robot from templates
-  this.selectRobot = function() {
+  this.selectRobot = function () {
     let $body = $('<div class="selectRobot"></div>');
     let $select = $('<select></select>');
     let $description = $('<div class="description"><img class="thumbnail" width="200" height="200"><div class="text"></div></div>');
@@ -2016,7 +2530,7 @@ var configurator = new function() {
       $configurations.html(i18n.replace(robot.longerDescription));
     }
 
-    robotTemplates.forEach(function(robotTemplate){
+    robotTemplates.forEach(function (robotTemplate) {
       let $robot = $('<option></option>');
       $robot.prop('value', robotTemplate.name);
       $robot.text(i18n.get(robotTemplate.shortDescription));
@@ -2031,7 +2545,7 @@ var configurator = new function() {
     $body.append($description);
     $body.append($configurations);
 
-    $select.change(function(){
+    $select.change(function () {
       let robotTemplate = robotTemplates.find(robotTemplate => robotTemplate.name == $select.val());
       displayRobotDescriptions(robotTemplate);
     });
@@ -2043,8 +2557,8 @@ var configurator = new function() {
 
     let $dialog = dialog(i18n.get('#main-select_robot#'), $body, $buttons);
 
-    $buttons.siblings('.cancel').click(function() { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function(){
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(function () {
       robot.options = JSON.parse(JSON.stringify(robotTemplates.find(robotTemplate => robotTemplate.name == $select.val())));
       self.clearHistory();
       self.saveHistory();
@@ -2054,7 +2568,7 @@ var configurator = new function() {
   };
 
   // Display current position
-  this.displayPosition = function() {
+  this.displayPosition = function () {
     let x = Math.round(robot.body.position.x * 10) / 10;
     let y = Math.round(robot.body.position.z * 10) / 10;
     let angles = robot.body.absoluteRotationQuaternion.toEulerAngles();
@@ -2070,14 +2584,14 @@ var configurator = new function() {
   };
 
   // Save current position
-  this.savePosition = function() {
+  this.savePosition = function () {
     let x = Math.round(robot.body.position.x * 10) / 10;
     let y = Math.round(robot.body.position.z * 10) / 10;
     let angles = robot.body.absoluteRotationQuaternion.toEulerAngles();
     let rot = Math.round(angles.y / Math.PI * 1800) / 10;
 
     if (typeof babylon.world.defaultOptions.startPosXY != 'undefined') {
-      babylon.world.options.startPosXY = x + ',' +y;
+      babylon.world.options.startPosXY = x + ',' + y;
     } else {
       toastMsg('Current world doesn\'t allow saving of position');
       return;
@@ -2091,7 +2605,7 @@ var configurator = new function() {
   };
 
   // Clear current position
-  this.clearPosition = function() {
+  this.clearPosition = function () {
     if (babylon.world.options.startPosXY) {
       babylon.world.options.startPosXY = '';
     }
@@ -2102,37 +2616,37 @@ var configurator = new function() {
   };
 
   // Toggle filemenu
-  this.toggleFileMenu = function(e) {
+  this.toggleFileMenu = function (e) {
     if ($('.fileMenuDropDown').length == 0) {
       $('.menuDropDown').remove();
       e.stopPropagation();
 
       let menuItems = [
-        {html: 'Load from file', line: false, callback: self.loadRobotLocal},
-        {html: 'Save to file', line: true, callback: self.saveRobot},
+        { html: 'Load from file', line: false, callback: self.loadRobotLocal },
+        { html: 'Save to file', line: true, callback: self.saveRobot },
       ];
 
-      menuDropDown(self.$fileMenu, menuItems, {className: 'fileMenuDropDown'});
+      menuDropDown(self.$fileMenu, menuItems, { className: 'fileMenuDropDown' });
     }
   };
 
   // Toggle robotmenu
-  this.toggleRobotMenu = function(e) {
+  this.toggleRobotMenu = function (e) {
     if ($('.robotMenuDropDown').length == 0) {
       $('.menuDropDown').remove();
       e.stopPropagation();
 
       let menuItems = [
-        {html: 'Select Robot', line: false, callback: self.selectRobot},
+        { html: 'Select Robot', line: false, callback: self.selectRobot },
       ];
 
-      menuDropDown(self.$robotMenu, menuItems, {className: 'robotMenuDropDown'});
+      menuDropDown(self.$robotMenu, menuItems, { className: 'robotMenuDropDown' });
     }
   };
 
   // Snapping
   this.snapStep = [0, 0, 0];
-  this.roundToSnap = function(value, snap) {
+  this.roundToSnap = function (value, snap) {
     if (snap == 0) {
       return value;
     }
@@ -2141,7 +2655,7 @@ var configurator = new function() {
   }
 
   // Toggle snapmenu
-  this.toggleSnapMenu = function(e) {
+  this.toggleSnapMenu = function (e) {
     if ($('.snapMenuDropDown').length == 0) {
       $('.menuDropDown').remove();
       e.stopPropagation();
@@ -2166,12 +2680,12 @@ var configurator = new function() {
       }
 
       let menuItems = [
-        {html: 'No Snapping', line: false, callback: snapNone},
-        {html: 'Snap to 0.25cm', line: false, callback: snap25},
-        {html: 'Snap to 0.4cm (Lego Technic)', line: false, callback: snapTechnic},
-        {html: 'Snap to Lego (xy: 0.4, z: 0.48)', line: false, callback: snapLego},
-        {html: 'Snap to 0.5cm', line: false, callback: snap05},
-        {html: 'Snap to 1cm', line: false, callback: snap10},
+        { html: 'No Snapping', line: false, callback: snapNone },
+        { html: 'Snap to 0.25cm', line: false, callback: snap25 },
+        { html: 'Snap to 0.4cm (Lego Technic)', line: false, callback: snapTechnic },
+        { html: 'Snap to Lego (xy: 0.4, z: 0.48)', line: false, callback: snapLego },
+        { html: 'Snap to 0.5cm', line: false, callback: snap05 },
+        { html: 'Snap to 1cm', line: false, callback: snap10 },
       ];
       var tickIndex = 0;
       if (self.snapStep[2] == 0) {
@@ -2189,12 +2703,12 @@ var configurator = new function() {
       }
       menuItems[tickIndex].html = '<span class="tick">&#x2713;</span> ' + menuItems[tickIndex].html;
 
-      menuDropDown(self.$snapMenu, menuItems, {className: 'snapMenuDropDown'});
+      menuDropDown(self.$snapMenu, menuItems, { className: 'snapMenuDropDown' });
     }
   };
 
   // Clicked on tab
-  this.tabClicked = function(tabNav) {
+  this.tabClicked = function (tabNav) {
   };
 }
 

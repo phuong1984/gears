@@ -3,7 +3,7 @@ function GenConfig(caller, $settingsArea) {
   var gen = {};
   this.gen = gen;
 
-  this.getTitle = function(opt) {
+  this.getTitle = function (opt) {
     let $title = $('<div class="configurationTitle"></div>');
     let $toolTip = $('<span> </span><div class="tooltip">?<div class="tooltiptext"></div></div>');
     $title.text(opt.option);
@@ -21,7 +21,7 @@ function GenConfig(caller, $settingsArea) {
     return $title;
   }
 
-  gen.label = function(opt, currentOptions) {
+  gen.label = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $textBox = $('<div class="text"></div>');
     $textBox.text(opt.text);
@@ -31,14 +31,14 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.buttons = function(opt, currentOptions) {
+  gen.buttons = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $buttonsBox = $('<div class="buttons"></div>');
 
     for (let button of opt.buttons) {
       let $button = $('<button></button>');
       $button.text(button.label);
-      $button.click(function() {
+      $button.click(function () {
         caller[button.callback](opt, currentOptions);
       });
       $buttonsBox.append($button);
@@ -49,7 +49,7 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.custom = function(opt, currentOptions) {
+  gen.custom = function (opt, currentOptions) {
     let $custom = caller[opt.generatorFunction](opt, currentOptions);
     if ($custom == false) {
       return;
@@ -58,10 +58,10 @@ function GenConfig(caller, $settingsArea) {
     let $div = $('<div class="configuration"></div>');
     $div.append(self.getTitle(opt));
     $div.append($custom);
-    return $div;  
+    return $div;
   }
 
-  gen.color = function(opt, currentOptions) {
+  gen.color = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $colorBox = $('<div class="color"><input type="color"><input type="text"></div>');
     let $alphaBox = $('<div class="slider">Opacity: <input type="range"></div>');
@@ -93,8 +93,8 @@ function GenConfig(caller, $settingsArea) {
       }
 
       // Split into color and alpha
-      let currentValColor = currentVal.slice(0,6).toLowerCase();
-      let currentValAlpha = currentVal.slice(6,8);
+      let currentValColor = currentVal.slice(0, 6).toLowerCase();
+      let currentValAlpha = currentVal.slice(6, 8);
       if (currentValAlpha == '') {
         currentValAlpha = 255;
       } else {
@@ -124,7 +124,7 @@ function GenConfig(caller, $settingsArea) {
 
     $color.change(setColor);
     $alpha.change(setColor);
-    $text.change(function(){
+    $text.change(function () {
       let val = $text.val();
       setInputs(val);
       caller.saveHistory();
@@ -141,32 +141,32 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.selectImage = function(opt, currentOptions) {
+  gen.selectImage = function (opt, currentOptions) {
     function selectImageDialog() {
       let $body = $('<div class="selectImage"></div>');
       let $filter = $(
         '<div class="filter">Filter by Type: ' +
-          '<select>' +
-            '<option selected value="any">Any</option>' +
-            '<option value="box">Box</option>' +
-            '<option value="cylinder">Cylinder</option>' +
-            '<option value="sphere">Sphere</option>' +
-            '<option value="ground">Ground</option>' +
-            '<option value="robot">Robot</option>' +
-          '</select>' +
+        '<select>' +
+        '<option selected value="any">Any</option>' +
+        '<option value="box">Box</option>' +
+        '<option value="cylinder">Cylinder</option>' +
+        '<option value="sphere">Sphere</option>' +
+        '<option value="ground">Ground</option>' +
+        '<option value="robot">Robot</option>' +
+        '</select>' +
         '</div>'
       );
       let $select = $filter.find('select');
       let $search = $(
         '<div class="search">Search: ' +
-          '<input type="text"></input>' +
+        '<input type="text"></input>' +
         '</div>'
       );
       let $searchInput = $search.find('input');
 
       let $itemList = $('<div class="images"></div>');
 
-      BUILT_IN_IMAGES.forEach(function(image){
+      BUILT_IN_IMAGES.forEach(function (image) {
         let basename = image.url.split('/').pop();
 
         let $row = $('<div class="row"></div>');
@@ -182,7 +182,7 @@ function GenConfig(caller, $settingsArea) {
         let $selectBtn = $selectBox.find('button');
         $selectBtn.prop('url', image.url);
 
-        $selectBtn.click(function(e){
+        $selectBtn.click(function (e) {
           caller.saveHistory();
           currentOptions[opt.option] = e.target.url;
           if (opt.reset) {
@@ -206,12 +206,12 @@ function GenConfig(caller, $settingsArea) {
       $body.append($search);
       $body.append($itemList);
 
-      function filterList(){
+      function filterList() {
         let filter = $select.val();
         let search = $searchInput.val().trim().toLowerCase();
 
         let count = 0;
-        $itemList[0].childNodes.forEach(function(item){
+        $itemList[0].childNodes.forEach(function (item) {
           let itemText = item.childNodes[0].textContent.toLowerCase();
           if (
             (filter == 'any' || item.classList.contains(filter.replace(/\W/g, '')))
@@ -245,7 +245,7 @@ function GenConfig(caller, $settingsArea) {
           $itemList[0].scrollTop = caller.selectImage_scroll;
           if ($itemList[0].scrollTop == 0) {
             setTimeout(setScroll, 200);
-          }  
+          }
         }
       }
 
@@ -257,12 +257,12 @@ function GenConfig(caller, $settingsArea) {
       }
       let $dialog = dialog('Select Built-In Image', $body, $buttons);
 
-      $buttons.click(function() {
+      $buttons.click(function () {
         // Save search
         caller.selectImage_filterType = $select.val();
         caller.selectImage_searchText = $searchInput.val();
         caller.selectImage_scroll = $itemList[0].scrollTop;
-        
+
         $dialog.close();
       });
     }
@@ -278,14 +278,14 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   };
 
-  gen.selectModel = function(opt, currentOptions) {
+  gen.selectModel = function (opt, currentOptions) {
     function selectModelDialog() {
       let $body = $('<div class="selectModel"></div>');
       let $filter = $(
         '<div class="filter">Filter by Type: ' +
-          '<select>' +
-            '<option selected value="any">Any</option>' +
-          '</select>' +
+        '<select>' +
+        '<option selected value="any">Any</option>' +
+        '</select>' +
         '</div>'
       );
       let $select = $filter.find('select');
@@ -294,58 +294,58 @@ function GenConfig(caller, $settingsArea) {
       }
       let $search = $(
         '<div class="search">Search: ' +
-          '<input type="text"></input>' +
+        '<input type="text"></input>' +
         '</div>'
       );
       let $searchInput = $search.find('input');
-  
+
       let $itemList = $('<div class="items"></div>');
-  
-      BUILT_IN_MODELS.forEach(function(model){
+
+      BUILT_IN_MODELS.forEach(function (model) {
         let basename = model.url.split('/').pop();
-  
+
         let $row = $('<div class="row"></div>');
         let category = model.category.replace(/\W/g, '');
         $row.addClass(category);
-  
+
         let $descriptionBox = $('<div class="description"></div>');
         let $basename = $('<p class="bold"></p>').text(basename);
         $descriptionBox.append($basename);
-  
+
         let $selectBox = $('<div class="select"><button>Select</button></div>');
         let $selectBtn = $selectBox.find('button');
         $selectBtn.prop('url', model.url);
-  
-        $selectBtn.click(function(e){
+
+        $selectBtn.click(function (e) {
           caller.saveHistory();
           currentOptions[opt.option] = e.target.url;
           if (opt.reset) {
             caller.resetScene(false);
           }
-  
+
           // Save search
           caller.selectModel_filterType = $select.val();
           caller.selectModel_searchText = $searchInput.val();
           caller.selectModel_scroll = $itemList[0].scrollTop;
-  
+
           $dialog.close();
         });
-  
+
         $row.append($descriptionBox);
         $row.append($selectBox);
         $itemList.append($row);
       });
-  
+
       $body.append($filter);
       $body.append($search);
       $body.append($itemList);
-  
-      function filterList(){
+
+      function filterList() {
         let filter = $select.val();
         let search = $searchInput.val().trim().toLowerCase();
-  
+
         let count = 0;
-        $itemList[0].childNodes.forEach(function(item){
+        $itemList[0].childNodes.forEach(function (item) {
           let itemText = item.childNodes[0].textContent.toLowerCase();
           if (
             (filter == 'any' || item.classList.contains(filter.replace(/\W/g, '')))
@@ -357,47 +357,47 @@ function GenConfig(caller, $settingsArea) {
             item.classList.add('hide');
           }
         });
-  
+
         updateSearchCount(count);
       }
-  
+
       $select.change(filterList);
       $searchInput.on('input', filterList);
-  
+
       let $buttons = $(
         '<div class="searchCount"></div><button type="button" class="cancel btn-light">Cancel</button>'
       );
-  
+
       function updateSearchCount(count) {
         $buttons.siblings('.searchCount').text(count + ' models found');
       }
-  
+
       updateSearchCount($itemList[0].childNodes.length);
-  
+
       function setScroll() {
         if (caller.selectModel_scroll != 0) {
           $itemList[0].scrollTop = caller.selectModel_scroll;
           if ($itemList[0].scrollTop == 0) {
             setTimeout(setScroll, 200);
-          }  
+          }
         }
       }
-  
+
       if (caller.selectModel_filterType) {
         $select.val(caller.selectModel_filterType);
         $searchInput.val(caller.selectModel_searchText);
         filterList();
         setScroll();
       }
-  
+
       let $dialog = dialog('Select Built-In Model', $body, $buttons);
-  
-      $buttons.click(function() {
+
+      $buttons.click(function () {
         // Save search
         caller.selectModel_filterType = $select.val();
         caller.selectModel_searchText = $searchInput.val();
         caller.selectModel_scroll = $itemList[0].scrollTop;
-        
+
         $dialog.close();
       });
     }
@@ -413,11 +413,230 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   };
 
-  gen.sliderBox = function(opt, currentValue, callback) {
+  // Select 3D model file: browse from OS file picker OR select from built-in library
+  gen.selectModelFile = function (opt, currentOptions) {
+    let $div = $('<div class="configuration"></div>');
+
+    // Show current model filename
+    let currentVal = currentOptions[opt.option] || '';
+    let displayName = '';
+    if (currentVal) {
+      if (currentVal.startsWith('blob:')) {
+        displayName = currentOptions._modelFileName || 'Uploaded file';
+      } else {
+        displayName = currentVal.split('/').pop();
+      }
+    } else {
+      displayName = '(No model selected)';
+    }
+    let $currentFile = $('<div class="text" style="margin-bottom:4px; font-size:0.95em; color:#666;"></div>');
+    $currentFile.text('Current: ' + displayName);
+
+    // Browse file button + hidden file input
+    let $buttonsBox = $('<div class="buttons" style="display:flex; gap:6px; flex-wrap:wrap;"></div>');
+
+    let $fileInput = $('<input type="file" accept=".glb,.gltf" style="display:none;">');
+    let $browseBtn = $('<button>Browse File...</button>');
+    $browseBtn.click(function () {
+      $fileInput.click();
+    });
+
+    $fileInput.change(function (e) {
+      let file = e.target.files[0];
+      if (!file) return;
+
+      // Revoke old blob URL if exists
+      if (currentOptions[opt.option] && currentOptions[opt.option].startsWith('blob:')) {
+        URL.revokeObjectURL(currentOptions[opt.option]);
+      }
+
+      // Create blob URL from the selected file
+      let blobURL = URL.createObjectURL(file);
+      caller.saveHistory();
+      currentOptions[opt.option] = blobURL;
+      currentOptions._modelFileName = file.name;
+
+      // Update display
+      $currentFile.text('Current: ' + file.name);
+
+      // Update component name in sidebar list
+      let $selectedLi = caller.$componentList.find('li.selected');
+      if ($selectedLi.length > 0) {
+        $selectedLi.text(file.name);
+      }
+
+      if (opt.reset) {
+        caller.resetScene(false);
+      }
+    });
+
+    // Built-in models button (reuses selectModel dialog logic)
+    let $builtInBtn = $('<button>Built-in Models</button>');
+    $builtInBtn.click(function () {
+      selectModelFileDialog(opt, currentOptions, $currentFile);
+    });
+
+    $buttonsBox.append($browseBtn);
+    $buttonsBox.append($fileInput);
+    $buttonsBox.append($builtInBtn);
+
+    $div.append(self.getTitle(opt));
+    $div.append($currentFile);
+    $div.append($buttonsBox);
+
+    return $div;
+  };
+
+  // Dialog for selecting built-in models (used by selectModelFile)
+  function selectModelFileDialog(opt, currentOptions, $currentFile) {
+    let $body = $('<div class="selectModel"></div>');
+    let $filter = $(
+      '<div class="filter">Filter by Type: ' +
+      '<select>' +
+      '<option selected value="any">Any</option>' +
+      '</select>' +
+      '</div>'
+    );
+    let $select = $filter.find('select');
+    if (typeof BUILT_IN_MODELS_CATEGORIES !== 'undefined') {
+      for (let category of BUILT_IN_MODELS_CATEGORIES) {
+        $select.append('<option>' + category + '</option');
+      }
+    }
+    let $search = $(
+      '<div class="search">Search: ' +
+      '<input type="text"></input>' +
+      '</div>'
+    );
+    let $searchInput = $search.find('input');
+
+    let $itemList = $('<div class="items"></div>');
+
+    if (typeof BUILT_IN_MODELS !== 'undefined') {
+      BUILT_IN_MODELS.forEach(function (model) {
+        let basename = model.url.split('/').pop();
+
+        let $row = $('<div class="row"></div>');
+        let category = model.category.replace(/\W/g, '');
+        $row.addClass(category);
+
+        let $descriptionBox = $('<div class="description"></div>');
+        let $categoryLabel = $('<p style="font-size:0.85em; color:#888;"></p>').text(model.category);
+        let $basename = $('<p class="bold"></p>').text(basename);
+        $descriptionBox.append($basename);
+        $descriptionBox.append($categoryLabel);
+
+        let $selectBox = $('<div class="select"><button>Select</button></div>');
+        let $selectBtn = $selectBox.find('button');
+        $selectBtn.prop('url', model.url);
+
+        $selectBtn.click(function (e) {
+          // Revoke old blob URL if exists
+          if (currentOptions[opt.option] && currentOptions[opt.option].startsWith('blob:')) {
+            URL.revokeObjectURL(currentOptions[opt.option]);
+          }
+
+          caller.saveHistory();
+          currentOptions[opt.option] = e.target.url;
+          delete currentOptions._modelFileName;
+
+          // Update display
+          let newName = e.target.url.split('/').pop();
+          $currentFile.text('Current: ' + newName);
+
+          // Update component name in sidebar list
+          let $selectedLi = caller.$componentList.find('li.selected');
+          if ($selectedLi.length > 0) {
+            $selectedLi.text(newName);
+          }
+
+          if (opt.reset) {
+            caller.resetScene(false);
+          }
+
+          // Save search
+          caller.selectModelFile_filterType = $select.val();
+          caller.selectModelFile_searchText = $searchInput.val();
+          caller.selectModelFile_scroll = $itemList[0].scrollTop;
+
+          $dialog.close();
+        });
+
+        $row.append($descriptionBox);
+        $row.append($selectBox);
+        $itemList.append($row);
+      });
+    }
+
+    $body.append($filter);
+    $body.append($search);
+    $body.append($itemList);
+
+    function filterList() {
+      let filter = $select.val();
+      let search = $searchInput.val().trim().toLowerCase();
+
+      let count = 0;
+      $itemList[0].childNodes.forEach(function (item) {
+        let itemText = item.childNodes[0].textContent.toLowerCase();
+        if (
+          (filter == 'any' || item.classList.contains(filter.replace(/\W/g, '')))
+          && (search == '' || itemText.indexOf(search) != -1)
+        ) {
+          item.classList.remove('hide');
+          count++;
+        } else {
+          item.classList.add('hide');
+        }
+      });
+
+      updateSearchCount(count);
+    }
+
+    $select.change(filterList);
+    $searchInput.on('input', filterList);
+
+    let $buttons = $(
+      '<div class="searchCount"></div><button type="button" class="cancel btn-light">Cancel</button>'
+    );
+
+    function updateSearchCount(count) {
+      $buttons.siblings('.searchCount').text(count + ' models found');
+    }
+
+    updateSearchCount($itemList[0].childNodes.length);
+
+    function setScroll() {
+      if (caller.selectModelFile_scroll != 0) {
+        $itemList[0].scrollTop = caller.selectModelFile_scroll;
+        if ($itemList[0].scrollTop == 0) {
+          setTimeout(setScroll, 200);
+        }
+      }
+    }
+
+    if (caller.selectModelFile_filterType) {
+      $select.val(caller.selectModelFile_filterType);
+      $searchInput.val(caller.selectModelFile_searchText);
+      filterList();
+      setScroll();
+    }
+
+    let $dialog = dialog('Select Built-In 3D Model', $body, $buttons);
+
+    $buttons.click(function () {
+      caller.selectModelFile_filterType = $select.val();
+      caller.selectModelFile_searchText = $searchInput.val();
+      caller.selectModelFile_scroll = $itemList[0].scrollTop;
+      $dialog.close();
+    });
+  }
+
+  gen.sliderBox = function (opt, currentValue, callback) {
     let $sliderBox = $(
       '<div class="slider">' +
-        '<input type="range">' +
-        '<input type="text">' +
+      '<input type="range">' +
+      '<input type="text">' +
       '</div>'
     );
     let $slider = $sliderBox.find('input[type=range]');
@@ -429,17 +648,17 @@ function GenConfig(caller, $settingsArea) {
     $slider.attr('value', currentValue);
     $input.val(currentValue);
 
-    $slider.on('input', function(){
+    $slider.on('input', function () {
       $input.val($slider.val());
     });
-    $slider.on('change', function(){
+    $slider.on('change', function () {
       caller.saveHistory();
       callback(parseFloat($slider.val()));
       if (opt.reset) {
         caller.resetScene(false);
       }
     })
-    $input.change(function(){
+    $input.change(function () {
       caller.saveHistory();
       callback(parseFloat($input.val()));
       $slider.val($input.val());
@@ -451,24 +670,24 @@ function GenConfig(caller, $settingsArea) {
     return $sliderBox;
   }
 
-  gen.vectors = function(opt, currentOptions) {
+  gen.vectors = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
 
     $div.append(self.getTitle(opt));
 
     if (currentOptions[opt.option] == null) {
-      currentOptions[opt.option] = [0,0,0];
+      currentOptions[opt.option] = [0, 0, 0];
     }
 
-    currentOptions[opt.option].forEach(function(currentOption, i){
+    currentOptions[opt.option].forEach(function (currentOption, i) {
       let slider = null;
 
       if (typeof opt.deg2rad != 'undefined' && opt.deg2rad) {
-        slider = gen.sliderBox(opt, currentOption / Math.PI * 180, function(val) {
+        slider = gen.sliderBox(opt, currentOption / Math.PI * 180, function (val) {
           currentOptions[opt.option][i] = val / 180 * Math.PI;
         });
       } else {
-        slider = gen.sliderBox(opt, currentOption, function(val) {
+        slider = gen.sliderBox(opt, currentOption, function (val) {
           currentOptions[opt.option][i] = val;
         });
       }
@@ -478,18 +697,18 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.slider = function(opt, currentOptions) {
+  gen.slider = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
 
     $div.append(self.getTitle(opt));
-    $div.append(gen.sliderBox(opt, currentOptions[opt.option], function(val) {
+    $div.append(gen.sliderBox(opt, currentOptions[opt.option], function (val) {
       currentOptions[opt.option] = val;
     }));
 
     return $div;
   }
 
-  gen.floatText = function(opt, currentOptions) {
+  gen.floatText = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $textBox = $('<div class="text"><input type="text"></div>');
     let $input = $textBox.find('input');
@@ -497,7 +716,7 @@ function GenConfig(caller, $settingsArea) {
 
     $input.val(currentVal);
 
-    $input.change(function(){
+    $input.change(function () {
       let val = parseFloat($input.val())
       if (isNaN(val)) {
         toastMsg('Not a valid number');
@@ -516,7 +735,7 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.intText = function(opt, currentOptions) {
+  gen.intText = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $textBox = $('<div class="text"><input type="text"></div>');
     let $input = $textBox.find('input');
@@ -524,7 +743,7 @@ function GenConfig(caller, $settingsArea) {
 
     $input.val(currentVal);
 
-    $input.change(function(){
+    $input.change(function () {
       let val = parseInt($input.val())
       if (isNaN(val)) {
         toastMsg('Not a valid number');
@@ -543,7 +762,7 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.strText = function(opt, currentOptions) {
+  gen.strText = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $textBox = $('<div class="text"><input type="text"></div>');
     let $input = $textBox.find('input');
@@ -551,7 +770,7 @@ function GenConfig(caller, $settingsArea) {
 
     $input.val(currentVal);
 
-    $input.change(function(){
+    $input.change(function () {
       caller.saveHistory();
       currentOptions[opt.option] = $input.val();
       if (opt.reset) {
@@ -565,7 +784,7 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.boolean = function(opt, currentOptions) {
+  gen.boolean = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $checkBox = $('<div class="text"><input type="checkbox"></div>');
     let $input = $checkBox.find('input');
@@ -573,7 +792,7 @@ function GenConfig(caller, $settingsArea) {
 
     $input.prop('checked', currentVal);
 
-    $input.change(function(){
+    $input.change(function () {
       caller.saveHistory();
       currentOptions[opt.option] = $input.prop('checked');
       if (opt.reset) {
@@ -587,12 +806,12 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  gen.select = function(opt, currentOptions) {
+  gen.select = function (opt, currentOptions) {
     let $div = $('<div class="configuration"></div>');
     let $select = $('<select></select>');
     let currentVal = currentOptions[opt.option];
 
-    opt.options.forEach(function(option){
+    opt.options.forEach(function (option) {
       let $opt = $('<option></option>');
       $opt.prop('value', option[1]);
       $opt.text(option[0]);
@@ -603,7 +822,7 @@ function GenConfig(caller, $settingsArea) {
       $select.append($opt);
     });
 
-    $select.change(function(){
+    $select.change(function () {
       caller.saveHistory();
       currentOptions[opt.option] = $select.val();
       if (opt.reset) {
@@ -617,8 +836,8 @@ function GenConfig(caller, $settingsArea) {
     return $div;
   }
 
-  this.displayOptionsConfigurations = function(template, currentOptions) {
-    template.optionsConfigurations.forEach(function(optionConfiguration){
+  this.displayOptionsConfigurations = function (template, currentOptions) {
+    template.optionsConfigurations.forEach(function (optionConfiguration) {
       if (typeof gen[optionConfiguration.type] != 'undefined') {
         $settingsArea.append(gen[optionConfiguration.type](optionConfiguration, currentOptions));
       } else {
