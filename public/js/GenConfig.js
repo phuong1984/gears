@@ -142,7 +142,7 @@ function GenConfig(caller, $settingsArea) {
   }
 
   gen.selectImage = function (opt, currentOptions) {
-    function selectImageDialog() {
+    function selectImageDialog($currentFile) {
       let $body = $('<div class="selectImage"></div>');
       let $filter = $(
         '<div class="filter">Filter by Type: ' +
@@ -185,6 +185,14 @@ function GenConfig(caller, $settingsArea) {
         $selectBtn.click(function (e) {
           caller.saveHistory();
           currentOptions[opt.option] = e.target.url;
+          delete currentOptions._imageFileName;
+
+          // Update display
+          let newName = e.target.url.split('/').pop();
+          if ($currentFile) {
+            $currentFile.text('Current: ' + newName);
+          }
+
           if (opt.reset) {
             caller.resetScene(false);
           }
@@ -268,11 +276,66 @@ function GenConfig(caller, $settingsArea) {
     }
 
     let $div = $('<div class="configuration"></div>');
-    let $buttonsBox = $('<div class="buttons"></div>');
 
-    let $button = $('<button>Select built-in image</button>');
-    $button.click(selectImageDialog);
-    $buttonsBox.append($button);
+    // Show current image filename
+    let currentVal = currentOptions[opt.option] || '';
+    let displayName = '';
+    if (currentVal) {
+      if (currentVal.startsWith('data:')) {
+        displayName = currentOptions._imageFileName || 'Uploaded file';
+      } else {
+        displayName = currentVal.split('/').pop();
+      }
+    } else {
+      displayName = '(No image selected)';
+    }
+    let $currentFile = $('<div class="text" style="margin-bottom:4px; font-size:0.95em;"></div>');
+    $currentFile.text('Current: ' + displayName);
+
+    // Buttons row
+    let $buttonsBox = $('<div class="buttons" style="display:flex; gap:6px; flex-wrap:wrap;"></div>');
+
+    // Browse file button + hidden file input
+    let $fileInput = $('<input type="file" accept="image/*" style="display:none;">');
+    let $browseBtn = $('<button>Browse Image...</button>');
+    $browseBtn.click(function () {
+      $fileInput.click();
+    });
+
+    $fileInput.change(function (e) {
+      let file = e.target.files[0];
+      if (!file) return;
+
+      // Read the file as a data URL (base64) so it persists in saved JSON
+      let reader = new FileReader();
+      reader.onload = function () {
+        let dataURL = reader.result;
+        caller.saveHistory();
+        currentOptions[opt.option] = dataURL;
+        currentOptions._imageFileName = file.name;
+
+        // Update display
+        $currentFile.text('Current: ' + file.name);
+
+        if (opt.reset) {
+          caller.resetScene(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Built-in images button
+    let $builtInBtn = $('<button>Built-in Images</button>');
+    $builtInBtn.click(function () {
+      selectImageDialog($currentFile);
+    });
+
+    $buttonsBox.append($browseBtn);
+    $buttonsBox.append($fileInput);
+    $buttonsBox.append($builtInBtn);
+
+    $div.append(self.getTitle(opt));
+    $div.append($currentFile);
     $div.append($buttonsBox);
 
     return $div;
