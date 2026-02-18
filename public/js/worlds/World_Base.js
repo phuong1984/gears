@@ -1,4 +1,4 @@
-var World_Base = function() {
+var World_Base = function () {
   var self = this;
 
   this.name = 'base';
@@ -68,15 +68,17 @@ var World_Base = function() {
 
   this.objectDefault = {
     type: 'box',
-    position: [0,0,0],
+    position: [0, 0, 0],
     rotationMode: 'degrees',
-    rotation: [0,0,0],
+    rotation: [0, 0, 0],
     animationMode: 'none',
     animationKeys: [],
-    size: [10,10,10],
+    size: [10, 10, 10],
     modelURL: '',
     modelScale: 10,
     modelAnimation: 'None',
+    modelColor: '',
+    _modelFileName: '',
     color: '#80E680',
     imageType: 'repeat',
     imageURL: '',
@@ -104,7 +106,7 @@ var World_Base = function() {
   this.overrideHide = false;
 
   // Set default options
-  this.mergeOptionsWithDefault = function(options) {
+  this.mergeOptionsWithDefault = function (options) {
     Object.assign(self.options, self.defaultOptions);
 
     for (let name in options) {
@@ -117,7 +119,7 @@ var World_Base = function() {
   };
 
   // Set options, NOT including default
-  this.setOptions = function(options) {
+  this.setOptions = function (options) {
     function processOptionsObject(options) {
       if (options === null) {
         return null;
@@ -176,10 +178,10 @@ var World_Base = function() {
       self.processedOptions.image = options.imageFile;
     }
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       function setStartPosRot() {
         if (self.processedOptions.arenaStartPosXYZ instanceof Array) {
-          for (let i=0; i < self.processedOptions.arenaStartPosXYZ.length; i++) {
+          for (let i = 0; i < self.processedOptions.arenaStartPosXYZ.length; i++) {
             self.arenaStart[i].position = new BABYLON.Vector3(
               self.processedOptions.arenaStartPosXYZ[i][0],
               self.processedOptions.arenaStartPosXYZ[i][2],
@@ -189,7 +191,7 @@ var World_Base = function() {
         }
 
         if (self.processedOptions.arenaStartRot instanceof Array) {
-          for (let i=0; i < self.processedOptions.arenaStartRot.length; i++) {
+          for (let i = 0; i < self.processedOptions.arenaStartRot.length; i++) {
             self.arenaStart[i].rotation = new BABYLON.Vector3(
               0,
               self.processedOptions.arenaStartRot[i] / 180 * Math.PI,
@@ -235,7 +237,7 @@ var World_Base = function() {
         } else {
           startRot = self.processedOptions.startRotStr; // May be parsed by setting string processor
         }
-        if (! isNaN(startRot)) {
+        if (!isNaN(startRot)) {
           self.processedOptions.startRot = parseFloat(self.processedOptions.startRotStr);
         }
 
@@ -263,14 +265,14 @@ var World_Base = function() {
 
       var img = new Image();
       img.crossOrigin = "anonymous";
-      img.onerror = function() {
+      img.onerror = function () {
         showErrorModal(
           '<p>Gears cannot load this image.</p>' +
           '<p>Either the image URL is wrong, or the server that hosts this image do not allow cross origin access (...most servers do not).</p>' +
           '<p>Try hosting the image on Imgur. They are known to allow cross origin access.</p>'
         );
       };
-      img.onload = function() {
+      img.onload = function () {
         self.processedOptions.groundLength = this.width / 10.0 * self.processedOptions.imageScale * self.processedOptions.uScale;
         self.processedOptions.groundWidth = this.height / 10.0 * self.processedOptions.imageScale * self.processedOptions.vScale;
 
@@ -300,7 +302,7 @@ var World_Base = function() {
         resolve();
       }
       if (self.processedOptions.groundType == 'none') {
-        var VALID_STARTPOS = ['center','P0','P1','P2','P3'];
+        var VALID_STARTPOS = ['center', 'P0', 'P1', 'P2', 'P3'];
         if (VALID_STARTPOS.indexOf(self.processedOptions.startPos) == -1) {
           self.processedOptions.startPos = 'center';
         }
@@ -313,15 +315,15 @@ var World_Base = function() {
   };
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     self.setOptions();
   };
 
   // Box ground
-  this.boxGround = function(scene, groundMat) {
+  this.boxGround = function (scene, groundMat) {
     var faceUV = new Array(6);
     for (var i = 0; i < 6; i++) {
-        faceUV[i] = new BABYLON.Vector4(0, 0, 0, 0);
+      faceUV[i] = new BABYLON.Vector4(0, 0, 0, 0);
     }
     faceUV[4] = new BABYLON.Vector4(0, 0, 1, 1);
 
@@ -356,7 +358,7 @@ var World_Base = function() {
   };
 
   // Cylinder gound
-  this.cylinderGround = function(scene, groundMat) {
+  this.cylinderGround = function (scene, groundMat) {
     var faceUV = new Array(3);
     for (var i = 0; i < 3; i++) {
       faceUV[i] = new BABYLON.Vector4(0, 0, 0, 0);
@@ -405,7 +407,7 @@ var World_Base = function() {
       self.panel = arenaPanel;
     }
 
-    return new Promise(async function(resolve, reject) {
+    return new Promise(async function (resolve, reject) {
       var groundMat = new BABYLON.StandardMaterial('ground', scene);
       var groundTexture = new BABYLON.Texture(self.processedOptions.image, scene);
       groundMat.diffuseTexture = groundTexture;
@@ -497,7 +499,7 @@ var World_Base = function() {
 
       if (self.processedOptions.objects instanceof Array) {
         let indexObj = { index: 0 };
-        for (let i=0; i<self.processedOptions.objects.length; i++) {
+        for (let i = 0; i < self.processedOptions.objects.length; i++) {
           await self.addObject(scene, self.processedOptions.objects[i], indexObj);
         }
       }
@@ -535,7 +537,7 @@ var World_Base = function() {
   };
 
   // Compute all world matrices in order
-  this.computeAllWorldMatrices = function(meshes) {
+  this.computeAllWorldMatrices = function (meshes) {
     for (let mesh of meshes) {
       mesh.computeWorldMatrix(true);
       let childMeshes = mesh.getChildMeshes(true);
@@ -546,21 +548,21 @@ var World_Base = function() {
   };
 
   // Add physics body to designated
-  this.addPhysicsToAll = function(scene, physicsToAdd) {
+  this.addPhysicsToAll = function (scene, physicsToAdd) {
     for (let meshAndOptions of physicsToAdd) {
       self.addPhysics(scene, meshAndOptions[0], meshAndOptions[1]);
     }
   };
 
   // Remove designated parents.
-  this.removeParents = function(parentsToRemove) {
+  this.removeParents = function (parentsToRemove) {
     for (let parentChild of parentsToRemove) {
       parentChild[0].removeChild(parentChild[1]);
     }
   };
 
   // Add all hinge joints
-  this.addHingeJoints = function() {
+  this.addHingeJoints = function () {
     for (let hingedObject of self.hinges) {
       if (hingedObject.part2Mesh == null) {
         continue;
@@ -620,7 +622,7 @@ var World_Base = function() {
   };
 
   // Add all ball joints
-  this.addBallJoints = function() {
+  this.addBallJoints = function () {
     for (let ballJointObject of self.ballJoints) {
       if (ballJointObject.part2Mesh == null) {
         continue;
@@ -649,7 +651,7 @@ var World_Base = function() {
   };
 
   // Add an object of any type
-  this.addObject = async function(scene, object, indexObj) {
+  this.addObject = async function (scene, object, indexObj) {
     let mesh = null;
 
     let options = self.mergeObjectOptionsWithDefault(object);
@@ -675,8 +677,8 @@ var World_Base = function() {
   };
 
   // Add a compound object
-  this.addCompound = async function(scene, object, indexObj) {
-    if (! (object.objects instanceof Array)) {
+  this.addCompound = async function (scene, object, indexObj) {
+    if (!(object.objects instanceof Array)) {
       return;
     }
     if (object.objects.length == 0) {
@@ -700,7 +702,7 @@ var World_Base = function() {
     let parentMesh = await self.addBlock(scene, options, indexObj.index);
     indexObj.index++;
 
-    for (let i=1; i<object.objects.length; i++) {
+    for (let i = 1; i < object.objects.length; i++) {
       let childMesh = await self.addObject(scene, object.objects[i], indexObj);
       if (childMesh) {
         childMesh.parent = parentMesh;
@@ -713,8 +715,8 @@ var World_Base = function() {
   };
 
   // Add a hinge object
-  this.addHinge = async function(scene, object, indexObj) {
-    if (! (object.objects instanceof Array)) {
+  this.addHinge = async function (scene, object, indexObj) {
+    if (!(object.objects instanceof Array)) {
       return null;
     }
     if (object.objects.length > 1) {
@@ -727,7 +729,7 @@ var World_Base = function() {
     }
 
     let rotationRad = []
-    for (let i=0; i<options.rotation.length; i++) {
+    for (let i = 0; i < options.rotation.length; i++) {
       if (options.rotationMode == 'degrees') {
         rotationRad[i] = options.rotation[i] / 180 * Math.PI;
       } else {
@@ -791,8 +793,8 @@ var World_Base = function() {
   };
 
   // Add a ballJoint object
-  this.addBallJoint = async function(scene, object, indexObj) {
-    if (! (object.objects instanceof Array)) {
+  this.addBallJoint = async function (scene, object, indexObj) {
+    if (!(object.objects instanceof Array)) {
       return null;
     }
     if (object.objects.length > 1) {
@@ -805,7 +807,7 @@ var World_Base = function() {
     }
 
     let rotationRad = []
-    for (let i=0; i<options.rotation.length; i++) {
+    for (let i = 0; i < options.rotation.length; i++) {
       if (options.rotationMode == 'degrees') {
         rotationRad[i] = options.rotation[i] / 180 * Math.PI;
       } else {
@@ -869,7 +871,7 @@ var World_Base = function() {
   };
 
   // Merge with default object options
-  this.mergeObjectOptionsWithDefault = function(object) {
+  this.mergeObjectOptionsWithDefault = function (object) {
     let options = Object.assign({}, self.objectDefault);
     Object.assign(options, object);
 
@@ -877,13 +879,13 @@ var World_Base = function() {
   };
 
   // Add a single block object
-  this.addBlock = async function(scene, options, index) {
+  this.addBlock = async function (scene, options, index) {
     if (options.position.length < 3) {
       options.position.push(0);
     }
 
     let rotationRad = []
-    for (let i=0; i<options.rotation.length; i++) {
+    for (let i = 0; i < options.rotation.length; i++) {
       if (options.rotationMode == 'degrees') {
         rotationRad[i] = options.rotation[i] / 180 * Math.PI;
       } else {
@@ -896,6 +898,8 @@ var World_Base = function() {
       modelURL: options.modelURL,
       modelScale: options.modelScale,
       modelAnimation: options.modelAnimation,
+      modelColor: options.modelColor,
+      _modelFileName: options._modelFileName,
       size: [
         options.size[0],
         options.size[1],
@@ -914,7 +918,7 @@ var World_Base = function() {
       index: index
     };
 
-    let VALID_IMAGETYPES = ['top','front','repeat','all','cylinder','sphere'];
+    let VALID_IMAGETYPES = ['top', 'front', 'repeat', 'all', 'cylinder', 'sphere'];
 
     let imageURL = options.imageURL;
     if (VALID_IMAGETYPES.indexOf(meshOptions.imageType) != -1 && imageURL != '') {
@@ -974,7 +978,7 @@ var World_Base = function() {
   };
 
   // Add animation to animationList
-  this.addAnimation = function(mesh, options) {
+  this.addAnimation = function (mesh, options) {
     let VALID_ANIMATIONMODES = ['loop', 'alternate'];
     if (VALID_ANIMATIONMODES.indexOf(options.animationMode) == -1) {
       return;
@@ -995,7 +999,7 @@ var World_Base = function() {
       ])
     }
     let valid = true;
-    keys.sort(function(a, b){
+    keys.sort(function (a, b) {
       if (b[0] == a[0]) {
         console.log('Invalid animation (Duplicate key timing)');
         valid = false;
@@ -1023,15 +1027,15 @@ var World_Base = function() {
     }
 
     if (options.animationMode == 'alternate') {
-      let midTime = keys[keys.length-1][0];
-      for (let i=keys.length-2; i>=0; i--) {
+      let midTime = keys[keys.length - 1][0];
+      for (let i = keys.length - 2; i >= 0; i--) {
         let key = JSON.parse(JSON.stringify(keys[i]));
         key[0] = midTime + (midTime - key[0]);
         keys.push(key);
       }
     }
 
-    let duration = keys[keys.length-1][0];
+    let duration = keys[keys.length - 1][0];
     let animation = {
       active: true,
       object: mesh,
@@ -1043,22 +1047,35 @@ var World_Base = function() {
   };
 
   // Add model
-  this.addModel = async function(scene, options) {
+  this.addModel = async function (scene, options) {
     let id = 'worldBaseObject';
     if (typeof options.index != 'undefined') {
       id += '_model' + options.index;
     }
 
+    let results;
     try {
-      results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', options.modelURL, scene);
+      // Determine plugin extension for blob/data URLs (they have no file extension)
+      let pluginExtension = null;
+      if (options.modelURL && (options.modelURL.startsWith('blob:') || options.modelURL.startsWith('data:'))) {
+        // Use stored filename to determine extension, default to .glb
+        let fileName = options._modelFileName || '';
+        if (fileName.toLowerCase().endsWith('.gltf')) {
+          pluginExtension = '.gltf';
+        } else {
+          pluginExtension = '.glb';
+        }
+      }
+      results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', options.modelURL, scene, null, pluginExtension);
     }
     catch (err) {
+      console.log('Failed to load model: ' + (options.modelURL || '(empty)') + '. Using placeholder. Error:', err);
       results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', 'models/Misc/placeholder.gltf', scene);
     }
     var meshes = results.meshes;
 
     // Make all meshes unpickable
-    for (let i=0; i<meshes.length; i++) {
+    for (let i = 0; i < meshes.length; i++) {
       meshes[i].isPickable = false;
     }
 
@@ -1066,7 +1083,7 @@ var World_Base = function() {
     let min = meshes[1].getBoundingInfo().boundingBox.minimumWorld;
     let max = meshes[1].getBoundingInfo().boundingBox.maximumWorld;
 
-    for (let i=1; i<meshes.length; i++) {
+    for (let i = 1; i < meshes.length; i++) {
       meshes[i].computeWorldMatrix(true)
       let meshBounds = meshes[i].getBoundingInfo().boundingBox;
 
@@ -1108,15 +1125,30 @@ var World_Base = function() {
     meshes[0].parent = mesh;
     meshes[0].visibility = 0;
 
+    // Apply model color to submeshes if specified
+    if (options.modelColor && options.modelColor !== '') {
+      let colorHex = options.modelColor;
+      if (colorHex[0] !== '#') colorHex = '#' + colorHex;
+      colorHex = colorHex.substring(0, 7);
+      let color3 = BABYLON.Color3.FromHexString(colorHex);
+      for (let i = 1; i < meshes.length; i++) {
+        if (meshes[i].material) {
+          let newMat = new BABYLON.StandardMaterial('modelColor_' + id + '_' + i, scene);
+          newMat.diffuseColor = color3;
+          meshes[i].material = newMat;
+        }
+      }
+    }
+
     // Save animation group in mesh
     mesh.animations = [];
-    results.animationGroups.forEach(function(animationGroup){
+    results.animationGroups.forEach(function (animationGroup) {
       mesh.animations.push(animationGroup.name);
     });
 
     // Start animation
     if (options.modelAnimation && options.modelAnimation != 'None') {
-      results.animationGroups.forEach(function(animationGroup){
+      results.animationGroups.forEach(function (animationGroup) {
         if (animationGroup.name == options.modelAnimation) {
           animationGroup.start(true);
         }
@@ -1133,7 +1165,7 @@ var World_Base = function() {
   };
 
   // Add sphere
-  this.addSphere = function(scene, options) {
+  this.addSphere = function (scene, options) {
     var meshOptions = {
       diameter: options.size[0],
     };
@@ -1159,7 +1191,7 @@ var World_Base = function() {
   };
 
   // Add cylinder
-  this.addCylinder = function(scene, options) {
+  this.addCylinder = function (scene, options) {
     var meshOptions = {
       height: options.size[0],
       diameter: options.size[1],
@@ -1167,9 +1199,9 @@ var World_Base = function() {
 
     if (options.imageType == 'cylinder') {
       var faceUV = new Array(3);
-      faceUV[0] = new BABYLON.Vector4(0,   0,   1/4, 1);
-      faceUV[1] = new BABYLON.Vector4(3/4, 0,   1/4, 1);
-      faceUV[2] = new BABYLON.Vector4(3/4, 0,   1,   1);
+      faceUV[0] = new BABYLON.Vector4(0, 0, 1 / 4, 1);
+      faceUV[1] = new BABYLON.Vector4(3 / 4, 0, 1 / 4, 1);
+      faceUV[2] = new BABYLON.Vector4(3 / 4, 0, 1, 1);
       meshOptions.faceUV = faceUV;
     }
 
@@ -1195,7 +1227,7 @@ var World_Base = function() {
   };
 
   // Add box
-  this.addBox = function(scene, options) {
+  this.addBox = function (scene, options) {
     var meshOptions = {
       width: options.size[0],
       depth: options.size[1],
@@ -1217,12 +1249,12 @@ var World_Base = function() {
         faceUV[i] = new BABYLON.Vector4(0, 0, 1, 1);
       }
     } else if (options.imageType == 'all') {
-      faceUV[0] = new BABYLON.Vector4(0,   0,   1/3, 1/2);
-      faceUV[1] = new BABYLON.Vector4(1/3, 0,   2/3, 1/2);
-      faceUV[2] = new BABYLON.Vector4(2/3, 0,   1,   1/2);
-      faceUV[3] = new BABYLON.Vector4(0,   1/2, 1/3, 1);
-      faceUV[4] = new BABYLON.Vector4(1/3, 1/2, 2/3, 1);
-      faceUV[5] = new BABYLON.Vector4(2/3, 1/2, 1,   1);
+      faceUV[0] = new BABYLON.Vector4(0, 0, 1 / 3, 1 / 2);
+      faceUV[1] = new BABYLON.Vector4(1 / 3, 0, 2 / 3, 1 / 2);
+      faceUV[2] = new BABYLON.Vector4(2 / 3, 0, 1, 1 / 2);
+      faceUV[3] = new BABYLON.Vector4(0, 1 / 2, 1 / 3, 1);
+      faceUV[4] = new BABYLON.Vector4(1 / 3, 1 / 2, 2 / 3, 1);
+      faceUV[5] = new BABYLON.Vector4(2 / 3, 1 / 2, 1, 1);
     }
     meshOptions.faceUV = faceUV;
 
@@ -1247,7 +1279,7 @@ var World_Base = function() {
     return mesh;
   };
 
-  this.addPhysics = function(scene, mesh, options) {
+  this.addPhysics = function (scene, mesh, options) {
     if (typeof options.physicsOptions == 'string') {
       if (options.physicsOptions == 'fixed') {
         options.physicsOptions = {
@@ -1320,20 +1352,20 @@ var World_Base = function() {
   };
 
   // startSim
-  self.startSim = function() {
+  self.startSim = function () {
     if (self.processedOptions.timer != 'none') {
       self.startTime = Date.now();
     }
 
     if (self.processedOptions.restartAnimationOnRun) {
-      self.animationList.forEach(function(animation){
+      self.animationList.forEach(function (animation) {
         animation.renderTime = 0;
       });
     }
   };
 
   // set the render function
-  self.render = function(delta){
+  self.render = function (delta) {
     // Fast loop
     if (self.animate) {
       self.renderAnimation(delta);
@@ -1351,8 +1383,8 @@ var World_Base = function() {
   }
 
   // Render animation
-  self.renderAnimation = function(delta) {
-    self.animationList.forEach(function(animation){
+  self.renderAnimation = function (delta) {
+    self.animationList.forEach(function (animation) {
       if (animation.active == false) {
         return;
       }
@@ -1361,18 +1393,18 @@ var World_Base = function() {
       let prevKey = null;
       let nextKey = null;
 
-      for (let i=0; i<animation.keys.length; i++) {
+      for (let i = 0; i < animation.keys.length; i++) {
         if (animationTime < animation.keys[i][0]) {
           nextKey = animation.keys[i];
           if (i > 0) {
-            prevKey = animation.keys[i-1];
+            prevKey = animation.keys[i - 1];
           }
           break;
         }
       }
       if (nextKey == null) {
-        nextKey = animation.keys[animation.keys.length-1];
-        prevKey = animation.keys[animation.keys.length-2];
+        nextKey = animation.keys[animation.keys.length - 1];
+        prevKey = animation.keys[animation.keys.length - 2];
       }
 
       let keyTime;
@@ -1406,14 +1438,14 @@ var World_Base = function() {
   };
 
   // Render the timer
-  self.renderTimer = function(delta) {
+  self.renderTimer = function (delta) {
     if (typeof self.processedOptions != 'undefined' && self.processedOptions.timer != 'none') {
       self.drawTimer(false);
     }
   };
 
   // draw the timer panel
-  self.drawTimer = function(rebuild) {
+  self.drawTimer = function (rebuild) {
     if (typeof self.panel == 'undefined') {
       return;
     }
@@ -1422,7 +1454,7 @@ var World_Base = function() {
     if (typeof skulpt != 'undefined' && skulpt.running) {
       programRunning = true;
     } else if (typeof playerFrames != 'undefined') {
-      playerFrames.forEach(function(playerFrame){
+      playerFrames.forEach(function (playerFrame) {
         if (playerFrame.skulpt.running) {
           programRunning = true;
         }
@@ -1433,7 +1465,7 @@ var World_Base = function() {
       self.panel.clearWorldInfoPanel();
       let $info = $(
         '<div class="mono row">' +
-          '<div class="center time"></div>' +
+        '<div class="center time"></div>' +
         '</div>'
       );
       self.panel.drawWorldInfo($info);
@@ -1483,7 +1515,7 @@ var World_Base = function() {
     }
 
     if (typeof time != 'undefined' && (programRunning || rebuild)) {
-      let timeStr = sign + Math.floor(time/60) + ':' + ('0' + time % 60).slice(-2);
+      let timeStr = sign + Math.floor(time / 60) + ':' + ('0' + time % 60).slice(-2);
 
       function updateIfChanged(text, $dom) {
         if (text != $dom.text()) {
@@ -1495,11 +1527,11 @@ var World_Base = function() {
   };
 
   // process setting string
-  self.processSettingsString = function(settingsString) {
+  self.processSettingsString = function (settingsString) {
     let NUMBERS = '-+0123456789';
 
     let fns = {};
-    fns.randrange = function(string, rand) {
+    fns.randrange = function (string, rand) {
       if (typeof rand == 'undefined') {
         rand = self.mulberry32();
       }
@@ -1518,22 +1550,22 @@ var World_Base = function() {
 
       return params[0] + rand * (params[1] - params[0]);
     };
-    fns.randrangeA = function(string) {
+    fns.randrangeA = function (string) {
       return fns.randrange(string, self.choiceA);
     }
-    fns.randrangeB = function(string) {
+    fns.randrangeB = function (string) {
       return fns.randrange(string, self.choiceB);
     }
-    fns.randrangeC = function(string) {
+    fns.randrangeC = function (string) {
       return fns.randrange(string, self.choiceC);
     }
-    fns.randrangeD = function(string) {
+    fns.randrangeD = function (string) {
       return fns.randrange(string, self.choiceD);
     }
-    fns.randrangeE = function(string) {
+    fns.randrangeE = function (string) {
       return fns.randrange(string, self.choiceE);
     }
-    fns.randchoice = function(string, rand) {
+    fns.randchoice = function (string, rand) {
       if (typeof rand == 'undefined') {
         rand = self.mulberry32();
       }
@@ -1550,29 +1582,29 @@ var World_Base = function() {
       let choice = Math.floor(rand * params.length);
       return params[choice];
     };
-    fns.randchoiceA = function(string) {
+    fns.randchoiceA = function (string) {
       return fns.randchoice(string, self.choiceA);
     }
-    fns.randchoiceB = function(string) {
+    fns.randchoiceB = function (string) {
       return fns.randchoice(string, self.choiceB);
     }
-    fns.randchoiceC = function(string) {
+    fns.randchoiceC = function (string) {
       return fns.randchoice(string, self.choiceC);
     }
-    fns.randchoiceD = function(string) {
+    fns.randchoiceD = function (string) {
       return fns.randchoice(string, self.choiceD);
     }
-    fns.randchoiceE = function(string) {
+    fns.randchoiceE = function (string) {
       return fns.randchoice(string, self.choiceE);
     }
-    fns.shuffle = function(string, group, index) {
+    fns.shuffle = function (string, group, index) {
       if (typeof index != 'undefined') {
         return fns.shuffleIndex(string, group, index);
       } else {
         return fns.shuffleNext(string, group);
       }
     }
-    fns.shuffleIndex = function(string, group, index) {
+    fns.shuffleIndex = function (string, group, index) {
       let params = processTerms(string.slice(1, -1));
       if (params.length == 0) {
         return null;
@@ -1585,8 +1617,8 @@ var World_Base = function() {
       let choice = self.shuffleUsed[group][index];
       return params[choice];
     }
-    fns.shuffleNext = function(string, group) {
-        if (typeof string != 'string') {
+    fns.shuffleNext = function (string, group) {
+      if (typeof string != 'string') {
         return string;
       }
       string = string.trim();
@@ -1617,7 +1649,7 @@ var World_Base = function() {
 
     function processFunction(string) {
       let i;
-      for (i=0; i<string.length; i++) {
+      for (i = 0; i < string.length; i++) {
         if (string[i] == '(') {
           break;
         }
@@ -1625,11 +1657,11 @@ var World_Base = function() {
       let fn = string.slice(0, i);
       let remainder = string.slice(i);
 
-      if (fn.slice(0,7) == 'shuffle') {
+      if (fn.slice(0, 7) == 'shuffle') {
         if (fn.length > 8) {
-          return fns['shuffle'](remainder, fn.slice(7,8), parseInt(fn.slice(8)));
+          return fns['shuffle'](remainder, fn.slice(7, 8), parseInt(fn.slice(8)));
         } else {
-          return fns['shuffle'](remainder, fn.slice(7,8));
+          return fns['shuffle'](remainder, fn.slice(7, 8));
         }
       }
       if (fn in fns) {
@@ -1688,7 +1720,7 @@ var World_Base = function() {
 
       if (string[0] == '\'') {
         let closed = false;
-        for (i=1; i<string.length; i++) {
+        for (i = 1; i < string.length; i++) {
           if (string[i] == '\'') {
             closed = true;
           } else if (string[i] == ',' && closed) {
@@ -1697,7 +1729,7 @@ var World_Base = function() {
         }
       } else if (string[0] == '[') {
         let level = 0;
-        for (i=0; i<string.length; i++) {
+        for (i = 0; i < string.length; i++) {
           if (string[i] == '[') {
             level++;
           } else if (string[i] == ']') {
@@ -1707,14 +1739,14 @@ var World_Base = function() {
           }
         }
       } else if (NUMBERS.indexOf(string[0]) != -1) {
-        for (i=0; i<string.length; i++) {
+        for (i = 0; i < string.length; i++) {
           if (string[i] == ',') {
             break;
           }
         }
       } else {
         let level = 0;
-        for (i=0; i<string.length; i++) {
+        for (i = 0; i < string.length; i++) {
           if (string[i] == '(') {
             level++;
           } else if (string[i] == ')') {
@@ -1725,7 +1757,7 @@ var World_Base = function() {
         }
       }
       let firstTerm = string.slice(0, i);
-      let remainder = string.slice(i+1);
+      let remainder = string.slice(i + 1);
 
       terms.push(processTerm(firstTerm));
 
@@ -1741,7 +1773,7 @@ var World_Base = function() {
   };
 
   // Set the random number seed
-  this.setSeed = function(seed) {
+  this.setSeed = function (seed) {
     if (typeof seed == 'undefined' || seed == null) {
       self.seed = Date.now();
     } else {
@@ -1763,7 +1795,7 @@ var World_Base = function() {
   };
 
   // Generate random number
-  this.mulberry32 = function() {
+  this.mulberry32 = function () {
     var t = self.seed += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
     t ^= t + Math.imul(t ^ t >>> 7, t | 61);
@@ -1773,13 +1805,13 @@ var World_Base = function() {
   };
 
   // shuffle array
-  this.shuffleArray = function(arr) {
-    var i = arr.length, k , temp;      // k is to generate random index and temp is to swap the values
-    while(--i > 0){
-        k = Math.floor(Math.random() * (i+1));
-        temp = arr[k];
-        arr[k] = arr[i];
-        arr[i] = temp;
+  this.shuffleArray = function (arr) {
+    var i = arr.length, k, temp;      // k is to generate random index and temp is to swap the values
+    while (--i > 0) {
+      k = Math.floor(Math.random() * (i + 1));
+      temp = arr[k];
+      arr[k] = arr[i];
+      arr[i] = temp;
     }
     return arr;
   };

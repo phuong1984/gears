@@ -745,6 +745,12 @@ var builder = new function () {
         reset: true
       },
       {
+        option: 'modelColor',
+        type: 'color',
+        help: 'Override color for the 3D model. Leave empty to use original model colors.',
+        reset: true
+      },
+      {
         type: 'custom',
         option: 'modelAnimation',
         generatorFunction: 'selectAnimation'
@@ -959,6 +965,8 @@ var builder = new function () {
     ...this.objectDefault,
     type: 'model',
     imageType: 'sphere',
+    modelColor: '',
+    _modelFileName: '',
   };
 
   this.compoundDefault = {
@@ -1935,7 +1943,16 @@ var builder = new function () {
       }
 
       let $item = $('<li></li>');
-      $item.text(object.type);
+      // For models, show filename or URL basename instead of just 'model'
+      let displayName = object.type;
+      if (object.type === 'model') {
+        if (object._modelFileName) {
+          displayName = object._modelFileName;
+        } else if (object.modelURL && !object.modelURL.startsWith('data:') && !object.modelURL.startsWith('blob:')) {
+          displayName = object.modelURL.split('/').pop() || 'model';
+        }
+      }
+      $item.text(displayName);
       $item[0].name = object.type;
       $item[0].object = object;
       $item[0].objectIndex = objectIndex++;

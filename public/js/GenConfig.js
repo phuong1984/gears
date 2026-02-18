@@ -73,7 +73,7 @@ function GenConfig(caller, $settingsArea) {
     $alpha.attr('step', 1);
     let currentVal = currentOptions[opt.option];
 
-    if (typeof currentVal == 'undefined') {
+    if (typeof currentVal == 'undefined' || currentVal === '' || currentVal === null) {
       currentVal = '#FFFFFF';
     }
 
