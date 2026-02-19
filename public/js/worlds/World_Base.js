@@ -1046,31 +1046,83 @@ var World_Base = function () {
     self.animationList.push(animation);
   };
 
-  // Add model
+  // Detect if a model URL or filename refers to an STL file
+  this.isSTLModel = function (url, fileName) {
+    if (fileName && fileName.toLowerCase().endsWith('.stl')) return true;
+    if (url && !url.startsWith('blob:') && !url.startsWith('data:')) {
+      // Strip query parameters and hash fragments before checking extension
+      let cleanUrl = url.split('?')[0].split('#')[0];
+      return cleanUrl.toLowerCase().endsWith('.stl');
+    }
+    return false;
+  };
+
+  // Convert a data URL to a blob URL
+  this.dataURLToBlobURL = function (dataURL) {
+    let parts = dataURL.split(',');
+    let mimeMatch = parts[0].match(/:(.*?);/);
+    let mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    let isBase64 = parts[0].indexOf('base64') !== -1;
+    let data = parts[1];
+    let byteString;
+    if (isBase64) {
+      byteString = atob(data);
+    } else {
+      byteString = decodeURIComponent(data);
+    }
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    let blob = new Blob([ab], { type: mime });
+    return URL.createObjectURL(blob);
+  };
+
+  // Add model (supports GLTF/GLB and STL)
   this.addModel = async function (scene, options) {
     let id = 'worldBaseObject';
     if (typeof options.index != 'undefined') {
       id += '_model' + options.index;
     }
 
+    let isSTL = self.isSTLModel(options.modelURL, options._modelFileName);
+
     let results;
+    let tempBlobURL = null;
     try {
       // Determine plugin extension for blob/data URLs (they have no file extension)
       let pluginExtension = null;
+      let loadURL = options.modelURL;
       if (options.modelURL && (options.modelURL.startsWith('blob:') || options.modelURL.startsWith('data:'))) {
-        // Use stored filename to determine extension, default to .glb
         let fileName = options._modelFileName || '';
-        if (fileName.toLowerCase().endsWith('.gltf')) {
+        if (fileName.toLowerCase().endsWith('.stl')) {
+          pluginExtension = '.stl';
+        } else if (fileName.toLowerCase().endsWith('.gltf')) {
           pluginExtension = '.gltf';
         } else {
           pluginExtension = '.glb';
         }
+
+        // Babylon.js 4.2.1 STL loader lacks canDirectLoad support,
+        // so data URLs must be converted to blob URLs for STL files
+        if (isSTL && options.modelURL.startsWith('data:')) {
+          tempBlobURL = self.dataURLToBlobURL(options.modelURL);
+          loadURL = tempBlobURL;
+        }
       }
-      results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', options.modelURL, scene, null, pluginExtension);
+      results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', loadURL, scene, null, pluginExtension);
     }
     catch (err) {
       console.log('Failed to load model: ' + (options.modelURL || '(empty)') + '. Using placeholder. Error:', err);
       results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', 'models/Misc/placeholder.gltf', scene);
+      isSTL = false;
+    }
+    finally {
+      // Clean up temporary blob URL
+      if (tempBlobURL) {
+        URL.revokeObjectURL(tempBlobURL);
+      }
     }
     var meshes = results.meshes;
 
@@ -1079,89 +1131,190 @@ var World_Base = function () {
       meshes[i].isPickable = false;
     }
 
-    // Get bounding box
-    let min = meshes[1].getBoundingInfo().boundingBox.minimumWorld;
-    let max = meshes[1].getBoundingInfo().boundingBox.maximumWorld;
+    if (isSTL) {
+      // --- STL handling ---
+      // STLFileLoader returns flat meshes (no root node). 
+      // We wrap them in a bounding box like GLTF models.
 
-    for (let i = 1; i < meshes.length; i++) {
-      meshes[i].computeWorldMatrix(true)
-      let meshBounds = meshes[i].getBoundingInfo().boundingBox;
-
-      if (meshBounds.extendSize.x != 0 && meshBounds.extendSize.y != 0 && meshBounds.extendSize.z != 0) {
-        let meshMin = meshBounds.minimumWorld;
-        let meshMax = meshBounds.maximumWorld;
-
-        min = BABYLON.Vector3.Minimize(min, meshMin);
-        max = BABYLON.Vector3.Maximize(max, meshMax);
+      // Apply default material if STL mesh has none
+      for (let i = 0; i < meshes.length; i++) {
+        if (!meshes[i].material) {
+          let defaultMat = new BABYLON.StandardMaterial('stlDefaultMat_' + id + '_' + i, scene);
+          defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+          defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+          meshes[i].material = defaultMat;
+        }
       }
-    }
 
-    let bounding = new BABYLON.BoundingInfo(min, max);
-    var bx = bounding.boundingBox.extendSize.x * options.modelScale * 2;
-    var by = bounding.boundingBox.extendSize.y * options.modelScale * 2;
-    var bz = bounding.boundingBox.extendSize.z * options.modelScale * 2;
+      // Compute overall bounding box from all meshes (in local/world coords before reparenting)
+      let min = null;
+      let max = null;
+      for (let i = 0; i < meshes.length; i++) {
+        meshes[i].computeWorldMatrix(true);
+        let meshBounds = meshes[i].getBoundingInfo().boundingBox;
+        if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
+          if (min === null) {
+            min = meshBounds.minimumWorld.clone();
+            max = meshBounds.maximumWorld.clone();
+          } else {
+            min = BABYLON.Vector3.Minimize(min, meshBounds.minimumWorld);
+            max = BABYLON.Vector3.Maximize(max, meshBounds.maximumWorld);
+          }
+        }
+      }
 
-    // Build bounding box mesh
-    var meshOptions = {
-      width: bx,
-      depth: bz,
-      height: by
-    };
-    var mesh = BABYLON.MeshBuilder.CreateBox(id, meshOptions, scene);
-    mesh.visibility = 0;
+      if (min === null) {
+        min = new BABYLON.Vector3(0, 0, 0);
+        max = new BABYLON.Vector3(1, 1, 1);
+      }
 
-    mesh.position = options.position;
-    mesh.rotation = options.rotation;
+      let bounding = new BABYLON.BoundingInfo(min, max);
+      let center = bounding.boundingBox.center;
+      var bx = bounding.boundingBox.extendSize.x * options.modelScale * 2;
+      var by = bounding.boundingBox.extendSize.y * options.modelScale * 2;
+      var bz = bounding.boundingBox.extendSize.z * options.modelScale * 2;
 
-    // Set up scale and parent
-    meshes[0].scaling.x = options.modelScale;
-    meshes[0].scaling.y = options.modelScale;
-    meshes[0].scaling.z = -options.modelScale;
+      // Ensure minimum bounding box size to avoid degenerate physics shapes
+      bx = Math.max(bx, 0.1);
+      by = Math.max(by, 0.1);
+      bz = Math.max(bz, 0.1);
 
-    let offset = bounding.boundingBox.center.scale(options.modelScale);
-    meshes[0].position.x = -offset.x;
-    meshes[0].position.y = -offset.y;
-    meshes[0].position.z = -offset.z;
-    meshes[0].parent = mesh;
-    meshes[0].visibility = 0;
+      // Build invisible bounding box mesh (used for physics collision)
+      var boxOpts = { width: bx, depth: bz, height: by };
+      var mesh = BABYLON.MeshBuilder.CreateBox(id, boxOpts, scene);
+      mesh.visibility = 0;
+      mesh.position = options.position;
+      mesh.rotation = options.rotation;
 
-    // Apply model color to submeshes if specified
-    if (options.modelColor && options.modelColor !== '') {
-      let colorHex = options.modelColor;
-      if (colorHex[0] !== '#') colorHex = '#' + colorHex;
-      colorHex = colorHex.substring(0, 7);
-      let color3 = BABYLON.Color3.FromHexString(colorHex);
-      for (let i = 1; i < meshes.length; i++) {
-        if (meshes[i].material) {
+      // Create a root transform node for all STL meshes
+      // Z-axis is negated to convert from right-handed (STL) to left-handed (Babylon.js) coords
+      let stlRoot = new BABYLON.TransformNode('stlRoot_' + id, scene);
+      stlRoot.scaling.x = options.modelScale;
+      stlRoot.scaling.y = options.modelScale;
+      stlRoot.scaling.z = -options.modelScale;
+
+      // Center the model within the bounding box.
+      // For X,Y: offset = -center * modelScale (standard centering)
+      // For Z: offset = +center * modelScale (inverted because scaling.z is negative)
+      stlRoot.position.x = -center.x * options.modelScale;
+      stlRoot.position.y = -center.y * options.modelScale;
+      stlRoot.position.z = center.z * options.modelScale;
+      stlRoot.parent = mesh;
+
+      for (let i = 0; i < meshes.length; i++) {
+        meshes[i].parent = stlRoot;
+      }
+
+      // Apply model color if specified
+      if (options.modelColor && options.modelColor !== '') {
+        let colorHex = options.modelColor;
+        if (colorHex[0] !== '#') colorHex = '#' + colorHex;
+        colorHex = colorHex.substring(0, 7);
+        let color3 = BABYLON.Color3.FromHexString(colorHex);
+        for (let i = 0; i < meshes.length; i++) {
           let newMat = new BABYLON.StandardMaterial('modelColor_' + id + '_' + i, scene);
           newMat.diffuseColor = color3;
           meshes[i].material = newMat;
         }
       }
-    }
 
-    // Save animation group in mesh
-    mesh.animations = [];
-    results.animationGroups.forEach(function (animationGroup) {
-      mesh.animations.push(animationGroup.name);
-    });
+      // STL has no animations
+      mesh.animations = [];
 
-    // Start animation
-    if (options.modelAnimation && options.modelAnimation != 'None') {
-      results.animationGroups.forEach(function (animationGroup) {
-        if (animationGroup.name == options.modelAnimation) {
-          animationGroup.start(true);
+      meshes.forEach(m => m.receiveShadows = options.receiveShadows);
+      if (options.castShadows) {
+        scene.shadowGenerator.addShadowCaster(stlRoot);
+      }
+
+      return mesh;
+
+    } else {
+      // --- GLTF/GLB handling (original logic) ---
+
+      // Get bounding box
+      let min = meshes[1].getBoundingInfo().boundingBox.minimumWorld;
+      let max = meshes[1].getBoundingInfo().boundingBox.maximumWorld;
+
+      for (let i = 1; i < meshes.length; i++) {
+        meshes[i].computeWorldMatrix(true)
+        let meshBounds = meshes[i].getBoundingInfo().boundingBox;
+
+        if (meshBounds.extendSize.x != 0 && meshBounds.extendSize.y != 0 && meshBounds.extendSize.z != 0) {
+          let meshMin = meshBounds.minimumWorld;
+          let meshMax = meshBounds.maximumWorld;
+
+          min = BABYLON.Vector3.Minimize(min, meshMin);
+          max = BABYLON.Vector3.Maximize(max, meshMax);
         }
-      })
+      }
+
+      let bounding = new BABYLON.BoundingInfo(min, max);
+      var bx = bounding.boundingBox.extendSize.x * options.modelScale * 2;
+      var by = bounding.boundingBox.extendSize.y * options.modelScale * 2;
+      var bz = bounding.boundingBox.extendSize.z * options.modelScale * 2;
+
+      // Build bounding box mesh
+      var meshOptions = {
+        width: bx,
+        depth: bz,
+        height: by
+      };
+      var mesh = BABYLON.MeshBuilder.CreateBox(id, meshOptions, scene);
+      mesh.visibility = 0;
+
+      mesh.position = options.position;
+      mesh.rotation = options.rotation;
+
+      // Set up scale and parent
+      meshes[0].scaling.x = options.modelScale;
+      meshes[0].scaling.y = options.modelScale;
+      meshes[0].scaling.z = -options.modelScale;
+
+      let offset = bounding.boundingBox.center.scale(options.modelScale);
+      meshes[0].position.x = -offset.x;
+      meshes[0].position.y = -offset.y;
+      meshes[0].position.z = -offset.z;
+      meshes[0].parent = mesh;
+      meshes[0].visibility = 0;
+
+      // Apply model color to submeshes if specified
+      if (options.modelColor && options.modelColor !== '') {
+        let colorHex = options.modelColor;
+        if (colorHex[0] !== '#') colorHex = '#' + colorHex;
+        colorHex = colorHex.substring(0, 7);
+        let color3 = BABYLON.Color3.FromHexString(colorHex);
+        for (let i = 1; i < meshes.length; i++) {
+          if (meshes[i].material) {
+            let newMat = new BABYLON.StandardMaterial('modelColor_' + id + '_' + i, scene);
+            newMat.diffuseColor = color3;
+            meshes[i].material = newMat;
+          }
+        }
+      }
+
+      // Save animation group in mesh
+      mesh.animations = [];
+      results.animationGroups.forEach(function (animationGroup) {
+        mesh.animations.push(animationGroup.name);
+      });
+
+      // Start animation
+      if (options.modelAnimation && options.modelAnimation != 'None') {
+        results.animationGroups.forEach(function (animationGroup) {
+          if (animationGroup.name == options.modelAnimation) {
+            animationGroup.start(true);
+          }
+        })
+      }
+
+
+      meshes.forEach(mesh => mesh.receiveShadows = options.receiveShadows);
+      if (options.castShadows) {
+        scene.shadowGenerator.addShadowCaster(meshes[0]);
+      }
+
+      return mesh;
     }
-
-
-    meshes.forEach(mesh => mesh.receiveShadows = options.receiveShadows);
-    if (options.castShadows) {
-      scene.shadowGenerator.addShadowCaster(meshes[0]);
-    }
-
-    return mesh;
   };
 
   // Add sphere

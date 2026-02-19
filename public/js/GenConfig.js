@@ -498,7 +498,7 @@ function GenConfig(caller, $settingsArea) {
     // Browse file button + hidden file input
     let $buttonsBox = $('<div class="buttons" style="display:flex; gap:6px; flex-wrap:wrap;"></div>');
 
-    let $fileInput = $('<input type="file" accept=".glb,.gltf" style="display:none;">');
+    let $fileInput = $('<input type="file" accept=".glb,.gltf,.stl" style="display:none;">');
     let $browseBtn = $('<button>Browse File...</button>');
     $browseBtn.click(function () {
       $fileInput.click();

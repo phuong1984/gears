@@ -728,13 +728,13 @@ var builder = new function () {
         option: 'modelURL',
         type: 'selectModelFile',
         reset: true,
-        help: 'Select a 3D model (.glb/.gltf) from your computer or from the built-in library.'
+        help: 'Select a 3D model (.glb/.gltf/.stl) from your computer or from the built-in library.'
       },
       {
         option: 'modelURL',
         type: 'strText',
         reset: true,
-        help: 'URL for GLTF (.glb/.gltf) models. Will not work with most webhosts; Github will work.'
+        help: 'URL for 3D models (.glb/.gltf/.stl). Will not work with most webhosts; Github will work.'
       },
       {
         option: 'modelScale',
