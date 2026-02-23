@@ -1,10 +1,10 @@
-var arenaPanel = new function() {
+var arenaPanel = new function () {
   var self = this;
 
   this.sensors = [];
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     if (typeof babylon.scene == 'undefined') {
       setTimeout(self.init, 500);
       return;
@@ -39,46 +39,45 @@ var arenaPanel = new function() {
   };
 
   // Run when the simPanel in inactive
-  this.onInActive = function() {
-    for (playerFrame of playerFrames) {
-      if (playerFrame.skulpt.running) {
-        return;
-      }
-    }
-
-    babylon.engine.stopRenderLoop();
+  this.onInActive = function () {
+    babylon.simActive = false;
+    // Do NOT stop the render loop - BabylonJS 8.x needs it running to keep
+    // GPU shader programs alive. The idle throttle in babylon.js handles this.
   };
 
   // Run when the simPanel in active
-  this.onActive = function() {
-    if (babylon.engine._activeRenderLoops.length == 0)
-    babylon.engine.runRenderLoop(function(){
-      babylon.scene.render();
-    });
+  this.onActive = function () {
+    babylon.simActive = true;
+    // Resize engine after CSS transition so canvas has correct dimensions
+    setTimeout(function () {
+      babylon.engine.resize();
+    }, 50);
+    // Render loop is always running (started in babylon.init),
+    // simActive flag switches it from idle to full-speed mode
   };
 
   // clear world info
-  this.clearWorldInfoPanel = function() {
+  this.clearWorldInfoPanel = function () {
     self.$worldInfoPanel.empty();
   };
 
   // draw world info
-  this.drawWorldInfo = function(html) {
+  this.drawWorldInfo = function (html) {
     self.$worldInfoPanel.append(html);
   };
 
   // show world info
-  this.showWorldInfoPanel = function() {
+  this.showWorldInfoPanel = function () {
     self.$worldInfoPanel.removeClass('hide');
   };
 
   // hide world info
-  this.hideWorldInfoPanel = function() {
+  this.hideWorldInfoPanel = function () {
     self.$worldInfoPanel.addClass('hide');
   };
 
   // switch camera
-  this.switchCamera = function(e) {
+  this.switchCamera = function (e) {
     if (e.currentTarget.classList.contains('cameraArc')) {
       babylon.setCameraMode('arc');
       self.$camera.html('<span class="icon-cameraArc"></span>');
@@ -92,7 +91,7 @@ var arenaPanel = new function() {
   };
 
   // Toggle camera selector
-  this.toggleCameraSelector = function() {
+  this.toggleCameraSelector = function () {
     let current = self.$camera.children()[0].className.replace('icon-', '');
     self.$cameraSelector.children().removeClass('hide');
     self.$cameraSelector.find('.' + current).addClass('hide');
@@ -100,7 +99,7 @@ var arenaPanel = new function() {
   };
 
   // Select world map
-  this.selectWorld = function() {
+  this.selectWorld = function () {
     let $body = $('<div class="selectWorld"></div>');
     let $select = $('<select></select>');
     let $description = $('<div class="description"><img class="thumbnail"><div class="text"></div></div>');
@@ -132,7 +131,7 @@ var arenaPanel = new function() {
       let currentVal = currentOptions[opt.option];
       worldOptionsSetting[opt.option] = currentVal;
 
-      opt.options.forEach(function(option){
+      opt.options.forEach(function (option) {
         let $opt = $('<option></option>');
         $opt.prop('value', option[1]);
         $opt.text(option[0]);
@@ -143,7 +142,7 @@ var arenaPanel = new function() {
         $select.append($opt);
       });
 
-      $select.change(function(){
+      $select.change(function () {
         worldOptionsSetting[opt.option] = $select.val();
       });
 
@@ -160,7 +159,7 @@ var arenaPanel = new function() {
       let currentVal = currentOptions[opt.option];
       worldOptionsSetting[opt.option] = currentVal;
 
-      opt.options.forEach(function(option){
+      opt.options.forEach(function (option) {
         let $opt = $('<option></option>');
         $opt.prop('value', option[1]);
         $opt.text(option[0]);
@@ -172,7 +171,7 @@ var arenaPanel = new function() {
         $select.append($opt);
       });
 
-      $select.change(function(){
+      $select.change(function () {
         worldOptionsSetting[opt.option] = $select.val();
         $html.html(opt.optionsHTML[$select.val()]);
       });
@@ -200,7 +199,7 @@ var arenaPanel = new function() {
       } else {
         worldOptionsSetting[opt.option] = false;
       }
-      $checkbox.change(function(){
+      $checkbox.change(function () {
         worldOptionsSetting[opt.option] = $checkbox.prop('checked');
       });
 
@@ -215,8 +214,8 @@ var arenaPanel = new function() {
       let $div = $('<div class="configuration"></div>');
       let $sliderBox = $(
         '<div class="slider">' +
-          '<input type="range">' +
-          '<input type="text">' +
+        '<input type="range">' +
+        '<input type="text">' +
         '</div>'
       );
       let $slider = $sliderBox.find('input[type=range]');
@@ -230,11 +229,11 @@ var arenaPanel = new function() {
       $slider.attr('value', currentVal);
       $input.val(currentVal);
 
-      $slider.on('input', function(){
+      $slider.on('input', function () {
         worldOptionsSetting[opt.option] = parseInt($slider.val());
         $input.val($slider.val());
       });
-      $input.change(function(){
+      $input.change(function () {
         worldOptionsSetting[opt.option] = parseInt($input.val());
         $slider.val($input.val());
       });
@@ -254,7 +253,7 @@ var arenaPanel = new function() {
 
       $input.val(currentVal);
 
-      $input.change(function(){
+      $input.change(function () {
         worldOptionsSetting[opt.option] = $input.val();
       });
 
@@ -269,7 +268,7 @@ var arenaPanel = new function() {
       let $file = $('<input type="file">');
       $file.attr('accept', opt.accept);
 
-      $file.change(function(){
+      $file.change(function () {
         if (this.files.length) {
           worldOptionsSetting[opt.option] = URL.createObjectURL(this.files[0]);
         }
@@ -310,7 +309,7 @@ var arenaPanel = new function() {
       }
     }
 
-    worlds.forEach(function(world){
+    worlds.forEach(function (world) {
       let $world = $('<option></option>');
       $world.prop('value', world.name);
       $world.text(world.shortDescription);
@@ -325,7 +324,7 @@ var arenaPanel = new function() {
     $body.append($description);
     $body.append($configurations);
 
-    $select.change(function(){
+    $select.change(function () {
       let world = worlds.find(world => world.name == $select.val());
       displayWorldOptions(world, world.options);
     });
@@ -340,7 +339,7 @@ var arenaPanel = new function() {
 
     let $dialog = dialog('Select World', $body, $buttons);
 
-    $buttons.siblings('.save').click(function() {
+    $buttons.siblings('.save').click(function () {
       let world = worlds.find(world => world.name == $select.val());
       let saveObj = {
         worldName: $select.val(),
@@ -355,14 +354,14 @@ var arenaPanel = new function() {
       hiddenElement.download = $select.val() + 'Map_config.json';
       hiddenElement.dispatchEvent(new MouseEvent('click'));
     });
-    $buttons.siblings('.load').click(function() {
+    $buttons.siblings('.load').click(function () {
       var hiddenElement = document.createElement('input');
       hiddenElement.type = 'file';
       hiddenElement.accept = 'application/json,.json';
       hiddenElement.dispatchEvent(new MouseEvent('click'));
-      hiddenElement.addEventListener('change', function(e){
+      hiddenElement.addEventListener('change', function (e) {
         var reader = new FileReader();
-        reader.onload = function() {
+        reader.onload = function () {
           let loadedSave = JSON.parse(this.result);
           let world = worlds.find(world => world.name == loadedSave.worldName);
 
@@ -378,15 +377,15 @@ var arenaPanel = new function() {
         reader.readAsText(e.target.files[0]);
       });
     });
-    $buttons.siblings('.default').click(function() {
+    $buttons.siblings('.default').click(function () {
       let world = worlds.find(world => world.name == $select.val());
       world.options = {};
       Object.assign(world.options, world.defaultOptions);
       displayWorldOptions(world, world.options);
       // displayWorldOptions(world, world.defaultOptions);
     });
-    $buttons.siblings('.cancel').click(function() { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function(){
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(function () {
       babylon.world = worlds.find(world => world.name == $select.val());
       self.worldOptionsSetting = worldOptionsSetting;
       self.resetSim();
@@ -395,11 +394,11 @@ var arenaPanel = new function() {
   };
 
   // Run the simulator
-  this.startSim = function() {
-    robots.forEach(function(robot){
+  this.startSim = function () {
+    robots.forEach(function (robot) {
       robot.reset();
     });
-    playerFrames.forEach(function(playerFrame){
+    playerFrames.forEach(function (playerFrame) {
       playerFrame.runPython();
     });
 
@@ -409,12 +408,12 @@ var arenaPanel = new function() {
   };
 
   // stop the simulator
-  this.stopSim = function(stopRobot) {
+  this.stopSim = function (stopRobot) {
     if (typeof stopRobot == 'undefined') {
       var stopRobot = false;
     }
 
-    playerFrames.forEach(function(playerFrame){
+    playerFrames.forEach(function (playerFrame) {
       if (playerFrame.skulpt.running) {
         playerFrame.skulpt.hardInterrupt = true;
       }
@@ -427,10 +426,10 @@ var arenaPanel = new function() {
     if (stopRobot) {
       function repeatedReset(count) {
         if (count > 0) {
-          robots.forEach(function(robot){
+          robots.forEach(function (robot) {
             robot.reset();
           });
-          setTimeout(function() { repeatedReset(count - 1) }, 100);
+          setTimeout(function () { repeatedReset(count - 1) }, 100);
         }
       }
       repeatedReset(15);
@@ -438,12 +437,12 @@ var arenaPanel = new function() {
   };
 
   // Reset simulator
-  this.resetSim = function() {
-    babylon.world.setOptions(self.worldOptionsSetting).then(function(){
+  this.resetSim = function () {
+    babylon.world.setOptions(self.worldOptionsSetting).then(function () {
       self.clearWorldInfoPanel();
       self.hideWorldInfoPanel();
       babylon.resetScene();
-      playerFrames.forEach(function(playerFrame){
+      playerFrames.forEach(function (playerFrame) {
         playerFrame.skulpt.hardInterrupt = true;
       });
       if (arena.showNames) {
@@ -455,21 +454,21 @@ var arenaPanel = new function() {
   };
 
   // Strip html tags
-  this.stripHTML = function(text) {
+  this.stripHTML = function (text) {
     const regex = /</g;
     const regex2 = />/g;
     return text.replace(regex, '&lt;').replace(regex2, '&gt;');
   }
 
   // write to console
-  this.consoleWrite = function(text) {
+  this.consoleWrite = function (text) {
     text = self.$consoleContent.html() + self.stripHTML(text);
     self.$consoleContent.html(text);
     self.scrollConsoleToBottom();
   };
 
   // write to console
-  this.consoleWriteErrors = function(text) {
+  this.consoleWriteErrors = function (text) {
     text = '<span class="error">' + self.stripHTML(text) + '</span>\n';
     text = self.$consoleContent.html() + text;
     self.$consoleContent.html(text);
@@ -477,32 +476,32 @@ var arenaPanel = new function() {
   };
 
   // clear all content
-  this.clearConsole = function() {
+  this.clearConsole = function () {
     self.$consoleContent.html('');
   };
 
   // Toggle opening and closing of console
-  this.toggleConsole = function() {
+  this.toggleConsole = function () {
     self.$console.toggleClass('open');
   };
 
   // Scroll console to bottom
-  this.scrollConsoleToBottom = function() {
+  this.scrollConsoleToBottom = function () {
     var pre = self.$consoleContent[0];
     pre.scrollTop = pre.scrollHeight - pre.clientHeight
   };
 
   // Toggle FPS display
-  this.toggleFPS = function() {
-    self.showFPS = ! self.showFPS;
+  this.toggleFPS = function () {
+    self.showFPS = !self.showFPS;
 
-    if (! self.showFPS) {
+    if (!self.showFPS) {
       self.$fps.text('');
     }
   };
 
   // Load world
-  this.loadWorld = function(json) {
+  this.loadWorld = function (json) {
     try {
       let loadedSave = JSON.parse(json);
 
@@ -528,14 +527,14 @@ var arenaPanel = new function() {
   };
 
   // Load from file
-  this.loadWorldLocal = function() {
+  this.loadWorldLocal = function () {
     var hiddenElement = document.createElement('input');
     hiddenElement.type = 'file';
     hiddenElement.accept = 'application/json,.json';
     hiddenElement.dispatchEvent(new MouseEvent('click'));
-    hiddenElement.addEventListener('change', function(e){
+    hiddenElement.addEventListener('change', function (e) {
       var reader = new FileReader();
-      reader.onload = function() {
+      reader.onload = function () {
         self.loadWorld(this.result);
       };
       reader.readAsText(e.target.files[0]);
@@ -543,7 +542,7 @@ var arenaPanel = new function() {
   };
 
   // Save to file
-  this.saveWorld = function() {
+  this.saveWorld = function () {
     let world = babylon.world;
     let saveObj = {
       worldName: world.name,

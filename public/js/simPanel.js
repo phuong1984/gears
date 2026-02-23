@@ -78,7 +78,7 @@ var simPanel = new function () {
         self.touchDevice = true;
       } else {
         self.touchDevice = false;
-        babylon.marker1.isVisible = true;
+        if (babylon.marker1) babylon.marker1.isVisible = true;
       }
       self.toggleRuler();
       e.preventDefault();
@@ -127,18 +127,44 @@ var simPanel = new function () {
 
   // Run when the simPanel in inactive
   this.onInActive = function () {
-    if (!skulpt.running) {
-      babylon.engine.stopRenderLoop();
-    }
+    babylon.simActive = false;
   };
 
   // Run when the simPanel in active
   this.onActive = function () {
-    if (babylon.engine._activeRenderLoops.length == 0)
-      babylon.engine.runRenderLoop(function () {
-        babylon.scene.render();
-      });
+    // Resize engine first so canvas has correct dimensions
+    setTimeout(function () {
+      if (!babylon.initialized) {
+        // First time Simulator tab is clicked: init babylon NOW.
+        // Canvas is visible and sized correctly at this point,
+        // preventing the BabylonJS 8.x 'WebGL: useProgram: prog is already deleted' bug.
+        if (babylon._ammoInstance === null) {
+          // Ammo not ready yet - retry in 200ms
+          babylon.simActive = false;
+          setTimeout(self.onActive, 200);
+          return;
+        }
+        try {
+          babylon.simActive = true;
+          babylon.init();
+          babylon.engine.resize();
+          // Resize again after a short delay to catch any late CSS layout
+          setTimeout(function () { babylon.engine.resize(); }, 500);
+          console.log('[GEARS] babylon.init() called lazily on first Simulator tab visit');
+        } catch (e) {
+          console.error('[GEARS] babylon.init() error:', e);
+        }
+      } else {
+        // Already initialized - just enable rendering and resize
+        babylon.simActive = true;
+        babylon.engine.resize();
+      }
+    }, 100);
   };
+
+
+
+
 
   // Setup virtual joystick
   this.setupJoystick = function () {

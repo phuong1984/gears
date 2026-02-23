@@ -137,7 +137,7 @@ function Robot() {
       body.position.x = 0;
       body.position.y = (options.bodyHeight / 2) + (options.wheelDiameter / 2) - options.bodyEdgeToWheelCenterY;
       body.position.z = 0;
-      scene.shadowGenerator.addShadowCaster(body);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
       body.position.addInPlace(startPos);
       body.rotate(BABYLON.Axis.Y, startRot.y, BABYLON.Space.LOCAL);
       body.rotate(BABYLON.Axis.X, startRot.x, BABYLON.Space.LOCAL);
@@ -200,7 +200,7 @@ function Robot() {
           }
 
           // Add shadow for model
-          scene.shadowGenerator.addShadowCaster(modelMeshes[0]);
+          if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(modelMeshes[0]);
 
           self.bodyModel = modelMeshes;
         } catch (err) {
@@ -238,7 +238,7 @@ function Robot() {
           caster.position.z += options.casterOffsetZ;
         }
 
-        scene.shadowGenerator.addShadowCaster(caster);
+        if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(caster);
         caster.parent = body;
 
         caster.physicsImpostor = new BABYLON.PhysicsImpostor(

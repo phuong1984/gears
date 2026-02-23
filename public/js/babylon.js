@@ -1,4 +1,4 @@
-var babylon = new function() {
+var babylon = new function () {
   var self = this;
 
   this.DISABLE_ASYNC = true;
@@ -7,27 +7,41 @@ var babylon = new function() {
 
   this.world = worlds[0];
 
+  // Whether the sim panel is currently active (user is on Simulator tab)
+  this.simActive = false;
+
+  // Track whether babylon has been initialized yet (lazy init)
+  this.initialized = false;
+
+  // Ammo instance - stored after DOMContentLoaded, used when init() is called
+  this._ammoInstance = null;
+
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     self.canvas = document.getElementById('renderCanvas');
     self.engine = new BABYLON.Engine(self.canvas, self.ENABLE_ANTIALIASING);
 
-    self.scene = self.createScene(); // Call the createScene function
+    self.scene = self.createScene();
 
-    self.world.setOptions().then(function(){
-      self.loadMeshes(self.scene);
+    self.engine.runRenderLoop(function () {
+      var shouldRender = self.simActive
+        || (typeof skulpt != 'undefined' && skulpt.running);
+      if (shouldRender && self.scene) {
+        self.scene.render();
+      }
     });
 
-    // Register a render loop to repeatedly render the scene
-    // self.engine.runRenderLoop(function () {
-    //   self.scene.render();
-    // });
-
-    // Watch for browser/canvas resize events
     window.addEventListener('resize', function () {
       self.engine.resize();
     });
 
+    self.initialized = true;
+    self.engine.resize();
+
+    // Load world and meshes asynchronously
+    self.world.setOptions().then(function () {
+      self.loadMeshes(self.scene);
+    });
   };
 
   // Create the scene
@@ -35,10 +49,9 @@ var babylon = new function() {
     if (self.scene) {
       self.scene.dispose()
     }
+
     var scene = new BABYLON.Scene(self.engine);
-    var gravityVector = new BABYLON.Vector3(0,-98.1, 0);
-    // var physicsPlugin = new BABYLON.CannonJSPlugin();
-    // var physicsPlugin = new BABYLON.OimoJSPlugin();
+    var gravityVector = new BABYLON.Vector3(0, -98.1, 0);
     var physicsPlugin = new BABYLON.AmmoJSPlugin();
     scene.enablePhysics(gravityVector, physicsPlugin);
 
@@ -62,36 +75,27 @@ var babylon = new function() {
     lightHemi.intensity = 0.5;
 
     var lightDir = new BABYLON.DirectionalLight('DirectionalLight', new BABYLON.Vector3(-1, -1, -1), scene);
-    // lightDir.diffuse = new BABYLON.Color3(0.1, 1.2, 0.1);
     lightDir.position.y = 100;
     lightDir.position.x = 400;
     lightDir.position.z = 400;
     lightDir.intensity = 0.8;
     lightDir.autoCalcShadowZBounds = true;
 
-    // Shadows
-    scene.shadowGenerator = new BABYLON.ShadowGenerator(512, lightDir);
-    scene.shadowGenerator.forceBackFacesOnly = true;
-    // scene.shadowGenerator.bias = 0.00005;
-    // scene.shadowGenerator.depthScale = 5000;
-    // scene._shadowsEnabled = false;
+    // Shadows - DISABLED for BabylonJS 8.x (causes WebGL prog-deleted errors)
+    // scene.shadowGenerator = new BABYLON.ShadowGenerator(512, lightDir);
+    // scene.shadowGenerator.forceBackFacesOnly = true;
 
-    // Optimizer
-    var options = new BABYLON.SceneOptimizerOptions(80, 2000); // 60fps, check every 2000ms
-    options.addOptimization(new BABYLON.HardwareScalingOptimization(0, 2));
-    self.optimizer = new BABYLON.SceneOptimizer(scene, options);
-    self.optimizer.onNewOptimizationAppliedObservable.add(function (optim) {
-      console.log(optim.getDescription());
-    });
-
-    // Debugging
-    // scene.debugLayer.show();
+    // SceneOptimizer - DISABLED for BabylonJS 8.x compatibility
+    // var options = new BABYLON.SceneOptimizerOptions(80, 2000);
+    // options.addOptimization(new BABYLON.HardwareScalingOptimization(0, 2));
+    // self.optimizer = new BABYLON.SceneOptimizer(scene, options);
 
     return scene;
   };
 
+
   // Set othographic camera zoom
-  this.zoomOrtho = function(p) {
+  this.zoomOrtho = function (p) {
     if (self.cameraMode != 'orthoTop') {
       return;
     }
@@ -100,9 +104,9 @@ var babylon = new function() {
     if (typeof p != 'undefined') {
       var event = p.event;
       if (event.wheelDelta) {
-          wheelDelta = event.wheelDelta;
+        wheelDelta = event.wheelDelta;
       } else {
-          wheelDelta = -(event.deltaY || event.detail) * 60;
+        wheelDelta = -(event.deltaY || event.detail) * 60;
       }
     }
 
@@ -117,7 +121,7 @@ var babylon = new function() {
   };
 
   // Set camera to default
-  this.resetCamera = function() {
+  this.resetCamera = function () {
     self.cameraArc.alpha = -Math.PI / 2;
     self.cameraArc.beta = Math.PI / 5;
     self.cameraArc.radius = 200;
@@ -133,7 +137,7 @@ var babylon = new function() {
   };
 
   // Set camera mode
-  this.setCameraMode = function(mode) {
+  this.setCameraMode = function (mode) {
     if (typeof mode != 'undefined') {
       self.cameraMode = mode;
     }
@@ -189,7 +193,7 @@ var babylon = new function() {
   }
 
   // Reset scene
-  this.resetScene = function() {
+  this.resetScene = function () {
     // Save camera position and rotations
     let pos = self.cameraArc.position;
     let target = self.cameraArc.target;
@@ -197,22 +201,15 @@ var babylon = new function() {
     let up = self.cameraArc.upVector;
     let mode = self.cameraMode;
 
-    self.engine.stopRenderLoop();
-    self.scene.dispose();
+    // Pause rendering while the scene is being torn down and rebuilt
+    // to prevent rendering against a disposed or half-built scene.
+    var wasActive = self.simActive;
+    self.simActive = false;
 
+    self.scene.dispose();
     self.scene = self.createScene();
 
-    if (
-      typeof main == 'undefined'
-      || main.$navs.siblings('.active').attr('id') == 'navSim'
-      || main.$navs.siblings('.active').attr('id') == 'navArena'
-    ) {
-      self.engine.runRenderLoop(function () {
-        self.scene.render();
-      });
-    }
-
-    return self.loadMeshes(self.scene).then(function(){
+    return self.loadMeshes(self.scene).then(function () {
       // Restore camera
       self.setCameraMode(mode);
       self.cameraArc.position = pos;
@@ -221,28 +218,30 @@ var babylon = new function() {
       self.cameraArc.target = target;
       self.cameraArc.origAlpha = null;
       self.cameraArc.origBeta = null;
+      // Resume rendering now that the scene is fully built
+      self.simActive = wasActive;
     });
   };
 
   // Remove all RTT cameras
-  this.removeRTTCameras = function() {
-    for (let i=self.scene.cameras.length-1; i>0; i--) {
+  this.removeRTTCameras = function () {
+    for (let i = self.scene.cameras.length - 1; i > 0; i--) {
       self.scene.cameras[i].dispose();
     }
   };
 
   // Remove all meshes
-  this.removeMeshes = function() {
+  this.removeMeshes = function () {
     self.scene.actionManager.actions = [];
     self.scene.actionManager.dispose();
 
-    for (let i=self.scene.meshes.length-1; i>=0; i--) {
+    for (let i = self.scene.meshes.length - 1; i >= 0; i--) {
       self.scene.meshes[i].dispose(false, true);
     }
   };
 
   // Load meshes
-  this.loadMeshes = function() {
+  this.loadMeshes = function () {
     // self.engine.displayLoadingUI(); // Turns transparent, but doesn't disappear in some circumstances
 
     // Load ruler markers
@@ -268,7 +267,7 @@ var babylon = new function() {
     // Load world and robot
     let loader = [];
     loader.push(self.world.load(self.scene));
-    robots.forEach(function(robot){
+    robots.forEach(function (robot) {
       if (robot.player == 'single') {
         loader.push(robot.load(self.scene, self.world.robotStart));
       } else {
@@ -279,16 +278,16 @@ var babylon = new function() {
       }
     });
 
-    return Promise.all(loader).then(function() {
+    return Promise.all(loader).then(function () {
       self.setCameraMode(); // Set after loading mesh as camera may be locked to mesh
 
       // For camera visualization
       self.rttViewMat = new BABYLON.StandardMaterial("RTT mat", self.scene);
       // self.rttViewMat.diffuseTexture = robot.getComponentByPort('in1').renderTarget;
-      self.rttViewMat.emissiveColor = new BABYLON.Color3(1,1,1);
+      self.rttViewMat.emissiveColor = new BABYLON.Color3(1, 1, 1);
       self.rttViewMat.disableLighting = true;
 
-      self.rttView = BABYLON.MeshBuilder.CreateGround("RTT", {width: 1, height: 1}, self.scene);
+      self.rttView = BABYLON.MeshBuilder.CreateGround("RTT", { width: 1, height: 1 }, self.scene);
       self.rttView.rotation.x = -Math.PI / 2;
       self.rttView.position.x = 0;
       self.rttView.position.y = 2;
@@ -298,42 +297,22 @@ var babylon = new function() {
       self.rttView.setEnabled(false);
 
       // Some components in the robot may need to see the fully loaded meshes
-      robots.forEach(function(robot){
+      robots.forEach(function (robot) {
         if (robot.disabled == true) {
           return;
         }
         robot.loadMeshes(self.scene.meshes.filter(mesh => mesh.id != 'RTT' && mesh.id != 'marker1' && mesh.id != 'marker2'));
       })
 
-      // We should also pre-build the RTT materials for performance
-      let FULL_EMMISSIVE = new BABYLON.Color3(1,1,1);
-
-      self.scene.meshes.forEach(function(mesh) {
+      // BabylonJS 8.x INCOMPATIBILITY: material.clone() permanently corrupts
+      // the original material's WebGL shader programs. clone() shares internal
+      // Effect references, and modifying the clone (disableLighting + freeze)
+      // causes the shared WebGL program to be deleted/replaced.
+      // RTT materials are now created lazily when camera sensor is activated,
+      // instead of pre-building them here.
+      self.scene.meshes.forEach(function (mesh) {
         mesh.origMaterial = mesh.material;
-        if (mesh.material == null) {
-          if (mesh.visibility) {
-            console.log('WARNING: ' + mesh.id + ' does not have a material');
-          }
-          mesh.rttMaterial == null;
-        } else {
-          let rttID = 'RTT_' + mesh.material.id;
-          let mat = self.scene.getMaterialByID(rttID);
-          if (mat == null) {
-            mesh.rttMaterial = mesh.material.clone();
-            mesh.rttMaterial.id = rttID;
-            mesh.rttMaterial.disableLighting = true;
-            if (mesh.rttMaterial.diffuseTexture) {
-              mesh.rttMaterial.emissiveColor = FULL_EMMISSIVE;
-            } else if (mesh.rttMaterial.albedoColor) {
-              mesh.rttMaterial.emissiveColor = mesh.rttMaterial.albedoColor;
-            } else {
-              mesh.rttMaterial.emissiveColor = mesh.rttMaterial.diffuseColor;
-            }
-            mesh.rttMaterial.freeze();
-          } else {
-            mesh.rttMaterial = mat;
-          }
-        }
+        mesh.rttMaterial = mesh.material; // Will be properly created on demand
       });
 
       // Reset the world if needed
@@ -344,18 +323,16 @@ var babylon = new function() {
       self.scene.actionManager = new BABYLON.ActionManager(self.scene);
       self.scene.actionManager.registerAction(
         new BABYLON.ExecuteCodeAction({
-            trigger: BABYLON.ActionManager.OnEveryFrameTrigger
-          },
+          trigger: BABYLON.ActionManager.OnEveryFrameTrigger
+        },
           self.render
         )
       );
-
-      // self.engine.hideLoadingUI();
     });
   };
 
   // Get color3 from hex
-  this.hexToColor3 = function(rgba) {
+  this.hexToColor3 = function (rgba) {
     rgba = rgba.replace(/^#/g, '');
     let color = '#';
 
@@ -373,7 +350,7 @@ var babylon = new function() {
   };
 
   // Get material from rgba string, creating new if not existing
-  this.getMaterial = function(scene, rgba) {
+  this.getMaterial = function (scene, rgba) {
     rgba = rgba.replace(/^#/g, '');
     let color = new Array(4);
 
@@ -387,9 +364,9 @@ var babylon = new function() {
     mat.diffuseColor = self.hexToColor3(rgba);
 
     if (rgba.length == 4) {
-      color[3] = parseInt(rgba[3]+rgba[3], 16) / 255;
+      color[3] = parseInt(rgba[3] + rgba[3], 16) / 255;
     } else if (rgba.length == 8) {
-      color[3] = parseInt(rgba[6]+rgba[7], 16) / 255;
+      color[3] = parseInt(rgba[6] + rgba[7], 16) / 255;
     } else {
       color[3] = 1;
     }
@@ -401,7 +378,7 @@ var babylon = new function() {
   };
 
   // Change material for a mesh, including handling for rtt material
-  this.setMaterial = function(mesh, material) {
+  this.setMaterial = function (mesh, material) {
     mesh.material = material;
     mesh.isFrozen = false;
 
@@ -430,7 +407,7 @@ var babylon = new function() {
   this.renders = [];
 
   // Render loop
-  this.render = function() {
+  this.render = function () {
     var delta = self.scene.getEngine().getDeltaTime();
 
     if (typeof simPanel != 'undefined' && simPanel.showFPS) {
@@ -440,7 +417,7 @@ var babylon = new function() {
       arenaPanel.$fps.text(self.engine.getFps().toFixed() + " fps");
     }
 
-    robots.forEach(function(robot){
+    robots.forEach(function (robot) {
       if (robot.disabled == true) {
         return;
       }
@@ -451,24 +428,24 @@ var babylon = new function() {
       self.world.render(delta);
     }
 
-    self.renders.forEach(function(render){
+    self.renders.forEach(function (render) {
       render(delta);
     });
   };
 }
 
-// Init class
-// babylon.init();
-
-window.addEventListener("DOMContentLoaded", function() {
+// Lazy init: only load Ammo.js on DOMContentLoaded.
+// babylon.init() itself is deferred until the Simulator tab is first clicked,
+// ensuring the canvas is visible and properly sized when WebGL initializes.
+// This prevents BabylonJS 8.x from creating and immediately GC-ing GPU programs.
+window.addEventListener("DOMContentLoaded", function () {
   var config = {
     locateFile: () => 'ammo/ammo-20210414.wasm.wasm'
-  }
-  Ammo(config).then(babylon.init);
+  };
+  Ammo(config).then(function (ammo) {
+    babylon._ammoInstance = ammo;
+    console.log('[GEARS] Ammo.js ready - babylon will init on first Simulator tab visit');
+  }).catch(function (e) {
+    console.error('[GEARS] Ammo init error:', e);
+  });
 });
-
-// window.addEventListener("DOMContentLoaded", function() {
-//   Ammo().then(babylon.init);
-// });
-
-

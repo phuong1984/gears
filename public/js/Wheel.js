@@ -63,15 +63,15 @@ function Wheel(scene, parent, pos, rot, port, options) {
   //
   // Accessed by through Python
   //
-  this.runForever = function() {
+  this.runForever = function () {
     self.mode = self.modes.RUN;
   };
 
-  this.runTimed = function() {
+  this.runTimed = function () {
     self.mode = self.modes.RUN_TIL_TIME;
   };
 
-  this.runToPosition = function() {
+  this.runToPosition = function () {
     if (self.position_target < self.position) {
       self.positionDirectionReversed = true;
     } else {
@@ -80,7 +80,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     self.mode = self.modes.RUN_TO_POS;
   };
 
-  this.stop = function() {
+  this.stop = function () {
     self.mode = self.modes.STOP;
 
     if (self.stop_action == 'hold') {
@@ -96,7 +96,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     }
   };
 
-  this.init = function() {
+  this.init = function () {
     self.setOptions(options);
 
     self.maxAcceleration = self.options.maxAcceleration;
@@ -113,9 +113,9 @@ function Wheel(scene, parent, pos, rot, port, options) {
     }
 
     var faceUV = new Array(3);
-    faceUV[0] = new BABYLON.Vector4(0, 0, 200/828, 1);
-    faceUV[1] = new BABYLON.Vector4(200/828, 3/4, 1, 1);
-    faceUV[2] = new BABYLON.Vector4(0, 0, 200/828, 1);
+    faceUV[0] = new BABYLON.Vector4(0, 0, 200 / 828, 1);
+    faceUV[1] = new BABYLON.Vector4(200 / 828, 3 / 4, 1, 1);
+    faceUV[2] = new BABYLON.Vector4(0, 0, 200 / 828, 1);
     let wheelOptions = {
       height: self.options.width,
       diameter: self.options.diameter,
@@ -137,10 +137,10 @@ function Wheel(scene, parent, pos, rot, port, options) {
     self.mesh.rotate(BABYLON.Axis.Z, rot[2], BABYLON.Space.LOCAL);
     parent.removeChild(self.mesh);
 
-    scene.shadowGenerator.addShadowCaster(self.mesh);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(self.mesh);
   };
 
-  this.loadImpostor = function(){
+  this.loadImpostor = function () {
     self.mesh.physicsImpostor = new BABYLON.PhysicsImpostor(
       self.mesh,
       BABYLON.PhysicsImpostor.CylinderImpostor,
@@ -155,12 +155,12 @@ function Wheel(scene, parent, pos, rot, port, options) {
     // Hold position if speed is too low
     var origin = self.mesh.physicsImpostor.physicsBody.getWorldTransform().getOrigin();
     var lastOrigin = [
-        origin.x(),
-        origin.y(),
-        origin.z()
+      origin.x(),
+      origin.y(),
+      origin.z()
     ];
 
-    self.mesh.physicsImpostor.registerBeforePhysicsStep(function(){
+    self.mesh.physicsImpostor.registerBeforePhysicsStep(function () {
       if (self.mesh.physicsImpostor.getLinearVelocity().lengthSquared() < 0.1) {
         origin.setX(lastOrigin[0]);
         origin.setY(lastOrigin[1]);
@@ -175,7 +175,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     });
   };
 
-  this.loadJoints = function(){
+  this.loadJoints = function () {
     var wheel2world = self.mesh.absoluteRotationQuaternion;
 
     let zero = BABYLON.Vector3.Zero();
@@ -189,11 +189,11 @@ function Wheel(scene, parent, pos, rot, port, options) {
     mainAxis.rotateByQuaternionAroundPointToRef(wheel2world, zero, mainAxis);
     mainAxis.rotateByQuaternionAroundPointToRef(world2body, zero, mainAxis);
 
-    self.wheelVector = new BABYLON.Vector3(1,0,0);
-    self.bodyVector = new BABYLON.Vector3(0,0,0);
+    self.wheelVector = new BABYLON.Vector3(1, 0, 0);
+    self.bodyVector = new BABYLON.Vector3(0, 0, 0);
     self.wheelVector.rotateByQuaternionAroundPointToRef(wheel2world, zero, self.bodyVector);
     self.bodyVector.rotateByQuaternionAroundPointToRef(world2body, zero, self.bodyVector);
-    self.normalVector = new BABYLON.Vector3(0,1,0)
+    self.normalVector = new BABYLON.Vector3(0, 1, 0)
 
     let targetBody = parent;
     while (targetBody.parent) {
@@ -210,7 +210,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     targetBody.physicsImpostor.addJoint(self.mesh.physicsImpostor, self.joint);
   };
 
-  this.setOptions = function(options) {
+  this.setOptions = function (options) {
     self.options = {
       diameter: 5.6,
       width: 0.8,
@@ -232,7 +232,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     }
   };
 
-  this.reset = function() {
+  this.reset = function () {
     self.positionAdjustment += self.position;
     self.position = 0;
     self.position_target = 0;
@@ -244,7 +244,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
   // Used in JS
   //
 
-  this.render = function(delta) {
+  this.render = function (delta) {
     if (
       typeof self.mesh == 'undefined' ||
       self.mesh == null ||
@@ -282,14 +282,14 @@ function Wheel(scene, parent, pos, rot, port, options) {
     }
     self.prevPosition = self.position;
 
-    self.components.forEach(function(component) {
+    self.components.forEach(function (component) {
       if (typeof component.render == 'function') {
         component.render(delta);
       }
     });
   };
 
-  this.holdPosition = function(delta) {
+  this.holdPosition = function (delta) {
     const P_GAIN = 0.1;
     const MAX_POSITION_CORRECTION_SPEED = 5;
     let error = self.position_target - self.position;
@@ -305,7 +305,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     self.joint.setMotor(speed, self.stopActionHoldForce);
   };
 
-  this.setMotorSpeed = function(delta, reversed=false) {
+  this.setMotorSpeed = function (delta, reversed = false) {
     let diff = self.speed_sp - self._speed_sp;
     let diffLimit = delta * self.maxAcceleration;
     if (diff > diffLimit) {
@@ -331,7 +331,7 @@ function Wheel(scene, parent, pos, rot, port, options) {
     self.joint.setMotor(speed, self.MOTOR_POWER_DEFAULT);
   };
 
-  this.updatePosition = function(delta) {
+  this.updatePosition = function (delta) {
     let e = self.mesh.rotationQuaternion;
     let rot = self.getRotation(self.s, e) / Math.PI * 180;
 
@@ -349,10 +349,10 @@ function Wheel(scene, parent, pos, rot, port, options) {
     self.position = position - self.positionAdjustment;
   };
 
-  this.getRotation = function(){
-    let rotatedBodyVector = new BABYLON.Vector3(0,0,0);
-    let rotatedWheelVector = new BABYLON.Vector3(0,0,0);
-    let rotatedNormalVector = new BABYLON.Vector3(0,0,0);
+  this.getRotation = function () {
+    let rotatedBodyVector = new BABYLON.Vector3(0, 0, 0);
+    let rotatedWheelVector = new BABYLON.Vector3(0, 0, 0);
+    let rotatedNormalVector = new BABYLON.Vector3(0, 0, 0);
     let zero = BABYLON.Vector3.Zero();
 
     this.bodyVector.rotateByQuaternionAroundPointToRef(parent.absoluteRotationQuaternion, zero, rotatedBodyVector);

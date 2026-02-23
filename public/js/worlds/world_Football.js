@@ -276,7 +276,7 @@ var world_Football = new function() {
       callback: function(mesh) {
         self.game.ball = mesh;
         self.game.ball.objectTrackerLabel = 'ball';
-        scene.shadowGenerator.addShadowCaster(mesh);
+        if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(mesh);
       }
     });
 

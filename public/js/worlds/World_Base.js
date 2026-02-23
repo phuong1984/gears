@@ -1223,7 +1223,7 @@ var World_Base = function () {
 
       meshes.forEach(m => m.receiveShadows = options.receiveShadows);
       if (options.castShadows) {
-        scene.shadowGenerator.addShadowCaster(stlRoot);
+        if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(stlRoot);
       }
 
       return mesh;
@@ -1310,7 +1310,7 @@ var World_Base = function () {
 
       meshes.forEach(mesh => mesh.receiveShadows = options.receiveShadows);
       if (options.castShadows) {
-        scene.shadowGenerator.addShadowCaster(meshes[0]);
+        if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(meshes[0]);
       }
 
       return mesh;
@@ -1337,7 +1337,7 @@ var World_Base = function () {
     mesh.rotation = options.rotation;
     mesh.receiveShadows = options.receiveShadows;
     if (options.castShadows) {
-      scene.shadowGenerator.addShadowCaster(mesh);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(mesh);
     }
 
     return mesh;
@@ -1373,7 +1373,7 @@ var World_Base = function () {
     mesh.rotation = options.rotation;
     mesh.receiveShadows = options.receiveShadows;
     if (options.castShadows) {
-      scene.shadowGenerator.addShadowCaster(mesh);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(mesh);
     }
 
     return mesh;
@@ -1426,7 +1426,7 @@ var World_Base = function () {
     mesh.rotation = options.rotation;
     mesh.receiveShadows = options.receiveShadows;
     if (options.castShadows) {
-      scene.shadowGenerator.addShadowCaster(mesh);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(mesh);
     }
 
     return mesh;

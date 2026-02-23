@@ -189,7 +189,7 @@ function ColorSensor(scene, parent, pos, rot, port, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.position.z -= 1.50001;
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
@@ -501,7 +501,7 @@ function BoxBlock(scene, parent, pos, rot, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
       body,
@@ -587,7 +587,7 @@ function CylinderBlock(scene, parent, pos, rot, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
       body,
@@ -662,7 +662,7 @@ function SphereBlock(scene, parent, pos, rot, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
       body,
@@ -757,7 +757,7 @@ function UltrasonicSensor(scene, parent, pos, rot, port, options) {
 
     var rearBody = BABYLON.MeshBuilder.CreateBox('ultrasonicSensorBody', bodyOptions, scene);
     rearBody.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(rearBody);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(rearBody);
     rearBody.position.z -= 0.25;
     rearBody.parent = body;
 
@@ -768,7 +768,7 @@ function UltrasonicSensor(scene, parent, pos, rot, port, options) {
     eyeL.rotation.x = -Math.PI / 2;
     eyeL.position.x = -1.5;
     eyeL.position.z = 1;
-    scene.shadowGenerator.addShadowCaster(eyeL);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(eyeL);
     eyeL.parent = body;
 
     var eyeR = BABYLON.MeshBuilder.CreateCylinder('eyeR', { height: 0.5, diameter: 2, tessellation: 12 }, scene);
@@ -776,7 +776,7 @@ function UltrasonicSensor(scene, parent, pos, rot, port, options) {
     eyeR.rotation.x = -Math.PI / 2;
     eyeR.position.x = 1.5;
     eyeR.position.z = 1;
-    scene.shadowGenerator.addShadowCaster(eyeR);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(eyeR);
     eyeR.parent = body;
 
     // Prep rays
@@ -1196,7 +1196,7 @@ function MagnetActuator(scene, parent, pos, rot, port, options) {
     attractor.material = attractorMat;
     attractor.parent = body;
     attractor.position.y = -0.75;
-    scene.shadowGenerator.addShadowCaster(attractor);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(attractor);
 
     var rearBodyMat = new BABYLON.StandardMaterial('magnetActuatorRearBody', scene);
     var rearBodyTexture = new BABYLON.Texture('textures/robot/magnet.png', scene);
@@ -1220,7 +1220,7 @@ function MagnetActuator(scene, parent, pos, rot, port, options) {
 
     var rearBody = BABYLON.MeshBuilder.CreateBox('magnetActuatorRearBody', bodyOptions, scene);
     rearBody.material = rearBodyMat;
-    scene.shadowGenerator.addShadowCaster(rearBody);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(rearBody);
     rearBody.position.y = 0.25;
     rearBody.parent = body;
   };
@@ -1432,13 +1432,13 @@ function ArmActuator(scene, parent, pos, rot, port, options) {
     armBase.material = armBaseMat;
     armBase.parent = body;
     armBase.position.x = -0.75;
-    scene.shadowGenerator.addShadowCaster(armBase);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(armBase);
 
     var armBase2 = BABYLON.MeshBuilder.CreateBox('armBase', { height: 3, width: 0.5, depth: 3 }, scene);
     armBase2.material = armBaseMat;
     armBase2.parent = body;
     armBase2.position.x = 0.75;
-    scene.shadowGenerator.addShadowCaster(armBase2);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(armBase2);
 
     var pivotMat = babylon.getMaterial(scene, self.options.pivotColor);
 
@@ -1447,7 +1447,7 @@ function ArmActuator(scene, parent, pos, rot, port, options) {
     pivot.component = self;
     pivot.material = pivotMat;
     pivot.position.y = 0.5;
-    scene.shadowGenerator.addShadowCaster(pivot);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(pivot);
 
     var armMat = babylon.getMaterial(scene, self.options.armColor);
 
@@ -1495,7 +1495,7 @@ function ArmActuator(scene, parent, pos, rot, port, options) {
     self.arm = arm;
     self.end = arm;
     arm.material = armMat;
-    scene.shadowGenerator.addShadowCaster(arm);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(arm);
     arm.position.z += (self.options.armLength / 2) - 1;
 
     pivot.parent = parent;
@@ -1730,7 +1730,7 @@ function LaserRangeSensor(scene, parent, pos, rot, port, options) {
     body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     // Prep rays
     self.rays = [];
@@ -1899,7 +1899,7 @@ function SwivelActuator(scene, parent, pos, rot, port, options) {
     body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     var platformMat = babylon.getMaterial(scene, self.options.platformColor);
 
@@ -2163,7 +2163,7 @@ function PaintballLauncherActuator(scene, parent, pos, rot, port, options) {
     body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     var base = BABYLON.MeshBuilder.CreateBox('launcherBase', { height: 0.5, width: 2, depth: 9 }, scene);
     base.parent = body;
@@ -2489,7 +2489,7 @@ function Pen(scene, parent, pos, rot, port, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.position.y += 2.5;
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
@@ -2680,7 +2680,7 @@ function TouchSensor(scene, parent, pos, rot, port, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
       body,
@@ -2869,7 +2869,7 @@ function LinearActuator(scene, parent, pos, rot, port, options) {
     body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
     body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     var platformMat = babylon.getMaterial(scene, self.options.platformColor);
 
@@ -3081,7 +3081,7 @@ function WheelPassive(scene, parent, pos, rot, options) {
     self.mesh.rotate(BABYLON.Axis.Z, rot[2], BABYLON.Space.LOCAL);
     parent.removeChild(self.mesh);
 
-    scene.shadowGenerator.addShadowCaster(self.mesh);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(self.mesh);
   };
 
   this.loadImpostor = function () {
@@ -3185,7 +3185,7 @@ function CameraSensor(scene, parent, pos, rot, port, options) {
     self.body = body;
     body.component = self;
     body.material = bodyMat;
-    scene.shadowGenerator.addShadowCaster(body);
+    if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     body.position.z -= 1.50001;
     body.physicsImpostor = new BABYLON.PhysicsImpostor(
@@ -3604,7 +3604,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       self.body = body;
       body.component = self;
       body.material = bodyMat;
-      scene.shadowGenerator.addShadowCaster(body);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
       body.physicsImpostor = new BABYLON.PhysicsImpostor(
         body,
@@ -3672,7 +3672,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       self.body = body;
       body.component = self;
       body.material = bodyMat;
-      scene.shadowGenerator.addShadowCaster(body);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
       body.physicsImpostor = new BABYLON.PhysicsImpostor(
         body,
@@ -3810,7 +3810,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
         }
       }
 
-      scene.shadowGenerator.addShadowCaster(stlRoot);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(stlRoot);
 
     } else {
       // --- GLTF/GLB handling ---
@@ -3908,7 +3908,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       }
 
       // Add shadow
-      scene.shadowGenerator.addShadowCaster(meshes[0]);
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(meshes[0]);
 
       // Handle model animation
       if (results.animationGroups && self.options.modelAnimation && self.options.modelAnimation !== 'None') {
