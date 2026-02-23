@@ -59,7 +59,9 @@ var simPanel = new function () {
     self.$cameraOptions.click(self.switchCamera);
     self.$sensors.click(self.toggleSensorsPanel);
     self.$closePlotter.click(self.closePlotter);
-    self.$plotterCanvas[0].addEventListener('mousemove', self.plotterDisplayPosition);
+    if (self.$plotterCanvas.length > 0) {
+      self.$plotterCanvas[0].addEventListener('mousemove', self.plotterDisplayPosition);
+    }
 
     if (self.$hubButtons.length > 0) {
       self.$hubButtonsIcon.click(self.toggleHubButtons);
@@ -73,17 +75,19 @@ var simPanel = new function () {
       self.setupJoystickKeyControls();
     }
 
-    self.$ruler[0].addEventListener('pointerup', function (e) {
-      if (e.pointerType == 'touch') {
-        self.touchDevice = true;
-      } else {
-        self.touchDevice = false;
-        if (babylon.marker1) babylon.marker1.isVisible = true;
-      }
-      self.toggleRuler();
-      e.preventDefault();
-      e.stopPropagation();
-    });
+    if (self.$ruler.length > 0) {
+      self.$ruler[0].addEventListener('pointerup', function (e) {
+        if (e.pointerType == 'touch') {
+          self.touchDevice = true;
+        } else {
+          self.touchDevice = false;
+          if (babylon.marker1) babylon.marker1.isVisible = true;
+        }
+        self.toggleRuler();
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
     window.addEventListener('pointerdown', function () {
       self.drag = false;
     });

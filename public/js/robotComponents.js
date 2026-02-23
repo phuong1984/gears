@@ -208,7 +208,7 @@ function ColorSensor(scene, parent, pos, rot, port, options) {
     body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
 
     var eyeMat = babylon.getMaterial(scene, 'E60000');
-    self.eye = new BABYLON.MeshBuilder.CreateSphere('colorSensorEye', { diameterX: 1, diameterY: 1, diameterZ: 0.6, segments: 3 }, scene);
+    self.eye = BABYLON.MeshBuilder.CreateSphere('colorSensorEye', { diameterX: 1, diameterY: 1, diameterZ: 0.6, segments: 3 }, scene);
     self.eye.material = eyeMat;
     self.eye.position.z = 1.5;
     self.eye.parent = body;
@@ -2362,7 +2362,7 @@ function PaintballLauncherActuator(scene, parent, pos, rot, port, options) {
   }
 
   this.createPaintball = function (power) {
-    let paintball = new BABYLON.MeshBuilder.CreateSphere('paintball', { diameter: 1, segments: 3 }, scene);
+    let paintball = BABYLON.MeshBuilder.CreateSphere('paintball', { diameter: 1, segments: 3 }, scene);
     paintball.material = self.paintballColors[self.options.color];
     paintball.color = self.options.color;
     paintball.parent = self.body;
@@ -2511,7 +2511,7 @@ function Pen(scene, parent, pos, rot, port, options) {
       diameterBottom: 0.01,
       tessellation: 4
     };
-    self.tip = new BABYLON.MeshBuilder.CreateCylinder('penTip', tipOptions, scene);
+    self.tip = BABYLON.MeshBuilder.CreateCylinder('penTip', tipOptions, scene);
     self.tip.material = tipMat;
     self.tip.position.y = -2;
     self.tip.parent = body;
@@ -3645,18 +3645,8 @@ function ModelBlock(scene, parent, pos, rot, options) {
         // Babylon.js 4.2.1 STL loader lacks canDirectLoad support,
         // so data URLs must be converted to blob URLs for STL files
         if (pluginExtension === '.stl' && self.options.modelURL.startsWith('data:')) {
-          let parts = self.options.modelURL.split(',');
-          let mimeMatch = parts[0].match(/:(.*?);/);
-          let mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-          let isBase64 = parts[0].indexOf('base64') !== -1;
-          let rawData = parts[1];
-          let byteString = isBase64 ? atob(rawData) : decodeURIComponent(rawData);
-          let ab = new ArrayBuffer(byteString.length);
-          let ia = new Uint8Array(ab);
-          for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-          }
-          let blob = new Blob([ab], { type: mime });
+          let response = await fetch(self.options.modelURL);
+          let blob = await response.blob();
           tempBlobURL = URL.createObjectURL(blob);
           loadURL = tempBlobURL;
         }

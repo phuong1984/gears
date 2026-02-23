@@ -16,6 +16,9 @@ var babylon = new function () {
   // Ammo instance - stored after DOMContentLoaded, used when init() is called
   this._ammoInstance = null;
 
+  // Internal flag to pause rendering during scene rebuilds
+  this._renderingPaused = false;
+
   // Run on page load
   this.init = function () {
     self.canvas = document.getElementById('renderCanvas');
@@ -24,6 +27,7 @@ var babylon = new function () {
     self.scene = self.createScene();
 
     self.engine.runRenderLoop(function () {
+      if (self._renderingPaused) return;
       var shouldRender = self.simActive
         || (typeof skulpt != 'undefined' && skulpt.running);
       if (shouldRender && self.scene) {
@@ -44,22 +48,18 @@ var babylon = new function () {
     });
   };
 
-  // Create the scene
+  // Create the scene (called once from init)
   this.createScene = function () {
-    if (self.scene) {
-      self.scene.dispose()
-    }
-
     var scene = new BABYLON.Scene(self.engine);
     var gravityVector = new BABYLON.Vector3(0, -98.1, 0);
-    var physicsPlugin = new BABYLON.AmmoJSPlugin();
+    var physicsPlugin = new BABYLON.AmmoJSPlugin(true, self._ammoInstance || window.Ammo);
     scene.enablePhysics(gravityVector, physicsPlugin);
 
     var cameraArc = new BABYLON.ArcRotateCamera('Camera', -Math.PI / 2, Math.PI / 5, 200, new BABYLON.Vector3(0, 0, 0), scene);
     cameraArc.attachControl(self.canvas, true);
     self.cameraArc = cameraArc;
     self.resetCamera();
-    self.setCameraMode('follow');
+    self.setCameraMode('arc');
 
     // Controls for Orthographic camera
     scene.onPointerObservable.add(self.zoomOrtho, BABYLON.PointerEventTypes.POINTERWHEEL);
@@ -92,7 +92,6 @@ var babylon = new function () {
 
     return scene;
   };
-
 
   // Set othographic camera zoom
   this.zoomOrtho = function (p) {
@@ -151,7 +150,10 @@ var babylon = new function () {
       }
       self.cameraArc.origAlpha = null;
       self.cameraArc.origBeta = null;
-      self.cameraArc.lockedTarget = robot.body;
+      // Guard: robot.body may not exist yet during initial scene creation
+      if (typeof robot !== 'undefined' && robot.body) {
+        self.cameraArc.lockedTarget = robot.body;
+      }
       self.cameraArc._panningMouseButton = 1;
       babylon.cameraArc.mode = BABYLON.Camera.PERSPECTIVE_CAMERA
       self.cameraArc.inputs.attached.keyboard.attachControl();
@@ -193,51 +195,88 @@ var babylon = new function () {
   }
 
   // Reset scene
+  // BabylonJS 8.x FIX: Do NOT dispose the entire scene, as this corrupts
+  // WebGL shader programs shared with the engine. Instead, selectively remove
+  // all meshes, materials, and physics bodies, then reload into the same scene.
   this.resetScene = function () {
-    // Save camera position and rotations
-    let pos = self.cameraArc.position;
-    let target = self.cameraArc.target;
-    let rot = self.cameraArc.absoluteRotation;
-    let up = self.cameraArc.upVector;
+    // Save camera state
+    let target = self.cameraArc.target.clone();
+    let alpha = self.cameraArc.alpha;
+    let beta = self.cameraArc.beta;
+    let radius = self.cameraArc.radius;
     let mode = self.cameraMode;
 
-    // Pause rendering while the scene is being torn down and rebuilt
-    // to prevent rendering against a disposed or half-built scene.
+    // Pause rendering while the scene is being rebuilt
+    self._renderingPaused = true;
     var wasActive = self.simActive;
     self.simActive = false;
 
-    self.scene.dispose();
-    self.scene = self.createScene();
+    // Remove action manager
+    if (self.scene.actionManager) {
+      self.scene.actionManager.actions = [];
+      self.scene.actionManager.dispose();
+      self.scene.actionManager = null;
+    }
+
+    // Remove all meshes - use while loop because dispose() may recursively
+    // remove child meshes from the array, changing its length mid-iteration
+    while (self.scene.meshes.length > 0) {
+      self.scene.meshes[self.scene.meshes.length - 1].dispose(false, true);
+    }
+
+    // Remove all materials
+    while (self.scene.materials.length > 0) {
+      self.scene.materials[0].dispose();
+    }
+
+    // Remove all textures
+    while (self.scene.textures.length > 0) {
+      self.scene.textures[0].dispose();
+    }
+
+    // Remove extra cameras (keep main camera)
+    for (let i = self.scene.cameras.length - 1; i > 0; i--) {
+      self.scene.cameras[i].dispose();
+    }
+
+    // Disable and re-enable physics to reset bodies
+    if (self.scene.isPhysicsEnabled()) {
+      self.scene.disablePhysicsEngine();
+      var gravityVector = new BABYLON.Vector3(0, -98.1, 0);
+      var physicsPlugin = new BABYLON.AmmoJSPlugin(true, self._ammoInstance || window.Ammo);
+      self.scene.enablePhysics(gravityVector, physicsPlugin);
+    }
+
+    // Remove GUI
+    if (self.gui) {
+      self.gui.dispose();
+      self.gui = null;
+    }
+    if (typeof BABYLON.GUI != 'undefined') {
+      self.gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+    }
+
+    // Reset camera
+    self.resetCamera();
 
     return self.loadMeshes(self.scene).then(function () {
       // Restore camera
       self.setCameraMode(mode);
-      self.cameraArc.position = pos;
-      self.cameraArc.absoluteRotation = rot;
-      self.cameraArc.upVector = up;
-      self.cameraArc.target = target;
+      self.cameraArc.alpha = alpha;
+      self.cameraArc.beta = beta;
+      self.cameraArc.radius = radius;
+      self.cameraArc.setTarget(target);
       self.cameraArc.origAlpha = null;
       self.cameraArc.origBeta = null;
       // Resume rendering now that the scene is fully built
       self.simActive = wasActive;
+      self._renderingPaused = false;
+    }).catch(function (err) {
+      console.error('[GEARS] resetScene loadMeshes error:', err);
+      // Always resume rendering even if loading failed
+      self.simActive = wasActive;
+      self._renderingPaused = false;
     });
-  };
-
-  // Remove all RTT cameras
-  this.removeRTTCameras = function () {
-    for (let i = self.scene.cameras.length - 1; i > 0; i--) {
-      self.scene.cameras[i].dispose();
-    }
-  };
-
-  // Remove all meshes
-  this.removeMeshes = function () {
-    self.scene.actionManager.actions = [];
-    self.scene.actionManager.dispose();
-
-    for (let i = self.scene.meshes.length - 1; i >= 0; i--) {
-      self.scene.meshes[i].dispose(false, true);
-    }
   };
 
   // Load meshes
@@ -253,13 +292,13 @@ var babylon = new function () {
     };
 
     let greenMat = self.getMaterial(self.scene, '00ff00');
-    self.marker1 = new BABYLON.MeshBuilder.CreateCylinder('marker1', markerOptions, self.scene);
+    self.marker1 = BABYLON.MeshBuilder.CreateCylinder('marker1', markerOptions, self.scene);
     self.marker1.material = greenMat;
     self.marker1.isPickable = false;
     self.marker1.isVisible = false;
 
     let redMat = self.getMaterial(self.scene, 'ff0000');
-    self.marker2 = new BABYLON.MeshBuilder.CreateCylinder('marker2', markerOptions, self.scene);
+    self.marker2 = BABYLON.MeshBuilder.CreateCylinder('marker2', markerOptions, self.scene);
     self.marker2.material = redMat;
     self.marker2.isPickable = false;
     self.marker2.isVisible = false;
@@ -346,7 +385,7 @@ var babylon = new function () {
       color += rgba[4] + rgba[5];
     }
 
-    return new BABYLON.Color3.FromHexString(color);
+    return BABYLON.Color3.FromHexString(color);
   };
 
   // Get material from rgba string, creating new if not existing
@@ -378,6 +417,9 @@ var babylon = new function () {
   };
 
   // Change material for a mesh, including handling for rtt material
+  // BabylonJS 8.x FIX: material.clone() shares internal Effect references,
+  // causing the original material's WebGL programs to be deleted when the
+  // clone is modified. We now create a fresh independent material instead.
   this.setMaterial = function (mesh, material) {
     mesh.material = material;
     mesh.isFrozen = false;
@@ -385,17 +427,24 @@ var babylon = new function () {
     let rttID = 'RTT_' + mesh.material.id;
     let mat = self.scene.getMaterialByID(rttID);
     if (mat == null) {
-      mesh.rttMaterial = mesh.material.clone();
-      mesh.rttMaterial.id = rttID;
-      mesh.rttMaterial.disableLighting = true;
-      if (mesh.rttMaterial.diffuseTexture) {
-        mesh.rttMaterial.emissiveColor = FULL_EMMISSIVE;
-      } else if (mesh.rttMaterial.albedoColor) {
-        mesh.rttMaterial.emissiveColor = mesh.rttMaterial.albedoColor;
+      // Create a new independent material instead of cloning
+      let rttMat = new BABYLON.StandardMaterial(rttID, self.scene);
+      rttMat.disableLighting = true;
+      if (mesh.material.diffuseTexture) {
+        rttMat.diffuseTexture = mesh.material.diffuseTexture;
+        rttMat.emissiveColor = typeof FULL_EMMISSIVE !== 'undefined' ? FULL_EMMISSIVE : new BABYLON.Color3(1, 1, 1);
+      } else if (mesh.material.albedoColor) {
+        rttMat.emissiveColor = mesh.material.albedoColor;
+      } else if (mesh.material.diffuseColor) {
+        rttMat.emissiveColor = mesh.material.diffuseColor;
       } else {
-        mesh.rttMaterial.emissiveColor = mesh.rttMaterial.diffuseColor;
+        rttMat.emissiveColor = new BABYLON.Color3(1, 1, 1);
       }
-      mesh.rttMaterial.freeze();
+      if (mesh.material.alpha !== undefined) {
+        rttMat.alpha = mesh.material.alpha;
+      }
+      rttMat.freeze();
+      mesh.rttMaterial = rttMat;
     } else {
       mesh.rttMaterial = mat;
     }
@@ -438,13 +487,32 @@ var babylon = new function () {
 // babylon.init() itself is deferred until the Simulator tab is first clicked,
 // ensuring the canvas is visible and properly sized when WebGL initializes.
 // This prevents BabylonJS 8.x from creating and immediately GC-ing GPU programs.
+//
+// EXCEPTION: On configurator.html and builder.html, the canvas is always visible
+// (no Simulator tab exists), so babylon must be initialized immediately after
+// Ammo.js is ready.
 window.addEventListener("DOMContentLoaded", function () {
   var config = {
     locateFile: () => 'ammo/ammo-20210414.wasm.wasm'
   };
   Ammo(config).then(function (ammo) {
     babylon._ammoInstance = ammo;
-    console.log('[GEARS] Ammo.js ready - babylon will init on first Simulator tab visit');
+
+    // Check if we are on configurator or builder page (canvas is always visible)
+    var isConfigurator = typeof configurator !== 'undefined';
+    var isBuilder = typeof builder !== 'undefined';
+
+    if (isConfigurator || isBuilder) {
+      // Canvas is always visible on these pages - init immediately
+      try {
+        babylon.simActive = true;
+        babylon.init();
+        babylon.engine.resize();
+        setTimeout(function () { babylon.engine.resize(); }, 500);
+      } catch (e) {
+        console.error('[GEARS] babylon.init() error:', e);
+      }
+    }
   }).catch(function (e) {
     console.error('[GEARS] Ammo init error:', e);
   });

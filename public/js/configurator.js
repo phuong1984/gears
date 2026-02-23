@@ -2004,6 +2004,15 @@ var configurator = new function () {
 
     if (self.wireframe && typeof self.wireframe.body != 'undefined') {
       self.wireframe.body.computeWorldMatrix(true);
+      // Sync wireframe position/rotation with body
+      self.wireframe.position.copyFrom(self.wireframe.body.absolutePosition);
+      if (self.wireframe.body.absoluteRotationQuaternion) {
+        if (!self.wireframe.rotationQuaternion) {
+          self.wireframe.rotationQuaternion = self.wireframe.body.absoluteRotationQuaternion.clone();
+        } else {
+          self.wireframe.rotationQuaternion.copyFrom(self.wireframe.body.absoluteRotationQuaternion);
+        }
+      }
     }
   }
 
@@ -2388,50 +2397,61 @@ var configurator = new function () {
     }
     let index = $selected[0].componentIndex;
     if (typeof index != 'undefined') {
-      let body = robot.getComponentByIndex(index).body;
+      let component = robot.getComponentByIndex(index);
+      if (!component || !component.body) {
+        console.warn('[configurator] highlightSelected: component or body not found for index', index);
+        return;
+      }
+      let body = component.body;
+
+      // Ensure world matrix is up-to-date before reading bounding info
+      body.computeWorldMatrix(true);
       let size = body.getBoundingInfo().boundingBox.extendSize;
       let options = {
         height: size.y * 2,
         width: size.x * 2,
         depth: size.z * 2
       };
-      let wireframeMat = babylon.scene.getMaterialByID('wireframeComponentSelector');
-      if (wireframeMat == null) {
-        wireframeMat = new BABYLON.StandardMaterial('wireframeComponentSelector', babylon.scene);
-        wireframeMat.alpha = 0;
-      }
+      let wireframeMat = new BABYLON.StandardMaterial('wireframeComponentSelectorMat', babylon.scene);
+      wireframeMat.wireframe = true;
+      wireframeMat.disableLighting = true;
+      wireframeMat.emissiveColor = new BABYLON.Color3(0, 0, 1);
 
       wireframe = BABYLON.MeshBuilder.CreateBox('wireframeComponentSelector', options, babylon.scene);
       wireframe.material = wireframeMat;
+      wireframe.scaling = new BABYLON.Vector3(1.05, 1.05, 1.05);
+      wireframe.renderingGroupId = 1;
       wireframe.isPickable = false;
 
       wireframe.body = body;
       self.wireframe = wireframe;
 
-      wireframe.position = body.absolutePosition;
+      // Position wireframe at body's absolute position and rotation
+      wireframe.position.copyFrom(body.absolutePosition);
+      if (body.absoluteRotationQuaternion) {
+        wireframe.rotationQuaternion = body.absoluteRotationQuaternion.clone();
+      }
 
-      wireframe.rotationQuaternion = body.absoluteRotationQuaternion;
-      wireframe.enableEdgesRendering();
-      wireframe.edgesWidth = 10;
+      // Animate wireframe color
       let wireframeAnimation = new BABYLON.Animation(
         'wireframeAnimation',
-        'edgesColor',
+        'material.emissiveColor',
         30,
-        BABYLON.Animation.ANIMATIONTYPE_COLOR4,
+        BABYLON.Animation.ANIMATIONTYPE_COLOR3,
         BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
       );
       var keys = [];
       keys.push({
         frame: 0,
-        value: new BABYLON.Color4(0, 0, 1, 1)
+        value: new BABYLON.Color3(0, 0, 1)
       });
       keys.push({
         frame: 15,
-        value: new BABYLON.Color4(1, 0, 0, 1)
+        value: new BABYLON.Color3(1, 0, 0)
       });
       keys.push({
         frame: 30,
-        value: new BABYLON.Color4(0, 0, 1, 1)
+        value: new BABYLON.Color3(0, 0, 1)
       });
       wireframeAnimation.setKeys(keys);
       wireframe.animations.push(wireframeAnimation);
@@ -2535,7 +2555,7 @@ var configurator = new function () {
       } else if (sensor.type == 'Pen') {
         sensors += '<li>#robot-port# ' + i + ' : #robot-pen#</li>';
       } else {
-        console.log(sensor);
+        console.log('Unrecognized sensor type: ' + sensor.type);
       }
       i++;
     }

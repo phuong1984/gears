@@ -1854,44 +1854,48 @@ var builder = new function () {
         return;
       }
 
+      body.computeWorldMatrix(true);
       let size = body.getBoundingInfo().boundingBox.extendSize;
       let options = {
         height: size.y * 2,
         width: size.x * 2,
         depth: size.z * 2
       };
-      let wireframeMat = babylon.scene.getMaterialByID('wireframeObjectSelector');
-      if (wireframeMat == null) {
-        wireframeMat = new BABYLON.StandardMaterial('wireframeObjectSelector', babylon.scene);
-        wireframeMat.alpha = 0;
-      }
 
       wireframe = BABYLON.MeshBuilder.CreateBox('wireframeObjectSelector', options, babylon.scene);
+      let wireframeMat = new BABYLON.StandardMaterial('wireframeObjectSelectorMat', babylon.scene);
+      wireframeMat.wireframe = true;
+      wireframeMat.disableLighting = true;
+      wireframeMat.emissiveColor = new BABYLON.Color3(0, 0, 1);
       wireframe.material = wireframeMat;
-      wireframe.position = body.absolutePosition;
-      wireframe.rotationQuaternion = body.absoluteRotationQuaternion;
-      wireframe.enableEdgesRendering();
-      wireframe.edgesWidth = 50;
+      wireframe.scaling = new BABYLON.Vector3(1.05, 1.05, 1.05);
+      wireframe.renderingGroupId = 1;
+      wireframe.position.copyFrom(body.absolutePosition);
+      if (body.absoluteRotationQuaternion) {
+        wireframe.rotationQuaternion = body.absoluteRotationQuaternion.clone();
+      }
       wireframe.isPickable = false;
+
+      // Animate wireframe color
       let wireframeAnimation = new BABYLON.Animation(
         'wireframeAnimation',
-        'edgesColor',
+        'material.emissiveColor',
         30,
-        BABYLON.Animation.ANIMATIONTYPE_COLOR4,
+        BABYLON.Animation.ANIMATIONTYPE_COLOR3,
         BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE
       );
       var keys = [];
       keys.push({
         frame: 0,
-        value: new BABYLON.Color4(0, 0, 1, 1)
+        value: new BABYLON.Color3(0, 0, 1)
       });
       keys.push({
         frame: 15,
-        value: new BABYLON.Color4(1, 0, 0, 1)
+        value: new BABYLON.Color3(1, 0, 0)
       });
       keys.push({
         frame: 30,
-        value: new BABYLON.Color4(0, 0, 1, 1)
+        value: new BABYLON.Color3(0, 0, 1)
       });
       wireframeAnimation.setKeys(keys);
       wireframe.animations.push(wireframeAnimation);

@@ -396,10 +396,15 @@ var World_Base = function () {
 
   // Create the scene
   this.load = function (scene) {
-    // Disable auto-playing of animation
-    BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (plugin) {
-      plugin.animationStartMode = BABYLON.GLTFLoaderAnimationStartMode.NONE;
-    });
+    // Disable auto-playing of animation (only add observer once)
+    if (!self._pluginObserverAdded) {
+      self._pluginObserverAdded = true;
+      BABYLON.SceneLoader.OnPluginActivatedObservable.add(function (plugin) {
+        if (typeof BABYLON.GLTFLoaderAnimationStartMode !== 'undefined') {
+          plugin.animationStartMode = BABYLON.GLTFLoaderAnimationStartMode.NONE;
+        }
+      });
+    }
 
     if (typeof simPanel != 'undefined') {
       self.panel = simPanel;
@@ -1057,25 +1062,10 @@ var World_Base = function () {
     return false;
   };
 
-  // Convert a data URL to a blob URL
-  this.dataURLToBlobURL = function (dataURL) {
-    let parts = dataURL.split(',');
-    let mimeMatch = parts[0].match(/:(.*?);/);
-    let mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-    let isBase64 = parts[0].indexOf('base64') !== -1;
-    let data = parts[1];
-    let byteString;
-    if (isBase64) {
-      byteString = atob(data);
-    } else {
-      byteString = decodeURIComponent(data);
-    }
-    let ab = new ArrayBuffer(byteString.length);
-    let ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    let blob = new Blob([ab], { type: mime });
+  // Convert a data URL to a blob URL (async, uses native fetch for performance)
+  this.dataURLToBlobURL = async function (dataURL) {
+    let response = await fetch(dataURL);
+    let blob = await response.blob();
     return URL.createObjectURL(blob);
   };
 
@@ -1084,6 +1074,16 @@ var World_Base = function () {
     let id = 'worldBaseObject';
     if (typeof options.index != 'undefined') {
       id += '_model' + options.index;
+    }
+
+    // No URL provided - return a visible placeholder box
+    if (!options.modelURL || options.modelURL === '') {
+      var mesh = BABYLON.MeshBuilder.CreateBox(id, { width: 10, depth: 10, height: 10 }, scene);
+      mesh.material = options.material || babylon.getMaterial(scene, 'A3CF0D');
+      mesh.position = options.position;
+      mesh.rotation = options.rotation;
+      mesh.animations = [];
+      return mesh;
     }
 
     let isSTL = self.isSTLModel(options.modelURL, options._modelFileName);
@@ -1107,7 +1107,7 @@ var World_Base = function () {
         // Babylon.js 4.2.1 STL loader lacks canDirectLoad support,
         // so data URLs must be converted to blob URLs for STL files
         if (isSTL && options.modelURL.startsWith('data:')) {
-          tempBlobURL = self.dataURLToBlobURL(options.modelURL);
+          tempBlobURL = await self.dataURLToBlobURL(options.modelURL);
           loadURL = tempBlobURL;
         }
       }
@@ -1232,6 +1232,7 @@ var World_Base = function () {
       // --- GLTF/GLB handling (original logic) ---
 
       // Get bounding box
+      meshes[1].computeWorldMatrix(true);
       let min = meshes[1].getBoundingInfo().boundingBox.minimumWorld;
       let max = meshes[1].getBoundingInfo().boundingBox.maximumWorld;
 
@@ -1266,6 +1267,8 @@ var World_Base = function () {
       mesh.rotation = options.rotation;
 
       // Set up scale and parent
+      // glTF models set rotationQuaternion by default, must clear for Euler rotation
+      meshes[0].rotationQuaternion = null;
       meshes[0].scaling.x = options.modelScale;
       meshes[0].scaling.y = options.modelScale;
       meshes[0].scaling.z = -options.modelScale;
