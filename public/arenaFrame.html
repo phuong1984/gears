@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,12 +8,12 @@
 
   <link rel="stylesheet" href="css/main.css?v=1d6f38da">
 
-  <script src="jquery/jquery-3.5.1.slim.min.js"></script>
+  <script src="jquery/jquery-3.7.1.slim.min.js"></script>
 
-  <script src="skulpt/0.11.0/skulpt.min.js"></script>
-  <script src="skulpt/0.11.0/skulpt-stdlib.js"></script>
+  <script src="skulpt/1.2.0/skulpt.min.js"></script>
+  <script src="skulpt/1.2.0/skulpt-stdlib.js"></script>
 
-  <script src="jszip/3.5.0/jszip.min.js"></script>
+  <script src="jszip/3.10.1/jszip.min.js"></script>
 
   <title>GearsBot Arena iFrame</title>
 </head>
@@ -41,7 +42,7 @@
   <script>
     function readGET(name) {
       var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-      if (results==null){
+      if (results == null) {
         return null;
       } else {
         return decodeURI(results[1]);
@@ -55,7 +56,7 @@
 
     document.getElementById('player').innerText = 'Player ' + player;
     document.getElementById('arenaFrame').classList.add('bot' + player);
-    document.getElementById('enable').onclick = function(){
+    document.getElementById('enable').onclick = function () {
       if (document.getElementById('enable').checked) {
         document.getElementById('arenaFrame').classList.remove('disabled');
         robot.disabled = false;
@@ -66,20 +67,20 @@
       parent.arenaPanel.resetSim();
     };
 
-    var simPanel = new function() {
+    var simPanel = new function () {
       playerIndicator = '<span class="player' + player + '">Player ' + player + ' : </span>';
 
-      this.setRunIcon = function(type) {
+      this.setRunIcon = function (type) {
       };
 
-      this.consoleWrite = function(text) {
+      this.consoleWrite = function (text) {
         text = playerIndicator + parent.arenaPanel.stripHTML(text);
         text = parent.arenaPanel.$consoleContent.html() + text;
         parent.arenaPanel.$consoleContent.html(text);
         parent.arenaPanel.scrollConsoleToBottom();
       };
 
-      this.consoleWriteErrors = function(text) {
+      this.consoleWriteErrors = function (text) {
         text = '<span class="error">' + parent.arenaPanel.stripHTML(text) + '</span>\n';
         text = playerIndicator + text;
         text = parent.arenaPanel.$consoleContent.html() + text;
@@ -88,22 +89,22 @@
       };
     };
 
-    document.getElementById('arenaFrame').addEventListener('dragover', function(e) {
+    document.getElementById('arenaFrame').addEventListener('dragover', function (e) {
       e.stopPropagation();
       e.preventDefault();
     }, false);
 
-    document.getElementById('arenaFrame').addEventListener('drop', function(e) {
+    document.getElementById('arenaFrame').addEventListener('drop', function (e) {
       e.stopPropagation();
       e.preventDefault();
       uploadFile(e.dataTransfer.files[0]);
     }, false);
 
-    document.getElementById('zip').addEventListener('click', function(e){
+    document.getElementById('zip').addEventListener('click', function (e) {
       document.getElementById('zip').value = null;
     });
 
-    document.getElementById('zip').addEventListener('change', function(e){
+    document.getElementById('zip').addEventListener('change', function (e) {
       uploadFile(e.target.files[0]);
     });
 
@@ -124,7 +125,7 @@
     function uploadFile(file) {
       document.getElementById('zipFileName').value = file.name;
       JSZip.loadAsync(file)
-        .then(async function(zip){
+        .then(async function (zip) {
           // Load metadata
           const metaParams = await loadFile(zip, 'meta.json');
           const meta = JSON.parse(metaParams);
@@ -146,7 +147,7 @@
           const robotConf = await loadFile(zip, 'gearsRobot.json')
           robot.options = JSON.parse(robotConf);
           function setColor(components) {
-            components.forEach(function(component) {
+            components.forEach(function (component) {
               if (component.type == 'PaintballLauncherActuator') {
                 if (component.options == null) {
                   component.options = {};
@@ -166,7 +167,7 @@
 
     function runPython() {
       let enable = document.getElementById('enable').checked;
-      if (! enable) {
+      if (!enable) {
         return;
       }
 
@@ -176,4 +177,5 @@
     };
   </script>
 </body>
+
 </html>
