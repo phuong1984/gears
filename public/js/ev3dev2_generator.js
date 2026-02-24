@@ -1,4 +1,4 @@
-var ev3dev2_generator = new function() {
+var ev3dev2_generator = new function () {
   var self = this;
 
   this.autoPorts = {
@@ -12,7 +12,7 @@ var ev3dev2_generator = new function() {
   };
 
   // Load Python generators
-  this.load = function() {
+  this.load = function () {
     Blockly.Python.INDENT = '    ';
 
     for (let generator in self.generators) {
@@ -21,7 +21,7 @@ var ev3dev2_generator = new function() {
   };
 
   // Generate python code
-  this.genCode = function() {
+  this.genCode = function () {
     self.training_wheels = false;
 
     var i = 1;
@@ -35,13 +35,13 @@ var ev3dev2_generator = new function() {
     let workspaceCode = Blockly.Python.workspaceToCode(blockly.workspace);
 
     let wheelCode = robot.processedOptions.wheels ?
-    ('motorA = LargeMotor(OUTPUT_A)\n' +
-    'motorB = LargeMotor(OUTPUT_B)\n' +
-    'left_motor = motorA\n' +
-    'right_motor = motorB\n' +
-    'tank_drive = MoveTank(OUTPUT_A, OUTPUT_B)\n' +
-    'steering_drive = MoveSteering(OUTPUT_A, OUTPUT_B)\n') :
-    '';
+      ('motorA = LargeMotor(OUTPUT_A)\n' +
+        'motorB = LargeMotor(OUTPUT_B)\n' +
+        'left_motor = motorA\n' +
+        'right_motor = motorB\n' +
+        'tank_drive = MoveTank(OUTPUT_A, OUTPUT_B)\n' +
+        'steering_drive = MoveSteering(OUTPUT_A, OUTPUT_B)\n') :
+      '';
     let code =
       '#!/usr/bin/env python3\n' +
       `\n` +
@@ -108,6 +108,8 @@ var ev3dev2_generator = new function() {
         motorsCode += 'motor' + PORT_LETTERS[i] + ' = LargeMotor(OUTPUT_' + PORT_LETTERS[i] + ') # Paintball Launcher\n';
       } else if (motor.type == 'WheelActuator') {
         motorsCode += 'motor' + PORT_LETTERS[i] + ' = LargeMotor(OUTPUT_' + PORT_LETTERS[i] + ') # Wheel Actuator\n';
+      } else if (motor.type == 'MotorActuator') {
+        motorsCode += 'motor' + PORT_LETTERS[i] + ' = LargeMotor(OUTPUT_' + PORT_LETTERS[i] + ') # Motor Actuator\n';
       }
       i++;
     }
@@ -127,7 +129,7 @@ var ev3dev2_generator = new function() {
     return code
   };
 
-  this.getPort = function(port, sensorType) {
+  this.getPort = function (port, sensorType) {
     if (port == 'AUTO') {
       return self.autoPorts[sensorType];
     }
@@ -142,21 +144,21 @@ var ev3dev2_generator = new function() {
     //
     // Special generators
     //
-    'math_change': function(block) {
+    'math_change': function (block) {
       var argument0 = Blockly.Python.valueToCode(block, 'DELTA',
-          Blockly.Python.ORDER_ADDITIVE) || '0';
+        Blockly.Python.ORDER_ADDITIVE) || '0';
       var varName = Blockly.Python.nameDB_.getNameForUserVariable(block.getFieldValue('VAR'), Blockly.VARIABLE_CATEGORY_NAME);
       return varName + ' += ' + argument0 + '\n';
     },
 
     // Start
-    'when_started': function(block) {
+    'when_started': function (block) {
       var code = '';
       return code;
     },
 
     // move tank
-    'move_tank': function(block) {
+    'move_tank': function (block) {
       var value_left = Blockly.Python.valueToCode(block, 'left', Blockly.Python.ORDER_ATOMIC);
       var value_right = Blockly.Python.valueToCode(block, 'right', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('units');
@@ -178,7 +180,7 @@ var ev3dev2_generator = new function() {
     },
 
     // move tank for
-    'move_tank_for': function(block) {
+    'move_tank_for': function (block) {
       var value_left = Blockly.Python.valueToCode(block, 'left', Blockly.Python.ORDER_ATOMIC);
       var value_right = Blockly.Python.valueToCode(block, 'right', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -216,7 +218,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Move steering
-    'move_steering': function(block) {
+    'move_steering': function (block) {
       var value_steering = Blockly.Python.valueToCode(block, 'steering', Blockly.Python.ORDER_ATOMIC);
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -235,7 +237,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Move steering for
-    'move_steering_for': function(block) {
+    'move_steering_for': function (block) {
       var value_steering = Blockly.Python.valueToCode(block, 'steering', Blockly.Python.ORDER_ATOMIC);
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -270,7 +272,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Stop
-    'stop': function(block) {
+    'stop': function (block) {
       var dropdown_stop_action = block.getFieldValue('stop_action');
 
       if (dropdown_stop_action == 'BRAKE') {
@@ -287,7 +289,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Set motors for move steering and move tank
-    'set_movement_motors': function(block) {
+    'set_movement_motors': function (block) {
       var left_port = block.getFieldValue('left_port');
       var right_port = block.getFieldValue('right_port');
 
@@ -301,7 +303,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Run motor
-    'run_motor': function(block) {
+    'run_motor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('unit');
@@ -320,7 +322,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Run motor for
-    'run_motor_for': function(block) {
+    'run_motor_for': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('unit');
@@ -361,7 +363,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Run motor to
-    'run_motor_to': function(block) {
+    'run_motor_to': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('unit');
@@ -387,7 +389,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Stop motor
-    'stop_motor': function(block) {
+    'stop_motor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_stop_action = block.getFieldValue('stop_action');
 
@@ -405,7 +407,7 @@ var ev3dev2_generator = new function() {
     },
 
     // get speed
-    'speed': function(block) {
+    'speed': function (block) {
       var dropdown_port = block.getFieldValue('port');
 
       var code = 'motor' + dropdown_port + '.speed';
@@ -414,7 +416,7 @@ var ev3dev2_generator = new function() {
     },
 
     // get position
-    'position': function(block) {
+    'position': function (block) {
       var dropdown_port = block.getFieldValue('port');
 
       var code = 'motor' + dropdown_port + '.position';
@@ -423,7 +425,7 @@ var ev3dev2_generator = new function() {
     },
 
     // reset position
-    'reset_motor': function(block) {
+    'reset_motor': function (block) {
       var dropdown_port = block.getFieldValue('port');
 
       if (dropdown_port == 'BOTH') {
@@ -438,7 +440,7 @@ var ev3dev2_generator = new function() {
     },
 
     // color sensor value
-    'color_sensor': function(block) {
+    'color_sensor': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'ColorSensor');
@@ -465,7 +467,7 @@ var ev3dev2_generator = new function() {
     },
 
     // ultrasonic
-    'ultrasonic_sensor': function(block) {
+    'ultrasonic_sensor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_units = block.getFieldValue('units');
       dropdown_port = self.getPort(dropdown_port, 'UltrasonicSensor');
@@ -482,7 +484,7 @@ var ev3dev2_generator = new function() {
     },
 
     // laser. Same as ultrasonic, except for autoport
-    'laser_sensor': function(block) {
+    'laser_sensor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_units = block.getFieldValue('units');
       dropdown_port = self.getPort(dropdown_port, 'LaserRangeSensor');
@@ -499,7 +501,7 @@ var ev3dev2_generator = new function() {
     },
 
     // lidar
-    'lidar_sensor': function(block) {
+    'lidar_sensor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'LidarSensor');
 
@@ -508,7 +510,7 @@ var ev3dev2_generator = new function() {
     },
 
     // gyro
-    'gyro_sensor': function(block) {
+    'gyro_sensor': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'GyroSensor');
@@ -534,7 +536,7 @@ var ev3dev2_generator = new function() {
     },
 
     // gyro reset
-    'reset_gyro': function(block) {
+    'reset_gyro': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'GyroSensor');
 
@@ -543,7 +545,7 @@ var ev3dev2_generator = new function() {
     },
 
     // say
-    'say': function(block) {
+    'say': function (block) {
       var value_text = Blockly.Python.valueToCode(block, 'text', Blockly.Python.ORDER_ATOMIC);
       var dropdown_block = block.getFieldValue('block');
 
@@ -558,7 +560,7 @@ var ev3dev2_generator = new function() {
     },
 
     // beep
-    'beep': function(block) {
+    'beep': function (block) {
       var dropdown_block = block.getFieldValue('block');
 
       if (dropdown_block == 'NO_BLOCK') {
@@ -572,7 +574,7 @@ var ev3dev2_generator = new function() {
     },
 
     // play tone
-    'play_tone': function(block) {
+    'play_tone': function (block) {
       var value_frequency = Blockly.Python.valueToCode(block, 'frequency', Blockly.Python.ORDER_ATOMIC);
       var value_duration = Blockly.Python.valueToCode(block, 'duration', Blockly.Python.ORDER_ATOMIC);
       var dropdown_block = block.getFieldValue('block');
@@ -588,7 +590,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Sleep
-    'sleep': function(block) {
+    'sleep': function (block) {
       var value_seconds = Blockly.Python.valueToCode(block, 'seconds', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
 
@@ -602,20 +604,20 @@ var ev3dev2_generator = new function() {
     },
 
     // Exit
-    'exit': function(block) {
+    'exit': function (block) {
       var code = 'exit()\n';
       return code;
     },
 
     // time
-    'time': function(block) {
+    'time': function (block) {
       var code = 'time.time()';
 
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
     // gps
-    'gps_sensor': function(block) {
+    'gps_sensor': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'GPSSensor');
@@ -635,7 +637,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'penDown': function(block) {
+    'penDown': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -643,7 +645,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'penUp': function(block) {
+    'penUp': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -651,7 +653,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'penSetColor': function(block) {
+    'penSetColor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -662,7 +664,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'penSetWidth': function(block) {
+    'penSetWidth': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -671,7 +673,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'touch_state': function(block) {
+    'touch_state': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_state = block.getFieldValue('state');
       dropdown_port = self.getPort(dropdown_port, 'TouchSensor');
@@ -686,7 +688,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'wait_for_state': function(block) {
+    'wait_for_state': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_state = block.getFieldValue('state');
       dropdown_port = self.getPort(dropdown_port, 'TouchSensor');
@@ -703,7 +705,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'button_state': function(block) {
+    'button_state': function (block) {
       const map_button = {
         'UP': 'up',
         'DOWN': 'down',
@@ -724,7 +726,7 @@ var ev3dev2_generator = new function() {
       }
     },
 
-    'wait_until_button': function(block) {
+    'wait_until_button': function (block) {
       const map_button = {
         'UP': 'up',
         'DOWN': 'down',
@@ -747,7 +749,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'camera_capture_image': function(block) {
+    'camera_capture_image': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'CameraSensor');
 
@@ -755,7 +757,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'camera_get_rgb': function(block) {
+    'camera_get_rgb': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'CameraSensor');
 
@@ -763,7 +765,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'camera_get_hsv': function(block) {
+    'camera_get_hsv': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'CameraSensor');
 
@@ -771,7 +773,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'camera_find_blobs': function(block) {
+    'camera_find_blobs': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var minH = Blockly.Python.valueToCode(block, 'minH', Blockly.Python.ORDER_ATOMIC);
       var maxH = Blockly.Python.valueToCode(block, 'maxH', Blockly.Python.ORDER_ATOMIC);
@@ -786,7 +788,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'radio_send': function(block) {
+    'radio_send': function (block) {
       var dropdown_robot = block.getFieldValue('robot');
       var text_mailbox = block.getFieldValue('mailbox');
       var value_value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
@@ -803,35 +805,35 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'radio_available': function(block) {
+    'radio_available': function (block) {
       var text_mailbox = block.getFieldValue('mailbox');
 
       var code = 'radio.available(\'' + text_mailbox + '\')';
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'radio_read': function(block) {
+    'radio_read': function (block) {
       var text_mailbox = block.getFieldValue('mailbox');
 
       var code = 'radio.read(\'' + text_mailbox + '\')';
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'radio_read_content': function(block) {
+    'radio_read_content': function (block) {
       var text_mailbox = block.getFieldValue('mailbox');
 
       var code = 'radio.read(\'' + text_mailbox + '\')[0]';
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'radio_empty': function(block) {
+    'radio_empty': function (block) {
       var text_mailbox = block.getFieldValue('mailbox');
 
       var code = 'radio.empty(\'' + text_mailbox + '\')\n';
       return code;
     },
 
-    'object_tracker': function(block) {
+    'object_tracker': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_robot = block.getFieldValue('robot');
 
@@ -863,7 +865,7 @@ var ev3dev2_generator = new function() {
         var target = '\'self\'';
       } else if (dropdown_robot == 'BALL') {
         var target = '\'ball\'';
-      }else {
+      } else {
         var target = dropdown_robot;
       }
 
@@ -872,7 +874,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'color': function(block) {
+    'color': function (block) {
       const map_to_number = {
         'BLACK': 1,
         'BLUE': 2,
@@ -905,42 +907,42 @@ var ev3dev2_generator = new function() {
       }
     },
 
-    'wait_until': function(block) {
+    'wait_until': function (block) {
       var value_value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
 
       let code = 'while not ' + value_value + ':\n    pass\n';
       return code;
     },
 
-    'tw_fwd': function(block) {
+    'tw_fwd': function (block) {
       self.training_wheels = true;
 
       var code = 'training_wheels.fwd_cm(25)\n';
       return code;
     },
 
-    'tw_rev': function(block) {
+    'tw_rev': function (block) {
       self.training_wheels = true;
 
       var code = 'training_wheels.rev_cm(25)\n';
       return code;
     },
 
-    'tw_left': function(block) {
+    'tw_left': function (block) {
       self.training_wheels = true;
 
       var code = 'training_wheels.turn_left()\n';
       return code;
     },
 
-    'tw_right': function(block) {
+    'tw_right': function (block) {
       self.training_wheels = true;
 
       var code = 'training_wheels.turn_right()\n';
       return code;
     },
 
-    'tw_color': function(block) {
+    'tw_color': function (block) {
       let dropdown_port = self.getPort("AUTO", 'ColorSensor');
       let typeStr = 'color';
 
@@ -960,7 +962,7 @@ var ev3dev2_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'comment': function(block) {
+    'comment': function (block) {
       var value = block.getFieldValue('value');
 
       // var code = '\n# ' + value + '\n\n';
@@ -976,7 +978,7 @@ var ev3dev2_generator = new function() {
     },
 
     // Plotter
-    'plotter_init': function(block) {
+    'plotter_init': function (block) {
       let minX = block.getFieldValue('minX');
       let minY = block.getFieldValue('minY');
       let maxX = block.getFieldValue('maxX');
@@ -986,7 +988,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'plotter_showHide': function(block) {
+    'plotter_showHide': function (block) {
       let type = block.getFieldValue('type');
 
       let code;
@@ -998,12 +1000,12 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'plotter_clear': function(block) {
+    'plotter_clear': function (block) {
       let code = 'plotter.clear()\n';
       return code;
     },
 
-    'plotter_drawGrid': function(block) {
+    'plotter_drawGrid': function (block) {
       let type = block.getFieldValue('type');
       let size = block.getFieldValue('size');
 
@@ -1017,21 +1019,21 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'plotter_setColor': function(block) {
+    'plotter_setColor': function (block) {
       let color = block.getFieldValue('color');
 
       let code = 'plotter.setColor(\'' + color + '\')\n';
       return code;
     },
 
-    'plotter_setPointSize': function(block) {
+    'plotter_setPointSize': function (block) {
       let size = Blockly.Python.valueToCode(block, 'size', Blockly.Python.ORDER_ATOMIC);
 
       let code = 'plotter.setPointSize(' + size + ')\n';
       return code;
     },
 
-    'plotter_drawPoint': function(block) {
+    'plotter_drawPoint': function (block) {
       let x = Blockly.Python.valueToCode(block, 'x', Blockly.Python.ORDER_ATOMIC);
       let y = Blockly.Python.valueToCode(block, 'y', Blockly.Python.ORDER_ATOMIC);
 
@@ -1039,7 +1041,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'plotter_drawLine': function(block) {
+    'plotter_drawLine': function (block) {
       let x1 = Blockly.Python.valueToCode(block, 'x1', Blockly.Python.ORDER_ATOMIC);
       let y1 = Blockly.Python.valueToCode(block, 'y1', Blockly.Python.ORDER_ATOMIC);
       let x2 = Blockly.Python.valueToCode(block, 'x2', Blockly.Python.ORDER_ATOMIC);
@@ -1049,7 +1051,7 @@ var ev3dev2_generator = new function() {
       return code;
     },
 
-    'plotter_drawTriangle': function(block) {
+    'plotter_drawTriangle': function (block) {
       let x = Blockly.Python.valueToCode(block, 'x', Blockly.Python.ORDER_ATOMIC);
       let y = Blockly.Python.valueToCode(block, 'y', Blockly.Python.ORDER_ATOMIC);
       let dir = Blockly.Python.valueToCode(block, 'dir', Blockly.Python.ORDER_ATOMIC);

@@ -1,4 +1,4 @@
-var pybricks_generator = new function() {
+var pybricks_generator = new function () {
   var self = this;
 
   this.autoPorts = {
@@ -12,7 +12,7 @@ var pybricks_generator = new function() {
   };
 
   // Load Python generators
-  this.load = function() {
+  this.load = function () {
     Blockly.Python.INDENT = '    ';
 
     for (let generator in self.generators) {
@@ -21,7 +21,7 @@ var pybricks_generator = new function() {
   };
 
   // Generate python code
-  this.genCode = function() {
+  this.genCode = function () {
     let code =
       '#!/usr/bin/env pybricks-micropython\n' +
       '\n' +
@@ -94,6 +94,8 @@ var pybricks_generator = new function() {
         motorsCode += 'motor' + PORT_LETTERS[i] + ' = Motor(Port.' + PORT_LETTERS[i] + ') # Paintball Launcher\n';
       } else if (motor.type == 'WheelActuator') {
         motorsCode += 'motor' + PORT_LETTERS[i] + ' = Motor(Port.' + PORT_LETTERS[i] + ') # Wheel Actuator\n';
+      } else if (motor.type == 'MotorActuator') {
+        motorsCode += 'motor' + PORT_LETTERS[i] + ' = Motor(Port.' + PORT_LETTERS[i] + ') # Motor Actuator\n';
       }
       i++;
     }
@@ -164,7 +166,7 @@ var pybricks_generator = new function() {
     return code
   };
 
-  this.getPort = function(port, sensorType) {
+  this.getPort = function (port, sensorType) {
     if (port == 'AUTO') {
       return self.autoPorts[sensorType];
     }
@@ -177,13 +179,13 @@ var pybricks_generator = new function() {
 
   this.generators = {
     // Start
-    'when_started': function(block) {
+    'when_started': function (block) {
       var code = '';
       return code;
     },
 
     // move tank
-    'move_tank': function(block) {
+    'move_tank': function (block) {
       var value_left = Blockly.Python.valueToCode(block, 'left', Blockly.Python.ORDER_ATOMIC);
       var value_right = Blockly.Python.valueToCode(block, 'right', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -205,7 +207,7 @@ var pybricks_generator = new function() {
     },
 
     // move tank for
-    'move_tank_for': function(block) {
+    'move_tank_for': function (block) {
       var value_left = Blockly.Python.valueToCode(block, 'left', Blockly.Python.ORDER_ATOMIC);
       var value_right = Blockly.Python.valueToCode(block, 'right', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -243,7 +245,7 @@ var pybricks_generator = new function() {
     },
 
     // Move steering
-    'move_steering': function(block) {
+    'move_steering': function (block) {
       var value_steering = Blockly.Python.valueToCode(block, 'steering', Blockly.Python.ORDER_ATOMIC);
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -262,7 +264,7 @@ var pybricks_generator = new function() {
     },
 
     // Move steering for
-    'move_steering_for': function(block) {
+    'move_steering_for': function (block) {
       var value_steering = Blockly.Python.valueToCode(block, 'steering', Blockly.Python.ORDER_ATOMIC);
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
@@ -297,7 +299,7 @@ var pybricks_generator = new function() {
     },
 
     // Stop
-    'stop': function(block) {
+    'stop': function (block) {
       var dropdown_stop_action = block.getFieldValue('stop_action');
 
       if (dropdown_stop_action == 'BRAKE') {
@@ -318,7 +320,7 @@ var pybricks_generator = new function() {
     },
 
     // Set motors for move steering and move tank
-    'set_movement_motors': function(block) {
+    'set_movement_motors': function (block) {
       var left_port = block.getFieldValue('left_port');
       var right_port = block.getFieldValue('right_port');
 
@@ -330,7 +332,7 @@ var pybricks_generator = new function() {
     },
 
     // Run motor
-    'run_motor': function(block) {
+    'run_motor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('unit');
@@ -349,7 +351,7 @@ var pybricks_generator = new function() {
     },
 
     // Run motor for
-    'run_motor_for': function(block) {
+    'run_motor_for': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('unit');
@@ -384,7 +386,7 @@ var pybricks_generator = new function() {
     },
 
     // Run motor to
-    'run_motor_to': function(block) {
+    'run_motor_to': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var value_speed = Blockly.Python.valueToCode(block, 'speed', Blockly.Python.ORDER_ATOMIC);
       var dropdown_unit = block.getFieldValue('unit');
@@ -404,7 +406,7 @@ var pybricks_generator = new function() {
     },
 
     // Stop motor
-    'stop_motor': function(block) {
+    'stop_motor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_stop_action = block.getFieldValue('stop_action');
 
@@ -422,7 +424,7 @@ var pybricks_generator = new function() {
     },
 
     // get speed
-    'speed': function(block) {
+    'speed': function (block) {
       var dropdown_port = block.getFieldValue('port');
 
       var code = 'motor' + dropdown_port + '.speed()';
@@ -431,7 +433,7 @@ var pybricks_generator = new function() {
     },
 
     // get position
-    'position': function(block) {
+    'position': function (block) {
       var dropdown_port = block.getFieldValue('port');
 
       var code = 'motor' + dropdown_port + '.angle()';
@@ -440,7 +442,7 @@ var pybricks_generator = new function() {
     },
 
     // reset position
-    'reset_motor': function(block) {
+    'reset_motor': function (block) {
       var dropdown_port = block.getFieldValue('port');
 
       if (dropdown_port == 'BOTH') {
@@ -455,7 +457,7 @@ var pybricks_generator = new function() {
     },
 
     // color sensor value
-    'color_sensor': function(block) {
+    'color_sensor': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'ColorSensor');
@@ -482,7 +484,7 @@ var pybricks_generator = new function() {
     },
 
     // ultrasonic
-    'ultrasonic_sensor': function(block) {
+    'ultrasonic_sensor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_units = block.getFieldValue('units');
       dropdown_port = self.getPort(dropdown_port, 'UltrasonicSensor');
@@ -500,7 +502,7 @@ var pybricks_generator = new function() {
     },
 
     // lidar
-    'lidar_sensor': function(block) {
+    'lidar_sensor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'LidarSensor');
 
@@ -509,7 +511,7 @@ var pybricks_generator = new function() {
     },
 
     // gyro
-    'gyro_sensor': function(block) {
+    'gyro_sensor': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'GyroSensor');
@@ -525,7 +527,7 @@ var pybricks_generator = new function() {
     },
 
     // gyro reset
-    'reset_gyro': function(block) {
+    'reset_gyro': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'GyroSensor');
 
@@ -534,7 +536,7 @@ var pybricks_generator = new function() {
     },
 
     // say
-    'say': function(block) {
+    'say': function (block) {
       var value_text = Blockly.Python.valueToCode(block, 'text', Blockly.Python.ORDER_ATOMIC);
       var dropdown_block = block.getFieldValue('block');
 
@@ -543,7 +545,7 @@ var pybricks_generator = new function() {
     },
 
     // beep
-    'beep': function(block) {
+    'beep': function (block) {
       var dropdown_block = block.getFieldValue('block');
 
       var code = 'ev3.speaker.beep()\n';
@@ -551,7 +553,7 @@ var pybricks_generator = new function() {
     },
 
     // play tone
-    'play_tone': function(block) {
+    'play_tone': function (block) {
       var value_frequency = Blockly.Python.valueToCode(block, 'frequency', Blockly.Python.ORDER_ATOMIC);
       var value_duration = Blockly.Python.valueToCode(block, 'duration', Blockly.Python.ORDER_ATOMIC);
       var dropdown_block = block.getFieldValue('block');
@@ -561,7 +563,7 @@ var pybricks_generator = new function() {
     },
 
     // Sleep
-    'sleep': function(block) {
+    'sleep': function (block) {
       var value_seconds = Blockly.Python.valueToCode(block, 'seconds', Blockly.Python.ORDER_ATOMIC);
       var dropdown_units = block.getFieldValue('units');
 
@@ -575,20 +577,20 @@ var pybricks_generator = new function() {
     },
 
     // Exit
-    'exit': function(block) {
+    'exit': function (block) {
       var code = 'exit()\n';
       return code;
     },
 
     // time
-    'time': function(block) {
+    'time': function (block) {
       var code = 'time.time()';
 
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
     // gps
-    'gps_sensor': function(block) {
+    'gps_sensor': function (block) {
       var dropdown_type = block.getFieldValue('type');
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'GPSSensor');
@@ -608,7 +610,7 @@ var pybricks_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'penDown': function(block) {
+    'penDown': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -616,7 +618,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'penUp': function(block) {
+    'penUp': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -624,7 +626,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'penSetColor': function(block) {
+    'penSetColor': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -635,7 +637,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'penSetWidth': function(block) {
+    'penSetWidth': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'Pen');
 
@@ -644,7 +646,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'touch_state': function(block) {
+    'touch_state': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_state = block.getFieldValue('state');
       dropdown_port = self.getPort(dropdown_port, 'TouchSensor');
@@ -659,7 +661,7 @@ var pybricks_generator = new function() {
       return [code, Blockly.Python.ORDER_LOGICAL_NOT];
     },
 
-    'wait_for_state': function(block) {
+    'wait_for_state': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var dropdown_state = block.getFieldValue('state');
       dropdown_port = self.getPort(dropdown_port, 'TouchSensor');
@@ -677,7 +679,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'button_state': function(block) {
+    'button_state': function (block) {
       const map_button = {
         'UP': 'Button.UP',
         'DOWN': 'Button.DOWN',
@@ -698,7 +700,7 @@ var pybricks_generator = new function() {
       }
     },
 
-    'wait_until_button': function(block) {
+    'wait_until_button': function (block) {
       const map_button = {
         'UP': 'Button.UP',
         'DOWN': 'Button.DOWN',
@@ -721,7 +723,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'color': function(block) {
+    'color': function (block) {
       // Pybricks doesn't use color name
       const map_to_param = {
         'BLACK': 'Color.BLACK',
@@ -739,14 +741,14 @@ var pybricks_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'wait_until': function(block) {
+    'wait_until': function (block) {
       var value_value = Blockly.Python.valueToCode(block, 'value', Blockly.Python.ORDER_ATOMIC);
 
       let code = 'while not ' + value_value + ':\n    pass\n';
       return code;
     },
 
-    'camera_capture_image': function(block) {
+    'camera_capture_image': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'CameraSensor');
 
@@ -754,7 +756,7 @@ var pybricks_generator = new function() {
       return code;
     },
 
-    'camera_get_hsv': function(block) {
+    'camera_get_hsv': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'CameraSensor');
 
@@ -762,7 +764,7 @@ var pybricks_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'camera_get_rgb': function(block) {
+    'camera_get_rgb': function (block) {
       var dropdown_port = block.getFieldValue('port');
       dropdown_port = self.getPort(dropdown_port, 'CameraSensor');
 
@@ -770,7 +772,7 @@ var pybricks_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'camera_find_blobs': function(block) {
+    'camera_find_blobs': function (block) {
       var dropdown_port = block.getFieldValue('port');
       var minH = Blockly.Python.valueToCode(block, 'minH', Blockly.Python.ORDER_ATOMIC);
       var maxH = Blockly.Python.valueToCode(block, 'maxH', Blockly.Python.ORDER_ATOMIC);
@@ -785,7 +787,7 @@ var pybricks_generator = new function() {
       return [code, Blockly.Python.ORDER_ATOMIC];
     },
 
-    'comment': function(block) {
+    'comment': function (block) {
       var value = block.getFieldValue('value');
 
       // var code = '\n# ' + value + '\n\n';

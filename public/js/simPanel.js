@@ -691,6 +691,11 @@ var simPanel = new function () {
           motor.port + ': ' + i18n.get('#sim-wheel#'),
           [i18n.get('#sim-position#')]
         );
+      } else if (motor.type == 'MotorActuator') {
+        tmp = genDiv(
+          motor.port + ': Motor',
+          [i18n.get('#sim-position#')]
+        );
       }
 
       if (tmp) {
@@ -743,6 +748,8 @@ var simPanel = new function () {
         sensor[1][0].text(Math.round(sensor[0].position));
       } else if (sensor[0].type == 'MagnetActuator') {
         sensor[1][0].text(Math.round(sensor[0].power * 100 / sensor[0].options.maxPower));
+      } else if (sensor[0].type == 'MotorActuator') {
+        sensor[1][0].text(Math.round(sensor[0].position));
       }
     });
   };

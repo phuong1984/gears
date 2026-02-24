@@ -517,6 +517,14 @@ function Robot() {
           componentConfig.rotation,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
+      } else if (componentConfig.type == 'MotorActuator') {
+        component = new MotorActuator(
+          self.scene,
+          parent,
+          componentConfig.position,
+          componentConfig.rotation,
+          'out' + PORT_LETTERS[(++self.motorCount)],
+          componentConfig.options);
       } else if (componentConfig.type == 'Pen') {
         component = new Pen(
           self.scene,

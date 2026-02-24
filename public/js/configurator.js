@@ -925,6 +925,147 @@ var configurator = new function () {
       ]
     },
     {
+      name: 'MotorActuator',
+      category: 'Actuators',
+      defaultConfig: {
+        type: 'MotorActuator',
+        position: [0, 5, 0],
+        rotation: [0, 0, 0],
+        components: [],
+        options: {
+          mass: 100,
+          housingColor: '555555',
+          shaftColor: 'CCCCCC',
+          housingSize: [3, 3, 3],
+          shaftDiameter: 1,
+          shaftLength: 2,
+          shaftOffset: [0, 2.5, 0],
+          shaftAxis: [0, 1, 0],
+          showShaft: true,
+          modelURL: '',
+          modelScale: 10,
+          modelColor: '',
+          restitution: 0.4,
+          friction: 0.1
+        }
+      },
+      optionsConfigurations: [
+        {
+          option: 'position',
+          type: 'vectors',
+          min: '-20',
+          max: '20',
+          step: '1',
+          reset: true
+        },
+        {
+          option: 'rotation',
+          type: 'vectors',
+          min: '-180',
+          max: '180',
+          step: '5',
+          deg2rad: true,
+          reset: true
+        },
+        {
+          option: 'modelURL',
+          type: 'selectModelFile',
+          reset: true,
+          help: 'Select a 3D model file (.stl, .glb, or .gltf) for the motor housing'
+        },
+        {
+          option: 'modelScale',
+          type: 'slider',
+          min: '0.1',
+          max: '50',
+          step: '0.1',
+          reset: true,
+          help: 'Scale of the 3D model'
+        },
+        {
+          option: 'modelColor',
+          type: 'color',
+          help: 'Color of the 3D model (leave blank to use model default)',
+          reset: true
+        },
+        {
+          option: 'housingColor',
+          type: 'color',
+          help: 'Color of the fallback housing box (used when no model is loaded)',
+          reset: true
+        },
+        {
+          option: 'housingSize',
+          type: 'vectors',
+          min: '0.5',
+          max: '20',
+          step: '0.5',
+          reset: true,
+          help: 'Width, Height, Depth of the invisible housing physics box'
+        },
+        {
+          option: 'shaftOffset',
+          type: 'vectors',
+          min: '-10',
+          max: '10',
+          step: '0.1',
+          reset: true,
+          help: 'Offset from housing center to shaft center (X, Y, Z in cm)'
+        },
+        {
+          option: 'shaftAxis',
+          type: 'vectors',
+          min: '-1',
+          max: '1',
+          step: '0.1',
+          reset: true,
+          help: 'Rotation axis direction vector. Y=[0,1,0] for vertical rotation.'
+        },
+        {
+          option: 'shaftDiameter',
+          type: 'slider',
+          min: '0.1',
+          max: '5',
+          step: '0.1',
+          reset: true,
+          help: 'Diameter of the shaft cylinder'
+        },
+        {
+          option: 'shaftLength',
+          type: 'slider',
+          min: '0.1',
+          max: '10',
+          step: '0.1',
+          reset: true,
+          help: 'Length of the shaft cylinder'
+        },
+        {
+          option: 'shaftColor',
+          type: 'color',
+          help: 'Color of the visible shaft',
+          reset: true
+        },
+        {
+          option: 'showShaft',
+          type: 'boolean',
+          help: 'Show the shaft cylinder (useful for positioning)'
+        },
+        {
+          option: 'mass',
+          type: 'floatText',
+          help: 'If chaining actuators, it\'s recommended to reduce mass of child actuators'
+        },
+        {
+          option: 'friction',
+          type: 'slider',
+          min: '0',
+          max: '1',
+          step: '0.05',
+          help: 'This will also apply to all child objects'
+        },
+      ]
+    },
+    {
       name: 'LinearActuator',
       category: 'Actuators',
       defaultConfig: {
@@ -2295,7 +2436,7 @@ var configurator = new function () {
   // Add a new component to selected
   this.addComponent = function () {
     let $selected = self.getSelectedComponent();
-    let COMPATIBLE_TYPES = ['ArmActuator', 'SwivelActuator', 'LinearActuator', 'WheelActuator', 'WheelPassive'];
+    let COMPATIBLE_TYPES = ['ArmActuator', 'SwivelActuator', 'MotorActuator', 'LinearActuator', 'WheelActuator', 'WheelPassive'];
     if (
       typeof $selected[0].component.bodyMass == 'undefined'
       && COMPATIBLE_TYPES.indexOf($selected[0].component.type) == -1
@@ -2406,12 +2547,24 @@ var configurator = new function () {
 
       // Ensure world matrix is up-to-date before reading bounding info
       body.computeWorldMatrix(true);
-      let size = body.getBoundingInfo().boundingBox.extendSize;
-      let options = {
-        height: size.y * 2,
-        width: size.x * 2,
-        depth: size.z * 2
-      };
+
+      // Use auto-computed model bounding size if available (e.g. MotorActuator with loaded 3D model)
+      // Otherwise fall back to body's own bounding box (manual housingSize for MotorActuator, or native for other components)
+      let options;
+      if (component.modelBoundingSize) {
+        options = {
+          height: component.modelBoundingSize.y,
+          width: component.modelBoundingSize.x,
+          depth: component.modelBoundingSize.z
+        };
+      } else {
+        let size = body.getBoundingInfo().boundingBox.extendSize;
+        options = {
+          height: size.y * 2,
+          width: size.x * 2,
+          depth: size.z * 2
+        };
+      }
       let wireframeMat = new BABYLON.StandardMaterial('wireframeComponentSelectorMat', babylon.scene);
       wireframeMat.wireframe = true;
       wireframeMat.disableLighting = true;
@@ -2430,6 +2583,21 @@ var configurator = new function () {
       wireframe.position.copyFrom(body.absolutePosition);
       if (body.absoluteRotationQuaternion) {
         wireframe.rotationQuaternion = body.absoluteRotationQuaternion.clone();
+      }
+
+      // If the component has a model offset (e.g. MotorActuator with loaded 3D model),
+      // transform the local offset into world space and apply it to the wireframe position.
+      // This ensures the bounding box wraps the actual visual model, not just the invisible body.
+      if (component.modelBoundingOffset) {
+        var localOff = component.modelBoundingOffset.clone();
+        if (body.absoluteRotationQuaternion) {
+          // Rotate the local offset by the body's world rotation to get world-space offset
+          var worldOff = BABYLON.Vector3.Zero();
+          localOff.rotateByQuaternionAroundPointToRef(body.absoluteRotationQuaternion, BABYLON.Vector3.Zero(), worldOff);
+          wireframe.position.addInPlace(worldOff);
+        } else {
+          wireframe.position.addInPlace(localOff);
+        }
       }
 
       // Animate wireframe color
@@ -2462,7 +2630,7 @@ var configurator = new function () {
   // Load robot into components window
   this.loadIntoComponentsWindow = function (options) {
     let PORT_LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let ACTUATORS = ['MagnetActuator', 'ArmActuator', 'SwivelActuator', 'LinearActuator', 'PaintballLauncherActuator', 'WheelActuator'];
+    let ACTUATORS = ['MagnetActuator', 'ArmActuator', 'SwivelActuator', 'MotorActuator', 'LinearActuator', 'PaintballLauncherActuator', 'WheelActuator'];
     let DUMB_BLOCKS = ['Box', 'Cylinder', 'Sphere', 'WheelPassive', 'Model'];
     let motorCount = options.wheels ? 2 : 0;
     let sensorCount = 0;
@@ -2579,6 +2747,8 @@ var configurator = new function () {
         ports += '<li>#robot-port# ' + PORT_LETTERS[i] + ' : #robot-electromagnet#</li>';
       } else if (motor.type == 'WheelActuator') {
         ports += '<li>#robot-port# ' + PORT_LETTERS[i] + ' : #robot-wheel#</li>';
+      } else if (motor.type == 'MotorActuator') {
+        ports += '<li>#robot-port# ' + PORT_LETTERS[i] + ' : Motor</li>';
       }
       i++;
     }
