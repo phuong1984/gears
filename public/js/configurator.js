@@ -2094,6 +2094,7 @@ var configurator = new function () {
 
     self.gizmo.attach(dragBody, {
       mode: self.gizmoMode,
+      scaleFactor: 0.06,
       onDragStart: function (axisName) {
         // Saved before drag, so undo can revert
       },
@@ -2108,6 +2109,38 @@ var configurator = new function () {
             componentData.rotation[0] = -result.x;
             componentData.rotation[1] = -result.z;
             componentData.rotation[2] = -result.y;
+          }
+        } else if (self.gizmoMode === 'scale') {
+          // result = BJS scaling vector (x, y, z)
+          // Map BJS scaling → component options
+          // BJS X=Descartes X, BJS Y=Descartes Z, BJS Z=Descartes Y
+          var opts = componentData.options || {};
+
+          // Determine which size properties exist and apply scale
+          // For uniform-scale components (Model), use average
+          if (typeof opts.modelScale !== 'undefined') {
+            var avgScale = (result.x + result.y + result.z) / 3;
+            opts.modelScale = Math.max(0.1, opts.modelScale * avgScale);
+          } else {
+            // Width → BJS X, Depth → BJS Z (Descartes Y), Height → BJS Y (Descartes Z)
+            if (typeof opts.width !== 'undefined') {
+              opts.width = Math.max(0.1, Math.round(opts.width * result.x * 10) / 10);
+            }
+            if (typeof opts.depth !== 'undefined') {
+              opts.depth = Math.max(0.1, Math.round(opts.depth * result.z * 10) / 10);
+            }
+            if (typeof opts.height !== 'undefined') {
+              opts.height = Math.max(0.1, Math.round(opts.height * result.y * 10) / 10);
+            }
+            if (typeof opts.diameter !== 'undefined') {
+              // Diameter scales with X (or average of X/Z for uniform radial)
+              var radialScale = (result.x + result.z) / 2;
+              opts.diameter = Math.max(0.1, Math.round(opts.diameter * radialScale * 10) / 10);
+            }
+            if (typeof opts.radius !== 'undefined') {
+              var radialScale2 = (result.x + result.z) / 2;
+              opts.radius = Math.max(0.1, Math.round(opts.radius * radialScale2 * 10) / 10);
+            }
           }
         } else {
           // result = position
@@ -2170,8 +2203,8 @@ var configurator = new function () {
       var $btn = $(this);
       var mode = $btn.data('mode');
 
-      // move and rotate available in Phase 3
-      if (mode === 'move' || mode === 'rotate') {
+      // move, rotate, and scale all available
+      if (mode === 'move' || mode === 'rotate' || mode === 'scale') {
         $btn.removeClass('disabled');
         $btn.click(function () {
           self.setGizmoMode(mode);
@@ -2188,8 +2221,9 @@ var configurator = new function () {
         self.setGizmoMode('move');
       } else if (e.key === 'e' || e.key === 'E') {
         self.setGizmoMode('rotate');
+      } else if (e.key === 'r' || e.key === 'R') {
+        self.setGizmoMode('scale');
       }
-      // R is reserved for future Scale gizmo (Phase 3)
     });
   };
 

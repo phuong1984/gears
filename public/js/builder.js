@@ -1093,8 +1093,8 @@ var builder = new function () {
       var $btn = $(this);
       var mode = $btn.data('mode');
 
-      // move and rotate available in Phase 3
-      if (mode === 'move' || mode === 'rotate') {
+      // move, rotate, and scale all available
+      if (mode === 'move' || mode === 'rotate' || mode === 'scale') {
         $btn.removeClass('disabled');
         $btn.click(function () {
           self.setGizmoMode(mode);
@@ -1111,8 +1111,9 @@ var builder = new function () {
         self.setGizmoMode('move');
       } else if (e.key === 'e' || e.key === 'E') {
         self.setGizmoMode('rotate');
+      } else if (e.key === 'r' || e.key === 'R') {
+        self.setGizmoMode('scale');
       }
-      // R is reserved for future Scale gizmo
     });
   };
 
@@ -1490,6 +1491,25 @@ var builder = new function () {
             objectData.rotation[0] = -result.x;
             objectData.rotation[1] = -result.z;
             objectData.rotation[2] = -result.y;
+          }
+        } else if (self.gizmoMode === 'scale') {
+          // result = BJS scaling vector (x, y, z)
+          // Map BJS scaling → objectData dimensions
+          // World Builder objects: size[0]=width(X), size[1]=depth(Y), size[2]=height(Z)
+          // BJS X=Descartes X, BJS Y=Descartes Z, BJS Z=Descartes Y
+          if (objectData.size && objectData.size.length >= 3) {
+            // Box/Cylinder: size is [width, depth, height]
+            objectData.size[0] = Math.max(0.1, Math.round(objectData.size[0] * result.x * 10) / 10);
+            objectData.size[1] = Math.max(0.1, Math.round(objectData.size[1] * result.z * 10) / 10);
+            objectData.size[2] = Math.max(0.1, Math.round(objectData.size[2] * result.y * 10) / 10);
+          } else if (typeof objectData.size !== 'undefined' && typeof objectData.size === 'number') {
+            // Sphere: size is a single number
+            var avgScale = (result.x + result.y + result.z) / 3;
+            objectData.size = Math.max(0.1, Math.round(objectData.size * avgScale * 10) / 10);
+          }
+          if (typeof objectData.modelScale !== 'undefined') {
+            var avgScaleM = (result.x + result.y + result.z) / 3;
+            objectData.modelScale = Math.max(0.1, Math.round(objectData.modelScale * avgScaleM * 10) / 10);
           }
         } else {
           // result = position

@@ -1,8 +1,9 @@
 /**
- * CustomGizmo — Position & Rotation manipulation gizmo
- * Supports two modes:
+ * CustomGizmo — Position, Rotation & Scale manipulation gizmo
+ * Supports three modes:
  *   - 'move':   colored axis arrows (Red=X, Green=Z(BJS Y), Blue=Y(BJS Z))
  *   - 'rotate': colored torus rings for rotation around each axis
+ *   - 'scale':  colored axis lines with cube handles for scaling
  * Each handle constrains interaction to a single axis (= axis locking)
  * Descartes coordinate mapping: BJS X=X, BJS Y=Z, BJS Z=Y
  */
@@ -11,10 +12,11 @@ function CustomGizmo(scene) {
     this.scene = scene;
     this.arrows = {};   // move mode elements
     this.rings = {};    // rotate mode elements
+    this.scaleHandles = {}; // scale mode elements
     this.rootNode = null;
     this.targetMesh = null;
     this.isActive = false;
-    this.mode = 'move'; // 'move' or 'rotate'
+    this.mode = 'move'; // 'move', 'rotate', or 'scale'
 
     // Callbacks
     this.onDragStartCb = null;
@@ -32,6 +34,11 @@ function CustomGizmo(scene) {
     var TORUS_THICKNESS = 0.03;
     var TORUS_TESSELLATION = 32;
 
+    // Config — Scale
+    var SCALE_LINE_LENGTH = 0.8;
+    var SCALE_LINE_RADIUS = 0.018;
+    var SCALE_CUBE_SIZE = 0.1;
+
     var COLORS = {
         x: new BABYLON.Color3(0.9, 0.2, 0.2),
         y: new BABYLON.Color3(0.2, 0.75, 0.2),
@@ -47,7 +54,7 @@ function CustomGizmo(scene) {
      * Attach gizmo to a mesh
      * @param {BABYLON.Mesh} mesh
      * @param {object} opts - { onDragStart, onDragEnd, mode }
-     *   mode: 'move' (default) or 'rotate'
+     *   mode: 'move' (default), 'rotate', or 'scale'
      */
     this.attach = function (mesh, opts) {
         self.detach();
@@ -56,6 +63,7 @@ function CustomGizmo(scene) {
         opts = opts || {};
         self.targetMesh = mesh;
         self.mode = opts.mode || 'move';
+        self.scaleFactor = opts.scaleFactor || SCALE_FACTOR;
         self.onDragStartCb = opts.onDragStart || null;
         self.onDragEndCb = opts.onDragEnd || null;
 
@@ -71,6 +79,10 @@ function CustomGizmo(scene) {
             self._createRing('x', COLORS.x, new BABYLON.Vector3(1, 0, 0));
             self._createRing('y', COLORS.y, new BABYLON.Vector3(0, 1, 0));
             self._createRing('z', COLORS.z, new BABYLON.Vector3(0, 0, 1));
+        } else if (self.mode === 'scale') {
+            self._createScaleHandle('x', COLORS.x, new BABYLON.Vector3(1, 0, 0));
+            self._createScaleHandle('y', COLORS.y, new BABYLON.Vector3(0, 1, 0));
+            self._createScaleHandle('z', COLORS.z, new BABYLON.Vector3(0, 0, 1));
         } else {
             self._createArrow('x', COLORS.x, new BABYLON.Vector3(1, 0, 0));
             self._createArrow('y', COLORS.y, new BABYLON.Vector3(0, 1, 0));
@@ -116,7 +128,7 @@ function CustomGizmo(scene) {
         cone.isPickable = false;
 
         // Axis label at the tip
-        var labelPlane = self._createLabel(axisName, color, axisDir);
+        var labelPlane = self._createLabel(axisName, LABEL_HEX[axisName], axisDir);
 
         // Orient arrow along axis
         if (axisName === 'x') {
@@ -207,7 +219,7 @@ function CustomGizmo(scene) {
         }
 
         // Axis label at the ring edge
-        var labelPlane = self._createLabel(axisName, color, axisDir);
+        var labelPlane = self._createLabel(axisName, LABEL_HEX[axisName], axisDir);
 
         // Rotation drag: use plane drag perpendicular to the axis,
         // then compute angle from pointer displacement
@@ -287,6 +299,121 @@ function CustomGizmo(scene) {
         self.rings[axisName] = { node: ringNode, torus: torus, labelPlane: labelPlane, mat: mat, hoverMat: hoverMat, drag: dragBehavior };
     };
 
+    // ===================== SCALE MODE: Cube Handles =====================
+
+    this._createScaleHandle = function (axisName, color, axisDir) {
+        var mat = new BABYLON.StandardMaterial('gizmoScaleMat_' + axisName, scene);
+        mat.emissiveColor = color;
+        mat.disableLighting = true;
+
+        var hoverMat = new BABYLON.StandardMaterial('gizmoScaleHoverMat_' + axisName, scene);
+        hoverMat.emissiveColor = HOVER_COLOR;
+        hoverMat.disableLighting = true;
+
+        var handleNode = new BABYLON.TransformNode('scaleNode_' + axisName, scene);
+        handleNode.parent = self.rootNode;
+
+        // Thin line along axis
+        var line = BABYLON.MeshBuilder.CreateCylinder('scaleLine_' + axisName, {
+            height: SCALE_LINE_LENGTH,
+            diameter: SCALE_LINE_RADIUS * 2,
+            tessellation: 8
+        }, scene);
+        line.material = mat;
+        line.parent = handleNode;
+        line.renderingGroupId = 2;
+        line.isPickable = false;
+
+        // Orient line along axisDir
+        if (axisDir.x === 1) {
+            line.rotation.z = -Math.PI / 2;
+            line.position.x = SCALE_LINE_LENGTH / 2;
+        } else if (axisDir.y === 1) {
+            line.position.y = SCALE_LINE_LENGTH / 2;
+        } else {
+            line.rotation.x = Math.PI / 2;
+            line.position.z = SCALE_LINE_LENGTH / 2;
+        }
+
+        // Cube at the tip
+        var cube = BABYLON.MeshBuilder.CreateBox('scaleCube_' + axisName, {
+            size: SCALE_CUBE_SIZE
+        }, scene);
+        cube.material = mat;
+        cube.parent = handleNode;
+        cube.renderingGroupId = 2;
+
+        // Position cube at end of line
+        cube.position = axisDir.scale(SCALE_LINE_LENGTH);
+
+        // Label
+        var labelPlane = self._createLabel(axisName, LABEL_HEX[axisName], axisDir);
+        if (labelPlane) {
+            labelPlane.parent = handleNode;
+            var labelOffset = 1.1;
+            labelPlane.position = axisDir.scale(SCALE_LINE_LENGTH + SCALE_CUBE_SIZE * labelOffset);
+        }
+
+        // Drag behavior — constrained to axis
+        var dragBehavior = new BABYLON.PointerDragBehavior({ dragAxis: axisDir });
+        dragBehavior.useObjectOrientationForDragging = false;
+        dragBehavior.moveAttached = false;
+
+        var initialScale = null;
+        var dragStartPos = null;
+
+        dragBehavior.onDragStartObservable.add(function (event) {
+            cube.material = hoverMat;
+            // Capture initial mesh scaling
+            initialScale = self.targetMesh.scaling.clone();
+            dragStartPos = event.dragPlanePoint.clone();
+            if (self.onDragStartCb) self.onDragStartCb(axisName);
+        });
+
+        dragBehavior.onDragObservable.add(function (event) {
+            // Calculate scale delta from drag displacement along axis
+            var delta = BABYLON.Vector3.Dot(event.delta, axisDir);
+            // Scale sensitivity: normalize by gizmo's visual size
+            var cam = scene.activeCamera;
+            var dist = BABYLON.Vector3.Distance(cam.position, self.rootNode.position);
+            var gizmoScale = Math.min(Math.max(dist * SCALE_FACTOR, 0.5), 15);
+            var scaleFactor = delta / (SCALE_LINE_LENGTH * gizmoScale);
+
+            // Apply scale change to target mesh
+            if (axisDir.x === 1) self.targetMesh.scaling.x += scaleFactor;
+            else if (axisDir.y === 1) self.targetMesh.scaling.y += scaleFactor;
+            else self.targetMesh.scaling.z += scaleFactor;
+
+            // Clamp minimum scale
+            self.targetMesh.scaling.x = Math.max(self.targetMesh.scaling.x, 0.01);
+            self.targetMesh.scaling.y = Math.max(self.targetMesh.scaling.y, 0.01);
+            self.targetMesh.scaling.z = Math.max(self.targetMesh.scaling.z, 0.01);
+        });
+
+        dragBehavior.onDragEndObservable.add(function () {
+            cube.material = mat;
+            // Report the target mesh's current scaling
+            var scl = self.targetMesh.scaling.clone();
+            if (self.onDragEndCb) self.onDragEndCb(axisName, scl);
+        });
+
+        cube.addBehavior(dragBehavior);
+        cube.isPickable = true;
+
+        // Hover effects
+        cube.actionManager = new BABYLON.ActionManager(scene);
+        cube.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOverTrigger, function () {
+                if (!dragBehavior.dragging) { cube.material = hoverMat; }
+            }));
+        cube.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOutTrigger, function () {
+                if (!dragBehavior.dragging) { cube.material = mat; }
+            }));
+
+        self.scaleHandles[axisName] = { node: handleNode, line: line, cube: cube, labelPlane: labelPlane, mat: mat, hoverMat: hoverMat, drag: dragBehavior };
+    };
+
     /** Calculate angle of a vector projected onto a plane defined by its normal */
     this._getAngleOnPlane = function (vector, planeNormal) {
         // Create orthonormal basis on the plane
@@ -313,7 +440,7 @@ function CustomGizmo(scene) {
         labelTex.drawText(labelText, 14, 48, 'bold 48px Arial', LABEL_HEX[axisName], 'transparent', true);
         var labelMat = new BABYLON.StandardMaterial('gizmoLabelMat_' + axisName, scene);
         labelMat.diffuseTexture = labelTex;
-        labelMat.emissiveColor = color;
+        labelMat.emissiveColor = BABYLON.Color3.FromHexString(color);
         labelMat.disableLighting = true;
         labelMat.useAlphaFromDiffuseTexture = true;
         labelMat.backFaceCulling = false;
@@ -346,7 +473,8 @@ function CustomGizmo(scene) {
 
         var cam = scene.activeCamera;
         var dist = BABYLON.Vector3.Distance(cam.position, self.rootNode.position);
-        var scale = Math.min(Math.max(dist * SCALE_FACTOR, 0.5), 15);
+        var sf = self.scaleFactor || SCALE_FACTOR;
+        var scale = Math.min(Math.max(dist * sf, 0.5), 15);
         self.rootNode.scaling.setAll(scale);
     };
 
@@ -381,6 +509,21 @@ function CustomGizmo(scene) {
             r.node.dispose();
         }
         self.rings = {};
+
+        // Clean up scale mode handles
+        for (var k in self.scaleHandles) {
+            var s = self.scaleHandles[k];
+            s.cube.removeBehavior(s.drag);
+            s.line.dispose(); s.cube.dispose();
+            if (s.labelPlane) {
+                if (s.labelPlane._gizmoTex) s.labelPlane._gizmoTex.dispose();
+                if (s.labelPlane._gizmoMat) s.labelPlane._gizmoMat.dispose();
+                s.labelPlane.dispose();
+            }
+            s.mat.dispose(); s.hoverMat.dispose();
+            s.node.dispose();
+        }
+        self.scaleHandles = {};
 
         if (self.rootNode) { self.rootNode.dispose(); self.rootNode = null; }
         self.targetMesh = null;
