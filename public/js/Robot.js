@@ -139,8 +139,8 @@ function Robot() {
       body.position.z = 0;
       if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
       body.position.addInPlace(startPos);
-      body.rotate(BABYLON.Axis.Y, startRot.y, BABYLON.Space.LOCAL);
       body.rotate(BABYLON.Axis.X, startRot.x, BABYLON.Space.LOCAL);
+      body.rotate(BABYLON.Axis.Y, startRot.y, BABYLON.Space.LOCAL);
       body.rotate(BABYLON.Axis.Z, startRot.z, BABYLON.Space.LOCAL);
 
       // Load 3D model for body if specified
@@ -315,8 +315,8 @@ function Robot() {
           body,
           [
             -(options.wheelWidth + options.bodyWidth) / 2 - options.wheelToBodyOffset,
-            -(options.bodyHeight / 2) + options.bodyEdgeToWheelCenterY,
-            (options.bodyLength / 2) - options.bodyEdgeToWheelCenterZ
+            (options.bodyLength / 2) - options.bodyEdgeToWheelCenterZ,
+            -(options.bodyHeight / 2) + options.bodyEdgeToWheelCenterY
           ],
           [0, 0, 0],
           'outA',
@@ -330,8 +330,8 @@ function Robot() {
           body,
           [
             (options.wheelWidth + options.bodyWidth) / 2 + options.wheelToBodyOffset,
-            -(options.bodyHeight / 2) + options.bodyEdgeToWheelCenterY,
-            (options.bodyLength / 2) - options.bodyEdgeToWheelCenterZ
+            (options.bodyLength / 2) - options.bodyEdgeToWheelCenterZ,
+            -(options.bodyHeight / 2) + options.bodyEdgeToWheelCenterY
           ],
           [0, 0, 0],
           'outB',
@@ -816,7 +816,7 @@ function Robot() {
     let temp = self.objectTrackerGetByName(name);
     if (temp != null) {
       let pos = temp.absolutePosition;
-      return [pos.x, pos.y, pos.z];
+      return [pos.x, pos.z, pos.y];
     }
     return null;
   };
@@ -825,7 +825,7 @@ function Robot() {
     let temp = self.objectTrackerGetByName(name);
     if (temp != null && temp.physicsImpostor != null) {
       let vel = temp.physicsImpostor.getLinearVelocity();
-      return [vel.x, vel.y, vel.z];
+      return [vel.x, vel.z, vel.y];
     }
     return null;
   };

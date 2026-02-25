@@ -465,7 +465,7 @@ var simPanel = new function () {
 
     self.$ruler.find('.x').html('<span class="label">X: </span><span class="value">' + x + ' cm</span>');
     self.$ruler.find('.y').html('<span class="label">Y: </span><span class="value">' + z + ' cm</span>');
-    self.$ruler.find('.alt').html('<span class="label">' + i18n.get('#sim-alt#') + ': </span><span class="value">' + y + ' cm</span>');
+    self.$ruler.find('.alt').html('<span class="label">Z: </span><span class="value">' + y + ' cm</span>');
     self.$ruler.find('.dist').html('<span class="label">' + i18n.get('#sim-distance#') + ': </span><span class="value">' + dist + ' cm</span>');
     self.$ruler.find('.angle').html('<span class="label">' + i18n.get('#sim-angle#') + ': </span><span class="value">' + angle + '°</span>');
   };
@@ -585,7 +585,7 @@ var simPanel = new function () {
       } else if (sensor.type == 'GPSSensor') {
         tmp = genDiv(
           sensor.port + ': ' + i18n.get('#sim-gps#'),
-          ['X (cm)', 'Y (cm)', i18n.get('#sim-altitude#')]
+          ['X (cm)', 'Y (cm)', 'Z (cm)']
         );
       } else if (sensor.type == 'LaserRangeSensor') {
         tmp = genDiv(
@@ -730,8 +730,8 @@ var simPanel = new function () {
       } else if (sensor[0].type == 'GPSSensor') {
         let position = sensor[0].getPosition();
         sensor[1][0].text(Math.round(position[0] * 10) / 10);
-        sensor[1][1].text(Math.round(position[2] * 10) / 10);
-        sensor[1][2].text(Math.round(position[1] * 10) / 10);
+        sensor[1][1].text(Math.round(position[1] * 10) / 10);
+        sensor[1][2].text(Math.round(position[2] * 10) / 10);
       } else if (sensor[0].type == 'WheelActuator') {
         sensor[1][0].text(Math.round(sensor[0].position));
       } else if (sensor[0].type == 'ArmActuator') {

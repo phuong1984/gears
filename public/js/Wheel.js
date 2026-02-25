@@ -9,9 +9,9 @@ function Wheel(scene, parent, pos, rot, port, options) {
 
   this.components = [];
 
-  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[2], rot[1]);
 
   this.bodyVector = null;
   this.wheelVector = null;

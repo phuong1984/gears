@@ -759,7 +759,7 @@ var World_Base = function () {
         options.position[2],
         options.position[1]
       ),
-      rotation: new BABYLON.Vector3(rotationRad[0], rotationRad[1], rotationRad[2]),
+      rotation: new BABYLON.Vector3(rotationRad[0], rotationRad[2], rotationRad[1]),
       physicsOptions: false,
       index: indexObj.index
     };
@@ -837,7 +837,7 @@ var World_Base = function () {
         options.position[2],
         options.position[1]
       ),
-      rotation: new BABYLON.Vector3(rotationRad[0], rotationRad[1], rotationRad[2]),
+      rotation: new BABYLON.Vector3(rotationRad[0], rotationRad[2], rotationRad[1]),
       physicsOptions: false,
       index: indexObj.index
     };
@@ -915,7 +915,7 @@ var World_Base = function () {
         options.position[2],
         options.position[1]
       ),
-      rotation: new BABYLON.Vector3(rotationRad[0], rotationRad[1], rotationRad[2]),
+      rotation: new BABYLON.Vector3(rotationRad[0], rotationRad[2], rotationRad[1]),
       physicsOptions: options.physicsOptions,
       imageType: options.imageType,
       receiveShadows: options.receiveShadows,
@@ -997,8 +997,8 @@ var World_Base = function () {
           position: key.position,
           rotation: [
             key.rotation[0] * Math.PI / 180,
-            key.rotation[1] * Math.PI / 180,
-            key.rotation[2] * Math.PI / 180
+            key.rotation[2] * Math.PI / 180,
+            key.rotation[1] * Math.PI / 180
           ]
         }
       ])
@@ -1588,7 +1588,7 @@ var World_Base = function () {
         diff = nextKey[1].rotation[2] - prevKey[1].rotation[2];
         let rotZ = prevKey[1].rotation[2] + ratio * diff;
 
-        animation.object.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(rotX, rotY, rotZ);
+        animation.object.rotationQuaternion = BABYLON.Quaternion.FromEulerAngles(rotX, rotZ, rotY);
       }
     });
   };

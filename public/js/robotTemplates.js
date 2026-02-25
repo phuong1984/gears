@@ -410,13 +410,13 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [0, -1, 9],
+        position: [0, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [0, 2.5, 8],
+        position: [0, 8, 2.5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -427,18 +427,18 @@ var robotTemplates = [
       },
       {
         type: 'GPSSensor',
-        position: [0, 2.5, 5],
+        position: [0, 5, 2.5],
         options: null
       },
       {
         type: 'MagnetActuator',
-        position: [0, -1, 3],
+        position: [0, 3, -1],
         rotation: [0, 0, 0],
         options: null
       },
       {
         type: 'Pen',
-        position: [0, 0, 6],
+        position: [0, 6, 0],
         rotation: [0, 0, 0],
         options: null
       }
@@ -498,19 +498,19 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [-2, -1, 9],
+        position: [-2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'ColorSensor',
-        position: [2, -1, 9],
+        position: [2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [0, 2.5, 8],
+        position: [0, 8, 2.5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -521,12 +521,12 @@ var robotTemplates = [
       },
       {
         type: 'GPSSensor',
-        position: [0, 2.5, 5],
+        position: [0, 5, 2.5],
         options: null
       },
       {
         type: 'MagnetActuator',
-        position: [0, -1, 3],
+        position: [0, 3, -1],
         rotation: [0, 0, 0],
         options: null
       }
@@ -588,19 +588,19 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [-2, -1, 9],
+        position: [-2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'ColorSensor',
-        position: [2, -1, 9],
+        position: [2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'LaserRangeSensor',
-        position: [0, 2.5, 7.5],
+        position: [0, 7.5, 2.5],
         rotation: [-Math.PI/2, 0, 0],
         options: {
           rayLength: 500
@@ -608,23 +608,23 @@ var robotTemplates = [
       },
       {
         type: 'GyroSensor',
-        position: [2.5, 2.5, 5],
+        position: [2.5, 5, 2.5],
         options: null
       },
       {
         type: 'GPSSensor',
-        position: [0, 2.5, 5],
+        position: [0, 5, 2.5],
         options: null
       },
       {
         type: 'MagnetActuator',
-        position: [0, -1, 3],
+        position: [0, 3, -1],
         rotation: [0, 0, 0],
         options: null
       },
       {
         type: 'ArmActuator',
-        position: [0, 3, 1],
+        position: [0, 1, 3],
         rotation: [0, 0, 0],
         options: {
           armLength: 3,
@@ -633,7 +633,7 @@ var robotTemplates = [
         components: [
           {
             type: 'PaintballLauncherActuator',
-            position: [0, 2.3, 2],
+            position: [0, 2, 2.3],
             rotation: [0, 0, 0],
             options: null
           }
@@ -695,31 +695,31 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [0, -1, 9],
+        position: [0, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [0, 2.5, 8],
+        position: [0, 8, 2.5],
         rotation: [0, 0, 0],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [-6, 3, 4],
-        rotation: [0, -Math.PI/2, 0],
+        position: [-6, 4, 3],
+        rotation: [0, 0, -Math.PI/2],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [6, 3, 4],
-        rotation: [0, Math.PI/2, 0],
+        position: [6, 4, 3],
+        rotation: [0, 0, Math.PI/2],
         options: null
       },
       {
         type: 'Box',
-        position: [-8.7, -1, 3],
+        position: [-8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -729,7 +729,7 @@ var robotTemplates = [
       },
       {
         type: 'Box',
-        position: [8.7, -1, 3],
+        position: [8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -739,12 +739,12 @@ var robotTemplates = [
       },
       {
         type: 'GyroSensor',
-        position: [0, 2.5, 5],
+        position: [0, 5, 2.5],
         options: null
       },
       {
         type: 'MagnetActuator',
-        position: [0, -1, 3],
+        position: [0, 3, -1],
         rotation: [0, 0, 0],
         options: null
       }
@@ -804,13 +804,13 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [0, -1, 9],
+        position: [0, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'Box',
-        position: [-8.7, -1, 3],
+        position: [-8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -820,7 +820,7 @@ var robotTemplates = [
       },
       {
         type: 'Box',
-        position: [8.7, -1, 3],
+        position: [8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -830,30 +830,30 @@ var robotTemplates = [
       },
       {
         type: 'GyroSensor',
-        position: [0, 2, 0],
+        position: [0, 0, 2],
         options: null
       },
       {
         type: 'MagnetActuator',
-        position: [0, -1, 3],
+        position: [0, 3, -1],
         rotation: [0, 0, 0],
         options: null
       },
       {
         type: 'SwivelActuator',
-        position: [0, 2, 5],
+        position: [0, 5, 2],
         rotation: [0, 0, 0],
         options: null,
         components: [
           {
             type: 'LaserRangeSensor',
-            position: [-0.75, 1, 0],
+            position: [-0.75, 0, 1],
             rotation: [-Math.PI/2, 0, 0],
             options: null
           },
           {
             type: 'ColorSensor',
-            position: [1, 1.25, 0],
+            position: [1, 0, 1.25],
             rotation: [0, 0, 0],
             options: {
               sensorMaxRange: 30,
@@ -918,25 +918,25 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [-2, -1, 9],
+        position: [-2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'ColorSensor',
-        position: [2, -1, 9],
+        position: [2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [0, 2.5, 8],
+        position: [0, 8, 2.5],
         rotation: [0, 0, 0],
         options: null
       },
       {
         type: 'Box',
-        position: [-8.7, -1, 3],
+        position: [-8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -946,7 +946,7 @@ var robotTemplates = [
       },
       {
         type: 'Box',
-        position: [8.7, -1, 3],
+        position: [8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -956,18 +956,18 @@ var robotTemplates = [
       },
       {
         type: 'GyroSensor',
-        position: [-4, 2.5, 5],
+        position: [-4, 5, 2.5],
         options: null
       },
       {
         type: 'ArmActuator',
-        position: [0, 3, 4],
-        rotation: [0, Math.PI, 0],
+        position: [0, 4, 3],
+        rotation: [0, 0, Math.PI],
         options: null,
         components: [
           {
             type: 'MagnetActuator',
-            position: [0, -1.75, 8],
+            position: [0, 8, -1.75],
             rotation: [0, 0, 0],
             options: null
           }
@@ -1031,25 +1031,25 @@ var robotTemplates = [
     components: [
       {
         type: 'ColorSensor',
-        position: [-2, -1, 9],
+        position: [-2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'ColorSensor',
-        position: [2, -1, 9],
+        position: [2, 9, -1],
         rotation: [Math.PI/2, 0, 0],
         options: null
       },
       {
         type: 'UltrasonicSensor',
-        position: [0, 2.5, 8],
+        position: [0, 8, 2.5],
         rotation: [0, 0, 0],
         options: null
       },
       {
         type: 'Box',
-        position: [-8.7, -1, 3],
+        position: [-8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -1059,7 +1059,7 @@ var robotTemplates = [
       },
       {
         type: 'Box',
-        position: [8.7, -1, 3],
+        position: [8.7, 3, -1],
         rotation: [0, 0, 0],
         options: {
           height: 3,
@@ -1069,18 +1069,18 @@ var robotTemplates = [
       },
       {
         type: 'GyroSensor',
-        position: [-4, 2.5, 5],
+        position: [-4, 5, 2.5],
         options: null
       },
       {
         type: 'ArmActuator',
-        position: [0, 3, 4],
+        position: [0, 4, 3],
         rotation: [0, 0, 0],
         options: null,
         components: [
           {
             type: 'ArmActuator',
-            position: [0, 0, 8],
+            position: [0, 8, 0],
             rotation: [0, 0, 0],
             options: {
               minAngle: -160,
@@ -1090,13 +1090,13 @@ var robotTemplates = [
             components: [
               {
                 type: 'MagnetActuator',
-                position: [0, -1.75, 8],
+                position: [0, 8, -1.75],
                 rotation: [0, 0, 0],
                 options: null
               },
               {
                 type: 'ColorSensor',
-                position: [0, -1.25, 10],
+                position: [0, 10, -1.25],
                 rotation: [Math.PI/2, 0, 0],
                 options: null
               }

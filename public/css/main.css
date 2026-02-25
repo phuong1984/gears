@@ -1,5 +1,6 @@
 @charset "UTF-8";
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+
 html,
 body {
   height: 100%;
@@ -26,12 +27,14 @@ header {
   height: 2.2em;
   align-items: center;
 }
+
 header .gearsIcon {
   height: 1.6em;
   margin-right: 0.5em;
   margin-top: -0.3em;
   margin-bottom: -0.3em;
 }
+
 header #projectName,
 header #robotName {
   margin-left: 1em;
@@ -42,9 +45,11 @@ header #robotName {
   position: relative;
   color: #2C3E50;
 }
+
 header #projectName::placeholder {
   color: #95989A;
 }
+
 header .language {
   margin-left: auto;
   cursor: pointer;
@@ -67,11 +72,13 @@ nav {
   border-bottom: solid 1px #D6B59D;
   align-items: center;
 }
+
 nav ul.panelTabs {
   display: flex;
   padding-left: 5px;
   margin: 0;
 }
+
 nav ul.panelTabs li {
   display: block;
   border: solid 1px #D6B59D;
@@ -85,9 +92,11 @@ nav ul.panelTabs li {
   user-select: none;
   white-space: nowrap;
 }
+
 nav ul.panelTabs li:hover {
   background: #FEFDF5;
 }
+
 nav ul.panelTabs li.active {
   z-index: 1;
   background: #ffffff;
@@ -95,10 +104,12 @@ nav ul.panelTabs li.active {
   margin-top: -5px;
   font-size: 110%;
 }
+
 nav .menuBar {
   display: flex;
   margin-left: 0.5em;
 }
+
 nav .menuBar .menuItem {
   padding: 0.3em 0.5em;
   font-weight: bold;
@@ -106,9 +117,11 @@ nav .menuBar .menuItem {
   cursor: pointer;
   user-select: none;
 }
+
 nav .menuBar .menuItem:hover {
   color: #01688D;
 }
+
 nav .news {
   margin-left: 2em;
   font-weight: bold;
@@ -116,12 +129,15 @@ nav .news {
   cursor: pointer;
   user-select: none;
 }
+
 nav .panelControlsArea {
   margin-left: auto;
 }
+
 nav .panelControlsArea .panelControls {
   display: none;
 }
+
 nav .panelControlsArea .panelControls.active {
   display: block;
 }
@@ -131,12 +147,14 @@ nav .panelControlsArea .panelControls.active {
   position: relative;
   overflow: hidden;
 }
+
 .panels .panel {
   height: 100%;
   width: 100%;
   z-index: -1;
   position: absolute;
 }
+
 .panels .panel.active {
   z-index: 0;
 }
@@ -160,15 +178,18 @@ nav .panelControlsArea .panelControls.active {
   border: solid 1px white;
   margin-top: 0.5em;
 }
+
 .dialogWindow .selectRobot .description .thumbnail {
   width: 200px;
   height: 200px;
 }
+
 .dialogWindow .selectRobot .description .text {
   border-left: solid 1px white;
   padding: 0 1em;
   flex-shrink: 1;
 }
+
 .dialogWindow .selectRobot .configurations {
   border: solid 1px white;
   margin-top: 0.5em;
@@ -188,17 +209,21 @@ ul.menuDropDown {
   overflow: hidden;
   box-shadow: 0px 10px 6px 0px rgba(0, 0, 0, 0.25);
 }
+
 ul.menuDropDown li {
   display: block;
   color: gray;
   padding: 0.5em;
 }
+
 ul.menuDropDown li:hover {
   background: #ffffff;
 }
+
 ul.menuDropDown li.underline {
   border-bottom: solid 1px #D6B59D;
 }
+
 ul.menuDropDown .tick {
   color: green;
 }
@@ -219,6 +244,7 @@ ul.menuDropDownRightAlign {
   justify-content: center;
   align-items: center;
 }
+
 .blocklyEditor .disable .enable {
   font-size: 200%;
   color: red;
@@ -228,6 +254,7 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
+
 .blocklyEditor #blocklyPages {
   position: absolute;
   top: 0.5em;
@@ -239,6 +266,7 @@ ul.menuDropDownRightAlign {
   user-select: none;
   cursor: pointer;
 }
+
 .blocklyEditor #blocklyPages ul.menuDropDown {
   right: 0;
   left: auto;
@@ -282,14 +310,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .runSim:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .runSim:active {
   transform: scale(0.95);
 }
+
 .runSim {
   top: 10px;
   left: 10px;
@@ -314,14 +345,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .startSim:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .startSim:active {
   transform: scale(0.95);
 }
+
 .startSim {
   top: 10px;
   left: 10px;
@@ -346,14 +380,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .stopSim:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .stopSim:active {
   transform: scale(0.95);
 }
+
 .stopSim {
   top: 10px;
   left: 10px;
@@ -378,14 +415,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .world:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .world:active {
   transform: scale(0.95);
 }
+
 .world {
   top: 60px;
   left: 10px;
@@ -410,14 +450,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .reset:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .reset:active {
   transform: scale(0.95);
 }
+
 .reset {
   top: 110px;
   left: 10px;
@@ -462,10 +505,12 @@ ul.menuDropDownRightAlign {
   gap: 2px;
   z-index: 2;
 }
-.cameraSelector > div,
-.cameraSelectorShort > div {
+
+.cameraSelector>div,
+.cameraSelectorShort>div {
   margin: 2px;
 }
+
 .cameraSelector .hide,
 .cameraSelectorShort .hide {
   display: none;
@@ -491,16 +536,19 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .cameraSelector.closed:hover,
 .cameraSelectorShort.closed:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .cameraSelector.closed:active,
 .cameraSelectorShort.closed:active {
   transform: scale(0.95);
 }
+
 .cameraSelector.closed,
 .cameraSelectorShort.closed {
   top: 10px;
@@ -514,10 +562,12 @@ ul.menuDropDownRightAlign {
   overflow: visible !important;
   font-size: 24px;
 }
+
 .cameraSelector.closed .cameraOptions,
 .cameraSelectorShort.closed .cameraOptions {
   display: none;
 }
+
 .cameraSelector.closed .camera,
 .cameraSelectorShort.closed .camera {
   margin: 0;
@@ -547,14 +597,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .sensors:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .sensors:active {
   transform: scale(0.95);
 }
+
 .sensors {
   top: 10px;
   right: 10px;
@@ -582,18 +635,22 @@ ul.menuDropDownRightAlign {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   z-index: 2;
 }
+
 .ruler .icon {
   margin-right: 8px;
   font-size: 22px;
   color: #00e5ff;
   flex-shrink: 0;
 }
+
 .ruler .label {
   color: white;
 }
+
 .ruler .value {
   color: #00e5ff;
 }
+
 .ruler .measurements {
   font-size: 13px;
   white-space: nowrap;
@@ -604,22 +661,27 @@ ul.menuDropDownRightAlign {
   line-height: 1.5;
   color: white;
 }
+
 .ruler .measurements .row {
   display: flex;
   gap: 14px;
 }
+
 .ruler .measurements table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .ruler .measurements td {
   padding: 2px 6px;
   text-align: left;
   color: white;
 }
+
 .ruler .measurements td .value {
   color: #00e5ff;
 }
+
 .ruler .row1,
 .ruler .row2 {
   font-size: 13px;
@@ -646,14 +708,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .ruler.closed:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .ruler.closed:active {
   transform: scale(0.95);
 }
+
 .ruler.closed {
   top: 160px;
   left: 10px;
@@ -665,11 +730,13 @@ ul.menuDropDownRightAlign {
   border-radius: 50% !important;
   min-width: 0 !important;
 }
+
 .ruler.closed .icon {
   margin: 0;
   color: white;
   font-size: 24px;
 }
+
 .ruler.closed .measurements,
 .ruler.closed .row1,
 .ruler.closed .row2,
@@ -703,12 +770,14 @@ ul.menuDropDownRightAlign {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   z-index: 2;
 }
+
 .joystick .icon {
   margin: 0 auto 4px auto;
   font-size: 24px;
   color: #00e5ff;
   align-self: center;
 }
+
 .joystick .virtualJoystick {
   position: relative;
   font-size: 110px;
@@ -716,6 +785,7 @@ ul.menuDropDownRightAlign {
   width: 110px;
   align-self: center;
 }
+
 .joystick .virtualJoystick .icon-virtualJoystickIndicator {
   position: absolute;
   color: #00e5ff;
@@ -723,6 +793,7 @@ ul.menuDropDownRightAlign {
   left: 0;
   z-index: 3;
 }
+
 .joystick .virtualJoystick .icon-virtualJoystick {
   position: absolute;
   color: rgba(255, 255, 255, 0.1);
@@ -735,6 +806,7 @@ ul.menuDropDownRightAlign {
   height: 100%;
   z-index: 1;
 }
+
 .joystick .keyboard {
   position: relative;
   margin-top: 6px;
@@ -811,14 +883,17 @@ ul.menuDropDownRightAlign {
   transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
   z-index: 2;
 }
+
 .joystick.closed:hover {
   background: rgba(9, 195, 219, 0.9);
   transform: scale(1.1);
   box-shadow: 0 4px 16px rgba(9, 195, 219, 0.4);
 }
+
 .joystick.closed:active {
   transform: scale(0.95);
 }
+
 .joystick.closed {
   top: 210px;
   left: 10px;
@@ -830,10 +905,12 @@ ul.menuDropDownRightAlign {
   border-radius: 50% !important;
   min-width: 0 !important;
 }
+
 .joystick.closed .icon {
   color: white;
   font-size: 24px;
 }
+
 .joystick.closed .virtualJoystick,
 .joystick.closed .keyboard {
   display: none;
@@ -857,6 +934,7 @@ ul.menuDropDownRightAlign {
   overflow: hidden;
   transition: height 0.5s;
 }
+
 .console .chevron {
   position: absolute;
   right: 0;
@@ -864,9 +942,11 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
+
 .console .chevron::before {
   content: "⌃";
 }
+
 .console .clear {
   position: absolute;
   right: 0.15em;
@@ -875,6 +955,7 @@ ul.menuDropDownRightAlign {
   user-select: none;
   top: 1em;
 }
+
 .console .content {
   position: absolute;
   top: 0.5em;
@@ -887,6 +968,7 @@ ul.menuDropDownRightAlign {
   overflow-y: hidden;
   white-space: pre-wrap;
 }
+
 .console .content .error {
   color: red;
 }
@@ -894,12 +976,15 @@ ul.menuDropDownRightAlign {
 .console.open {
   height: 10em;
 }
+
 .console.open .chevron {
   top: -0.5em;
 }
+
 .console.open .chevron::before {
   content: "⌄";
 }
+
 .console.open .content {
   overflow-y: scroll;
 }
@@ -909,24 +994,29 @@ ul.menuDropDownRightAlign {
   border: solid 1px white;
   margin-top: 0.5em;
 }
+
 .dialogWindow .selectWorld .description .thumbnail {
   width: 200px;
   height: 200px;
 }
+
 .dialogWindow .selectWorld .description .text {
   border-left: solid 1px white;
   padding: 0 1em;
   flex-shrink: 1;
 }
+
 .dialogWindow .selectWorld .configurations {
   border: solid 1px white;
   margin-top: 0.5em;
   padding: 0 0.5em;
   overflow-x: hidden;
 }
+
 .dialogWindow .selectWorld .configurations .configuration {
   padding: 0.5em 0em;
 }
+
 .dialogWindow .selectWorld .configurations .configuration input[type=text],
 .dialogWindow .selectWorld .configurations .configuration input[type=file] {
   font-size: 100%;
@@ -934,20 +1024,25 @@ ul.menuDropDownRightAlign {
   border: solid 1px white;
   color: white;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .configurationTitle {
   color: lightgray;
   margin-bottom: 0.1em;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .slider {
   display: flex;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .slider input[type=range] {
   flex-grow: 1;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .slider input[type=text] {
   width: 3em;
   text-align: right;
 }
+
 .dialogWindow .selectWorld .configurations .configuration .text input[type=text] {
   width: 100%;
 }
@@ -987,6 +1082,7 @@ ul.menuDropDownRightAlign {
   left: 50%;
   transform: translateX(-50%);
 }
+
 .tooltip.bottom .tooltiptext::after {
   margin-left: -5px;
   bottom: 100%;
@@ -999,6 +1095,7 @@ ul.menuDropDownRightAlign {
   left: 120%;
   transform: translate(0, -50%);
 }
+
 .tooltip.right .tooltiptext::after {
   margin-top: -5px;
   right: 100%;
@@ -1011,6 +1108,7 @@ ul.menuDropDownRightAlign {
   right: 120%;
   transform: translate(0, -50%);
 }
+
 .tooltip.left .tooltiptext::after {
   margin-top: -5px;
   left: 100%;
@@ -1042,9 +1140,11 @@ ul.menuDropDownRightAlign {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   z-index: 2;
 }
+
 .sensorReadings .sensorReading {
   margin-bottom: 8px;
 }
+
 .sensorReadings .sensorReading .sensorType {
   text-align: center;
   color: #00e5ff;
@@ -1052,16 +1152,19 @@ ul.menuDropDownRightAlign {
   font-size: 14px;
   margin-bottom: 4px;
 }
+
 .sensorReadings .sensorReading table.sensorValues {
   width: 100%;
   border-collapse: collapse;
 }
+
 .sensorReadings .sensorReading table.sensorValues td {
   border: solid 1px rgba(0, 228, 255, 0.2);
   color: white;
   padding: 3px 6px;
   font-size: 12px;
 }
+
 .sensorReadings .sensorReading table.sensorValues td.sensorValue {
   text-align: right;
   min-width: 3em;
@@ -1080,13 +1183,16 @@ ul.menuDropDownRightAlign {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.5);
   }
+
   100% {
     transform: scale(1);
   }
 }
+
 .worldInfo {
   position: absolute;
   color: white;
@@ -1101,39 +1207,50 @@ ul.menuDropDownRightAlign {
   max-height: 20%;
   overflow: hidden;
 }
+
 .worldInfo .row {
   display: flex;
   justify-content: space-between;
 }
+
 .worldInfo .mono {
   font-family: monospace;
 }
+
 .worldInfo .center {
   width: 100%;
   text-align: center;
 }
+
 .worldInfo .animate {
   animation-name: flash;
   animation-duration: 0.5s;
 }
+
 .worldInfo .red.animate {
   color: #ff0000;
 }
+
 .worldInfo .green.animate {
   color: #00ff00;
 }
+
 .worldInfo .p0.animate {
   color: #00ffff;
 }
+
 .worldInfo .p1.animate {
   color: #00ff00;
 }
+
 .worldInfo .p2.animate {
   color: #ffff00;
 }
+
 .worldInfo .p3.animate {
   color: #ff0000;
 }
+
 .worldInfo .warn {
   color: #ff0000;
 }
@@ -1156,6 +1273,7 @@ ul.menuDropDownRightAlign {
   bottom: 3em;
   right: 0;
 }
+
 #plotter .close {
   color: white;
   border: solid 1px white;
@@ -1169,6 +1287,7 @@ ul.menuDropDownRightAlign {
   background: rgba(255, 255, 255, 0.2666666667);
   cursor: pointer;
 }
+
 #plotter .position {
   height: 1em;
   position: absolute;
@@ -1195,6 +1314,7 @@ ul.menuDropDownRightAlign {
   font-style: normal;
   font-display: block;
 }
+
 [class^=icon-],
 [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
@@ -1326,31 +1446,40 @@ ul.menuDropDownRightAlign {
   background-color: white;
   border: solid 40px;
 }
+
 #arenaFrame .row {
   padding: 1em;
   display: flex;
   align-items: center;
 }
+
 #arenaFrame .row.header {
   background-color: lightgray;
 }
+
 #arenaFrame #enable {
   margin-right: 1.5em;
 }
+
 #arenaFrame #player {
   font-size: 200%;
   font-weight: bold;
 }
+
 #arenaFrame #zip {
   visibility: hidden;
 }
+
 #arenaFrame #zipLabel {
   font-size: 16px;
 }
+
 #arenaFrame #zipLabel .fileSelector {
   margin-top: 0.5em;
 }
-#arenaFrame #zipLabel .fileSelector input, #arenaFrame #zipLabel .fileSelector label {
+
+#arenaFrame #zipLabel .fileSelector input,
+#arenaFrame #zipLabel .fileSelector label {
   font-size: 16px;
   border: solid 1px gray;
   box-sizing: border-box;
@@ -1359,11 +1488,13 @@ ul.menuDropDownRightAlign {
   outline: none;
   float: left;
 }
+
 #arenaFrame #zipLabel .fileSelector input {
   border-right: none;
   width: 14em;
   border-radius: 0.4em 0 0 0.4em;
 }
+
 #arenaFrame #zipLabel .fileSelector label {
   border-radius: 0 0.4em 0.4em 0;
   background: #4EB9D5;
@@ -1390,6 +1521,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot0.disabled {
   border-color: #446666;
 }
+
 #arenaFrame.bot0.disabled #player {
   color: gray;
 }
@@ -1397,6 +1529,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot1.disabled {
   border-color: #446644;
 }
+
 #arenaFrame.bot1.disabled #player {
   color: gray;
 }
@@ -1404,6 +1537,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot2.disabled {
   border-color: #666644;
 }
+
 #arenaFrame.bot2.disabled #player {
   color: gray;
 }
@@ -1411,6 +1545,7 @@ ul.menuDropDownRightAlign {
 #arenaFrame.bot3.disabled {
   border-color: #664444;
 }
+
 #arenaFrame.bot3.disabled #player {
   color: gray;
 }
@@ -1418,14 +1553,17 @@ ul.menuDropDownRightAlign {
 .botsPanel {
   background: white;
 }
+
 .botsPanel .botsRow {
   display: flex;
   width: 100%;
   height: 50%;
 }
+
 .botsPanel .botsRow .bot {
   width: 50%;
 }
+
 .botsPanel .botsRow .bot iframe {
   border: none;
   width: 100%;
@@ -1435,12 +1573,15 @@ ul.menuDropDownRightAlign {
 .console .player0 {
   color: #00FFFF;
 }
+
 .console .player1 {
   color: #00FF00;
 }
+
 .console .player2 {
   color: #FFFF00;
 }
+
 .console .player3 {
   color: #FF0000;
 }
@@ -1454,24 +1595,31 @@ ul.menuDropDownRightAlign {
   width: 100%;
   height: 100%;
 }
+
 .python #pythonCode {
   width: 100%;
   height: 100%;
   font-size: 120%;
 }
+
 .python #pythonCode.hide {
   display: none;
 }
+
 .python #filesRow {
   display: flex;
   align-items: center;
 }
+
 .python #filesRow #filesList {
   display: flex;
   overflow-x: scroll;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .python #filesRow #filesList .file {
   display: flex;
   background: #515251;
@@ -1482,21 +1630,28 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   user-select: none;
 }
-.python #filesRow #filesList .file .renameFile, .python #filesRow #filesList .file .deleteFile {
+
+.python #filesRow #filesList .file .renameFile,
+.python #filesRow #filesList .file .deleteFile {
   display: none;
   margin-left: 0.5em;
 }
+
 .python #filesRow #filesList .file.selected {
   background-color: #272822;
   color: rgb(255, 255, 255);
   font-weight: bold;
 }
-.python #filesRow #filesList .file.selected .renameFile, .python #filesRow #filesList .file.selected .deleteFile {
+
+.python #filesRow #filesList .file.selected .renameFile,
+.python #filesRow #filesList .file.selected .deleteFile {
   display: block;
 }
+
 .python #filesRow #filesList::-webkit-scrollbar {
   display: none;
 }
+
 .python #filesRow #addNewFile {
   padding: 0.3em 0.5em;
   color: white;
@@ -1525,11 +1680,13 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
+
 .componentsWindow:hover,
 .objectsWindow:hover {
   box-shadow: 0 16px 56px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.25);
   border-color: rgba(9, 195, 219, 0.35);
 }
+
 .componentsWindow .buttons,
 .objectsWindow .buttons {
   display: flex;
@@ -1540,6 +1697,7 @@ ul.menuDropDownRightAlign {
   gap: 0.4em;
   margin-bottom: 0.7em;
 }
+
 .componentsWindow .buttons div,
 .objectsWindow .buttons div {
   flex: 1;
@@ -1560,6 +1718,7 @@ ul.menuDropDownRightAlign {
   position: relative;
   overflow: hidden;
 }
+
 .componentsWindow .buttons div::before,
 .objectsWindow .buttons div::before {
   content: "";
@@ -1571,21 +1730,25 @@ ul.menuDropDownRightAlign {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   transition: left 0.4s ease;
 }
+
 .componentsWindow .buttons div:hover,
 .objectsWindow .buttons div:hover {
   background: linear-gradient(135deg, rgb(10.0065789474, 216.8092105263, 243.4934210526), #09C3DB);
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(9, 195, 219, 0.35);
 }
+
 .componentsWindow .buttons div:hover::before,
 .objectsWindow .buttons div:hover::before {
   left: 100%;
 }
+
 .componentsWindow .buttons div:active,
 .objectsWindow .buttons div:active {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(9, 195, 219, 0.2);
 }
+
 .componentsWindow .componentsList,
 .componentsWindow .objectsList,
 .objectsWindow .componentsList,
@@ -1600,18 +1763,21 @@ ul.menuDropDownRightAlign {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
 .componentsWindow .componentsList::-webkit-scrollbar,
 .componentsWindow .objectsList::-webkit-scrollbar,
 .objectsWindow .componentsList::-webkit-scrollbar,
 .objectsWindow .objectsList::-webkit-scrollbar {
   width: 5px;
 }
+
 .componentsWindow .componentsList::-webkit-scrollbar-track,
 .componentsWindow .objectsList::-webkit-scrollbar-track,
 .objectsWindow .componentsList::-webkit-scrollbar-track,
 .objectsWindow .objectsList::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .componentsWindow .componentsList::-webkit-scrollbar-thumb,
 .componentsWindow .objectsList::-webkit-scrollbar-thumb,
 .objectsWindow .componentsList::-webkit-scrollbar-thumb,
@@ -1619,12 +1785,14 @@ ul.menuDropDownRightAlign {
   background: rgba(9, 195, 219, 0.35);
   border-radius: 3px;
 }
+
 .componentsWindow .componentsList::-webkit-scrollbar-thumb:hover,
 .componentsWindow .objectsList::-webkit-scrollbar-thumb:hover,
 .objectsWindow .componentsList::-webkit-scrollbar-thumb:hover,
 .objectsWindow .objectsList::-webkit-scrollbar-thumb:hover {
   background: rgba(9, 195, 219, 0.55);
 }
+
 .componentsWindow .componentsList ul,
 .componentsWindow .objectsList ul,
 .objectsWindow .componentsList ul,
@@ -1633,6 +1801,7 @@ ul.menuDropDownRightAlign {
   padding-inline-start: 0;
   margin: 0;
 }
+
 .componentsWindow .componentsList ul ul,
 .componentsWindow .objectsList ul ul,
 .objectsWindow .componentsList ul ul,
@@ -1640,6 +1809,7 @@ ul.menuDropDownRightAlign {
   padding-inline-start: 1.2em;
   list-style-type: "˪ ";
 }
+
 .componentsWindow .componentsList li,
 .componentsWindow .objectsList li,
 .objectsWindow .componentsList li,
@@ -1655,6 +1825,7 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   border-left: 3px solid transparent;
 }
+
 .componentsWindow .componentsList li:hover,
 .componentsWindow .objectsList li:hover,
 .objectsWindow .componentsList li:hover,
@@ -1663,6 +1834,7 @@ ul.menuDropDownRightAlign {
   color: rgb(57.6118421053, 225.2565789474, 246.8881578947);
   border-left-color: rgba(9, 195, 219, 0.4);
 }
+
 .componentsWindow .componentsList li.selected,
 .componentsWindow .objectsList li.selected,
 .objectsWindow .componentsList li.selected,
@@ -1673,6 +1845,7 @@ ul.menuDropDownRightAlign {
   border-left: 3px solid #09C3DB;
   box-shadow: inset 0 0 12px rgba(9, 195, 219, 0.08);
 }
+
 .componentsWindow .componentsList li.ulHolder,
 .componentsWindow .objectsList li.ulHolder,
 .objectsWindow .componentsList li.ulHolder,
@@ -1722,29 +1895,36 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
+
 .settingsWindow:hover {
   box-shadow: 0 16px 56px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.25);
   border-color: rgba(9, 195, 219, 0.35);
 }
+
 .settingsWindow .settingsArea {
   flex-grow: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 0.3em;
 }
+
 .settingsWindow .settingsArea::-webkit-scrollbar {
   width: 5px;
 }
+
 .settingsWindow .settingsArea::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .settingsWindow .settingsArea::-webkit-scrollbar-thumb {
   background: rgba(9, 195, 219, 0.35);
   border-radius: 3px;
 }
+
 .settingsWindow .settingsArea::-webkit-scrollbar-thumb:hover {
   background: rgba(9, 195, 219, 0.55);
 }
+
 .settingsWindow .buttons {
   display: flex;
   width: 100%;
@@ -1753,6 +1933,7 @@ ul.menuDropDownRightAlign {
   font-size: 90%;
   gap: 0.4em;
 }
+
 .settingsWindow .buttons div {
   background: linear-gradient(135deg, #09C3DB, rgb(6.9868421053, 151.3815789474, 170.0131578947));
   color: #ffffff;
@@ -1767,14 +1948,17 @@ ul.menuDropDownRightAlign {
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(9, 195, 219, 0.2);
 }
+
 .settingsWindow .buttons div:hover {
   background: linear-gradient(135deg, rgb(10.0065789474, 216.8092105263, 243.4934210526), #09C3DB);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(9, 195, 219, 0.3);
 }
+
 .settingsWindow .buttons div:active {
   transform: translateY(0);
 }
+
 .settingsWindow .componentName {
   text-align: center;
   font-size: 1.1em;
@@ -1786,13 +1970,16 @@ ul.menuDropDownRightAlign {
   letter-spacing: 0.02em;
   text-transform: capitalize;
 }
+
 .settingsWindow .configuration {
   padding: 0.55em 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
+
 .settingsWindow .configuration:last-child {
   border-bottom: none;
 }
+
 .settingsWindow .configurationTitle {
   color: #8fa3b8;
   margin-bottom: 0.25em;
@@ -1801,11 +1988,39 @@ ul.menuDropDownRightAlign {
   text-transform: capitalize;
   letter-spacing: 0.03em;
 }
+
 .settingsWindow .slider {
   display: flex;
   align-items: center;
   gap: 0.3em;
 }
+
+.settingsWindow .slider .axisLabel {
+  display: inline-block;
+  width: 1.4em;
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #e8edf3;
+  flex-shrink: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+.settingsWindow .slider .axisLabel:nth-of-type(1) {
+  color: #ff6b6b;
+}
+
+.dialogWindow .slider .axisLabel {
+  display: inline-block;
+  width: 1.4em;
+  text-align: center;
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #2C3E50;
+  flex-shrink: 0;
+  font-family: "Poppins", sans-serif;
+}
+
 .settingsWindow .slider input[type=range] {
   flex-grow: 1;
   -webkit-appearance: none;
@@ -1815,6 +2030,7 @@ ul.menuDropDownRightAlign {
   border-radius: 2px;
   outline: none;
 }
+
 .settingsWindow .slider input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -1826,10 +2042,12 @@ ul.menuDropDownRightAlign {
   box-shadow: 0 0 8px rgba(9, 195, 219, 0.5);
   transition: all 0.15s ease;
 }
+
 .settingsWindow .slider input[type=range]::-webkit-slider-thumb:hover {
   transform: scale(1.25);
   box-shadow: 0 0 14px rgba(9, 195, 219, 0.6);
 }
+
 .settingsWindow .slider input[type=range]::-moz-range-thumb {
   width: 16px;
   height: 16px;
@@ -1839,6 +2057,7 @@ ul.menuDropDownRightAlign {
   border: none;
   box-shadow: 0 0 8px rgba(9, 195, 219, 0.5);
 }
+
 .settingsWindow .slider input[type=text] {
   width: 3.5em;
   text-align: right;
@@ -1851,12 +2070,14 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: all 0.2s ease;
 }
+
 .settingsWindow .slider input[type=text]:focus {
   outline: none;
   border-color: #09C3DB;
   box-shadow: 0 0 0 2px rgba(9, 195, 219, 0.4);
   background: rgba(255, 255, 255, 0.1);
 }
+
 .settingsWindow input[type=number] {
   width: 3.5em;
   font-size: 0.85em;
@@ -1868,12 +2089,14 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: all 0.2s ease;
 }
+
 .settingsWindow input[type=number]:focus {
   outline: none;
   border-color: #09C3DB;
   box-shadow: 0 0 0 2px rgba(9, 195, 219, 0.4);
   background: rgba(255, 255, 255, 0.1);
 }
+
 .settingsWindow input[type=text] {
   font-size: 0.9em;
   padding: 0.3em 0.45em;
@@ -1884,18 +2107,21 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: all 0.2s ease;
 }
+
 .settingsWindow input[type=text]:focus {
   outline: none;
   border-color: #09C3DB;
   box-shadow: 0 0 0 2px rgba(9, 195, 219, 0.4);
   background: rgba(255, 255, 255, 0.1);
 }
+
 .settingsWindow input[type=checkbox] {
   accent-color: #09C3DB;
   width: 1.1em;
   height: 1.1em;
   cursor: pointer;
 }
+
 .settingsWindow select {
   font-size: 0.9em;
   padding: 0.3em 0.45em;
@@ -1907,15 +2133,18 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
 .settingsWindow select option {
   background: #1a2a3e;
   color: #e8edf3;
 }
+
 .settingsWindow select:focus {
   outline: none;
   border-color: #09C3DB;
   box-shadow: 0 0 0 2px rgba(9, 195, 219, 0.4);
 }
+
 .settingsWindow button {
   background: linear-gradient(135deg, #09C3DB, rgb(7.3894736842, 160.1052631579, 179.8105263158));
   color: #ffffff;
@@ -1929,19 +2158,23 @@ ul.menuDropDownRightAlign {
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(9, 195, 219, 0.2);
 }
+
 .settingsWindow button:hover {
   background: linear-gradient(135deg, rgb(10.0065789474, 216.8092105263, 243.4934210526), #09C3DB);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(9, 195, 219, 0.3);
 }
+
 .settingsWindow button:active {
   transform: translateY(0);
 }
+
 .settingsWindow .color {
   display: flex;
   align-items: center;
   gap: 0.4em;
 }
+
 .settingsWindow .color input[type=color] {
   -webkit-appearance: none;
   appearance: none;
@@ -1953,13 +2186,16 @@ ul.menuDropDownRightAlign {
   cursor: pointer;
   background: rgba(255, 255, 255, 0.08);
 }
+
 .settingsWindow .color input[type=color]::-webkit-color-swatch-wrapper {
   padding: 2px;
 }
+
 .settingsWindow .color input[type=color]::-webkit-color-swatch {
   border: none;
   border-radius: 0.2em;
 }
+
 .settingsWindow .tooltip .tooltiptext {
   max-width: 12em;
   font-size: 0.85em;
@@ -1978,6 +2214,7 @@ ul.menuDropDownRightAlign {
   display: flex;
   flex-direction: column;
 }
+
 .dialogWindow .selectImage .filter,
 .dialogWindow .selectModel .filter,
 .dialogWindow .editAnimationKeys .filter {
@@ -1987,6 +2224,7 @@ ul.menuDropDownRightAlign {
   font-weight: 500;
   color: #7F8C8D;
 }
+
 .dialogWindow .selectImage .filter select,
 .dialogWindow .selectModel .filter select,
 .dialogWindow .editAnimationKeys .filter select {
@@ -2000,6 +2238,7 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: border-color 0.2s ease;
 }
+
 .dialogWindow .selectImage .filter select:focus,
 .dialogWindow .selectModel .filter select:focus,
 .dialogWindow .editAnimationKeys .filter select:focus {
@@ -2007,6 +2246,7 @@ ul.menuDropDownRightAlign {
   border-color: #09C3DB;
   box-shadow: 0 0 0 2px rgba(9, 195, 219, 0.15);
 }
+
 .dialogWindow .selectImage .search,
 .dialogWindow .selectModel .search,
 .dialogWindow .editAnimationKeys .search {
@@ -2017,6 +2257,7 @@ ul.menuDropDownRightAlign {
   font-weight: 500;
   color: #7F8C8D;
 }
+
 .dialogWindow .selectImage .search input,
 .dialogWindow .selectModel .search input,
 .dialogWindow .editAnimationKeys .search input {
@@ -2030,6 +2271,7 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: border-color 0.2s ease;
 }
+
 .dialogWindow .selectImage .search input:focus,
 .dialogWindow .selectModel .search input:focus,
 .dialogWindow .editAnimationKeys .search input:focus {
@@ -2037,6 +2279,7 @@ ul.menuDropDownRightAlign {
   border-color: #09C3DB;
   box-shadow: 0 0 0 2px rgba(9, 195, 219, 0.15);
 }
+
 .dialogWindow .selectImage .images,
 .dialogWindow .selectImage .items,
 .dialogWindow .selectModel .images,
@@ -2051,6 +2294,7 @@ ul.menuDropDownRightAlign {
   border-radius: 0.5em;
   background: rgba(254, 253, 245, 0.5);
 }
+
 .dialogWindow .selectImage .images::-webkit-scrollbar,
 .dialogWindow .selectImage .items::-webkit-scrollbar,
 .dialogWindow .selectModel .images::-webkit-scrollbar,
@@ -2059,6 +2303,7 @@ ul.menuDropDownRightAlign {
 .dialogWindow .editAnimationKeys .items::-webkit-scrollbar {
   width: 5px;
 }
+
 .dialogWindow .selectImage .images::-webkit-scrollbar-track,
 .dialogWindow .selectImage .items::-webkit-scrollbar-track,
 .dialogWindow .selectModel .images::-webkit-scrollbar-track,
@@ -2067,6 +2312,7 @@ ul.menuDropDownRightAlign {
 .dialogWindow .editAnimationKeys .items::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .dialogWindow .selectImage .images::-webkit-scrollbar-thumb,
 .dialogWindow .selectImage .items::-webkit-scrollbar-thumb,
 .dialogWindow .selectModel .images::-webkit-scrollbar-thumb,
@@ -2076,6 +2322,7 @@ ul.menuDropDownRightAlign {
   background: rgba(9, 195, 219, 0.3);
   border-radius: 3px;
 }
+
 .dialogWindow .selectImage .images .row,
 .dialogWindow .selectImage .items .row,
 .dialogWindow .selectModel .images .row,
@@ -2088,6 +2335,7 @@ ul.menuDropDownRightAlign {
   margin-bottom: 2px;
   transition: all 0.15s ease;
 }
+
 .dialogWindow .selectImage .images .row:hover,
 .dialogWindow .selectImage .items .row:hover,
 .dialogWindow .selectModel .images .row:hover,
@@ -2097,6 +2345,7 @@ ul.menuDropDownRightAlign {
   background: rgba(9, 195, 219, 0.08);
   transform: translateX(2px);
 }
+
 .dialogWindow .selectImage .images .row .description,
 .dialogWindow .selectImage .items .row .description,
 .dialogWindow .selectModel .images .row .description,
@@ -2108,6 +2357,7 @@ ul.menuDropDownRightAlign {
   border: none;
   border-right: 1px solid rgba(214, 181, 157, 0.2);
 }
+
 .dialogWindow .selectImage .images .row .description p,
 .dialogWindow .selectImage .items .row .description p,
 .dialogWindow .selectModel .images .row .description p,
@@ -2117,6 +2367,7 @@ ul.menuDropDownRightAlign {
   margin: 0.1em 0;
   font-size: 0.9em;
 }
+
 .dialogWindow .selectImage .images .row .description .bold,
 .dialogWindow .selectImage .items .row .description .bold,
 .dialogWindow .selectModel .images .row .description .bold,
@@ -2126,6 +2377,7 @@ ul.menuDropDownRightAlign {
   font-weight: 600;
   color: #2C3E50;
 }
+
 .dialogWindow .selectImage .images .row .select,
 .dialogWindow .selectImage .items .row .select,
 .dialogWindow .selectModel .images .row .select,
@@ -2135,6 +2387,7 @@ ul.menuDropDownRightAlign {
   border: none;
   padding: 0.4em 0.65em;
 }
+
 .dialogWindow .selectImage .images .row .select button,
 .dialogWindow .selectImage .items .row .select button,
 .dialogWindow .selectModel .images .row .select button,
@@ -2153,6 +2406,7 @@ ul.menuDropDownRightAlign {
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(9, 195, 219, 0.2);
 }
+
 .dialogWindow .selectImage .images .row .select button:hover,
 .dialogWindow .selectImage .items .row .select button:hover,
 .dialogWindow .selectModel .images .row .select button:hover,
@@ -2163,6 +2417,7 @@ ul.menuDropDownRightAlign {
   transform: translateY(-1px);
   box-shadow: 0 3px 10px rgba(9, 195, 219, 0.3);
 }
+
 .dialogWindow .selectImage .images .row.hide,
 .dialogWindow .selectImage .items .row.hide,
 .dialogWindow .selectModel .images .row.hide,
@@ -2171,6 +2426,7 @@ ul.menuDropDownRightAlign {
 .dialogWindow .editAnimationKeys .items .row.hide {
   display: none;
 }
+
 .dialogWindow .selectImage table,
 .dialogWindow .selectModel table,
 .dialogWindow .editAnimationKeys table {
@@ -2181,6 +2437,7 @@ ul.menuDropDownRightAlign {
   margin-top: 0.5em;
   width: 100%;
 }
+
 .dialogWindow .selectImage table th,
 .dialogWindow .selectModel table th,
 .dialogWindow .editAnimationKeys table th {
@@ -2191,6 +2448,7 @@ ul.menuDropDownRightAlign {
   padding: 0.35em;
   color: #01688D;
 }
+
 .dialogWindow .selectImage table th,
 .dialogWindow .selectImage table td,
 .dialogWindow .selectModel table th,
@@ -2201,6 +2459,7 @@ ul.menuDropDownRightAlign {
   text-align: center;
   padding: 0.25em;
 }
+
 .dialogWindow .selectImage table th input,
 .dialogWindow .selectImage table td input,
 .dialogWindow .selectModel table th input,
@@ -2216,6 +2475,7 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
   transition: border-color 0.2s ease;
 }
+
 .dialogWindow .selectImage table th input:focus,
 .dialogWindow .selectImage table td input:focus,
 .dialogWindow .selectModel table th input:focus,
@@ -2225,11 +2485,13 @@ ul.menuDropDownRightAlign {
   outline: none;
   border-color: #09C3DB;
 }
+
 .dialogWindow .selectImage table td,
 .dialogWindow .selectModel table td,
 .dialogWindow .editAnimationKeys table td {
   border: 1px solid rgba(214, 181, 157, 0.15);
 }
+
 .dialogWindow .searchCount {
   margin-right: auto;
   font-size: 0.85em;
@@ -2255,6 +2517,7 @@ ul.menuDropDownRightAlign {
   border: 1px solid rgba(9, 195, 219, 0.2);
   font-family: "Poppins", sans-serif;
 }
+
 .worldInfo.hide {
   display: none;
 }

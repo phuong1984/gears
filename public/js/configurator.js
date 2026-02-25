@@ -198,7 +198,7 @@ var configurator = new function () {
       category: 'Blocks',
       defaultConfig: {
         type: 'Box',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           height: 1,
@@ -289,7 +289,7 @@ var configurator = new function () {
       category: 'Blocks',
       defaultConfig: {
         type: 'Cylinder',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           height: 1,
@@ -359,7 +359,7 @@ var configurator = new function () {
       category: 'Blocks',
       defaultConfig: {
         type: 'Sphere',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           diameter: 1,
@@ -411,7 +411,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'ColorSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -455,7 +455,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'UltrasonicSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -494,7 +494,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'LaserRangeSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -528,7 +528,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'LidarSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -567,7 +567,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'TouchSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           width: 2,
@@ -615,7 +615,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'GyroSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -635,7 +635,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'GPSSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -655,7 +655,7 @@ var configurator = new function () {
       category: 'Sensors',
       defaultConfig: {
         type: 'CameraSensor',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -694,7 +694,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'MagnetActuator',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -738,7 +738,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'ArmActuator',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         components: [],
         options: {
@@ -858,7 +858,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'SwivelActuator',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         components: [],
         options: {
@@ -929,7 +929,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'MotorActuator',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         components: [],
         options: {
@@ -1070,7 +1070,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'LinearActuator',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         components: [],
         options: {
@@ -1204,7 +1204,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'PaintballLauncherActuator',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: null
       },
@@ -1273,7 +1273,7 @@ var configurator = new function () {
       category: 'Actuators',
       defaultConfig: {
         type: 'WheelActuator',
-        position: [0, 2.8, 0],
+        position: [0, 0, 2.8],
         rotation: [0, 0, 0],
         components: [],
         options: {
@@ -1343,7 +1343,7 @@ var configurator = new function () {
       category: 'Others',
       defaultConfig: {
         type: 'WheelPassive',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         components: [],
         options: {
@@ -1413,7 +1413,7 @@ var configurator = new function () {
       category: 'Others',
       defaultConfig: {
         type: 'Pen',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           doubleSided: false,
@@ -1446,7 +1446,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: 'models/Kenny.nl - Characters/robot.glb',
@@ -1524,7 +1524,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: 'models/Kenny.nl - Characters/robot2.glb',
@@ -1602,7 +1602,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: 'models/Kenny.nl - Characters/robot3.glb',
@@ -1680,7 +1680,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: 'models/Kenny.nl - Cars/race.glb',
@@ -1758,7 +1758,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: 'models/Kenny.nl - Cars/firetruck.glb',
@@ -1836,7 +1836,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: 'models/Quaternius - Animals/Dog.glb',
@@ -1914,7 +1914,7 @@ var configurator = new function () {
       category: 'Models',
       defaultConfig: {
         type: 'Model',
-        position: [0, 5, 0],
+        position: [0, 0, 5],
         rotation: [0, 0, 0],
         options: {
           modelURL: '',
@@ -2081,11 +2081,11 @@ var configurator = new function () {
         if (notClose(selected[0].component.position[0], dragBodyPos.x)) {
           dragBody.position.x = self.roundToSnap(dragBodyPos.x, self.snapStep[0]);
         }
-        if (notClose(selected[0].component.position[1], dragBodyPos.y)) {
-          dragBody.position.y = self.roundToSnap(dragBodyPos.y, self.snapStep[2]);
-        }
-        if (notClose(selected[0].component.position[2], dragBodyPos.z)) {
+        if (notClose(selected[0].component.position[1], dragBodyPos.z)) {
           dragBody.position.z = self.roundToSnap(dragBodyPos.z, self.snapStep[1]);
+        }
+        if (notClose(selected[0].component.position[2], dragBodyPos.y)) {
+          dragBody.position.y = self.roundToSnap(dragBodyPos.y, self.snapStep[2]);
         }
       }
 
@@ -2101,11 +2101,11 @@ var configurator = new function () {
         if (notClose(selected[0].component.position[0], pos.x)) {
           selected[0].component.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
         }
-        if (notClose(selected[0].component.position[1], pos.y)) {
-          selected[0].component.position[1] = self.roundToSnap(pos.y, self.snapStep[2]);
+        if (notClose(selected[0].component.position[1], pos.z)) {
+          selected[0].component.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
         }
-        if (notClose(selected[0].component.position[2], pos.z)) {
-          selected[0].component.position[2] = self.roundToSnap(pos.z, self.snapStep[1]);
+        if (notClose(selected[0].component.position[2], pos.y)) {
+          selected[0].component.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
         }
         self.resetScene(false);
       };
@@ -2306,18 +2306,17 @@ var configurator = new function () {
   // Special case for the pen, add some buttons to move it to useful locations
   this.penSpecialCaseSetup = function (component) {
 
-    function moveTo(x, z) {
+    function moveTo(x, y) {
       let $posDiv = self.$settingsArea.find("div.configurationTitle:contains('position')")
       // Get the input boxes for x/y/z so value changes can be made visible
       let $inputX = $posDiv.next().find('input[type=text]');
       let $inputY = $posDiv.next().next().find('input[type=text]');
-      let $inputZ = $posDiv.next().next().next().find('input[type=text]');
-      // change only X and Z vals, Y is height from ground
+      // change only X and Y vals (ground plane), Z is height from ground
       self.saveHistory();
       $inputX.val(x)
       component.position[0] = x
-      $inputZ.val(z)
-      component.position[2] = z
+      $inputY.val(y)
+      component.position[1] = y
       self.resetScene(false);
     };
 

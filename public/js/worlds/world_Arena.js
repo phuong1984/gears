@@ -1,4 +1,4 @@
-var world_Arena = new function() {
+var world_Arena = new function () {
   var self = this;
 
   this.name = 'arena';
@@ -16,55 +16,55 @@ var world_Arena = new function() {
     island: [
       {
         position: new BABYLON.Vector3(-100, 0, 100),
-        rotation: new BABYLON.Vector3(0, 3/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, 3 / 4 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(-100, 0, -100),
-        rotation: new BABYLON.Vector3(0, 1/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, 1 / 4 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(100, 0, 100),
-        rotation: new BABYLON.Vector3(0, -3/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, -3 / 4 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(100, 0, -100),
-        rotation: new BABYLON.Vector3(0, -1/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, -1 / 4 * Math.PI, 0)
       },
     ],
     collector: [
       {
         position: new BABYLON.Vector3(-112.5, 0, 62.5),
-        rotation: new BABYLON.Vector3(0, 1/2 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, 1 / 2 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(-112.5, 0, -62.5),
-        rotation: new BABYLON.Vector3(0, 1/2 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, 1 / 2 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(112.5, 0, 62.5),
-        rotation: new BABYLON.Vector3(0, -1/2 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, -1 / 2 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(112.5, 0, -62.5),
-        rotation: new BABYLON.Vector3(0, -1/2 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, -1 / 2 * Math.PI, 0)
       },
     ],
     sumo: [
       {
         position: new BABYLON.Vector3(-50, 0, 50),
-        rotation: new BABYLON.Vector3(0, 3/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, 3 / 4 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(-50, 0, -50),
-        rotation: new BABYLON.Vector3(0, 1/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, 1 / 4 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(50, 0, 50),
-        rotation: new BABYLON.Vector3(0, -3/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, -3 / 4 * Math.PI, 0)
       },
       {
         position: new BABYLON.Vector3(50, 0, -50),
-        rotation: new BABYLON.Vector3(0, -1/4 * Math.PI, 0)
+        rotation: new BABYLON.Vector3(0, -1 / 4 * Math.PI, 0)
       },
     ]
   };
@@ -151,7 +151,7 @@ var world_Arena = new function() {
   };
 
   // Set options, including default
-  this.setOptions = function(options) {
+  this.setOptions = function (options) {
     Object.assign(self.options, self.defaultOptions);
 
     for (let name in options) {
@@ -165,7 +165,7 @@ var world_Arena = new function() {
     self.arenaStart = self.arenaStarts[self.options.challenge];
 
     if (self.options.arenaStartPosXY instanceof Array) {
-      for (let i=0; i < self.options.arenaStartPosXY.length; i++) {
+      for (let i = 0; i < self.options.arenaStartPosXY.length; i++) {
         self.arenaStart[i].position = new BABYLON.Vector3(
           self.options.arenaStartPosXY[i][0],
           0,
@@ -175,7 +175,7 @@ var world_Arena = new function() {
     }
 
     if (self.options.arenaStartRot instanceof Array) {
-      for (let i=0; i < self.options.arenaStartRot.length; i++) {
+      for (let i = 0; i < self.options.arenaStartRot.length; i++) {
         self.arenaStart[i].rotation = new BABYLON.Vector3(
           0,
           self.options.arenaStartRot[i],
@@ -186,13 +186,13 @@ var world_Arena = new function() {
 
     self.robotStart = self.arenaStart[parseInt(self.options.startPos)];
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       resolve();
     });
   };
 
   // Run on page load
-  this.init = function() {
+  this.init = function () {
     self.setOptions();
   };
 
@@ -200,7 +200,7 @@ var world_Arena = new function() {
   this.load = function (scene) {
     self.setSeed(self.options.seed);
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       if (self.options.challenge == 'island') {
         self.loadIsland(scene);
       } else if (self.options.challenge == 'collector') {
@@ -214,7 +214,7 @@ var world_Arena = new function() {
   };
 
   // Collector map
-  this.loadCollector = function(scene) {
+  this.loadCollector = function (scene) {
     // Set standby game state
     self.game = {
       state: 'standby',
@@ -235,19 +235,19 @@ var world_Arena = new function() {
     let wallMat = new BABYLON.StandardMaterial('wall', scene);
     wallMat.diffuseColor = new BABYLON.Color3(0.47, 0.48, 0.49);
     let walls = [
-      [[4,16,10],[-58,67,0]],
-      [[20,4,10],[-50,57,0]],
-      [[4,49,10],[-38,34.5,0]],
-      [[4,65,10],[-38,-42.5,0]],
-      [[4,16,10],[58,-67,0]],
-      [[20,4,10],[50,-57,0]],
-      [[4,49,10],[38,-34.5,0]],
-      [[4,65,10],[38,42.5,0]],
+      [[4, 16, 10], [-58, 67, 0]],
+      [[20, 4, 10], [-50, 57, 0]],
+      [[4, 49, 10], [-38, 34.5, 0]],
+      [[4, 65, 10], [-38, -42.5, 0]],
+      [[4, 16, 10], [58, -67, 0]],
+      [[20, 4, 10], [50, -57, 0]],
+      [[4, 49, 10], [38, -34.5, 0]],
+      [[4, 65, 10], [38, 42.5, 0]],
 
-      [[250,4,20],[0,77,-10]],
-      [[250,4,20],[0,-77,-10]],
-      [[4,158,20],[-127,0,-10]],
-      [[4,158,20],[127,0,-10]],
+      [[250, 4, 20], [0, 77, -10]],
+      [[250, 4, 20], [0, -77, -10]],
+      [[4, 158, 20], [-127, 0, -10]],
+      [[4, 158, 20], [127, 0, -10]],
     ];
     self.addWalls(scene, wallMat, walls);
 
@@ -258,11 +258,11 @@ var world_Arena = new function() {
     autoDoorYellow.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.1);
 
     let doors = [
-      [[4,19.8,10],[-38,0,0]],
+      [[4, 19.8, 10], [-38, 0, 0]],
     ];
     let blueDoors = self.addWalls(scene, autoDoorBlue, doors);
     doors = [
-      [[4,19.8,10],[38,0,0]],
+      [[4, 19.8, 10], [38, 0, 0]],
     ];
     let yellowDoors = self.addWalls(scene, autoDoorYellow, doors);
 
@@ -277,7 +277,7 @@ var world_Arena = new function() {
     sensorYellow.backFaceCulling = false;
 
     function addSensor(size, pos, mat, door) {
-      let doorSensor = self.addBox(scene, mat, [size[0],size[1],16], pos, false, false);
+      let doorSensor = self.addBox(scene, mat, [size[0], size[1], 16], pos, false, false);
       doorSensor.isPickable = false;
       let doorSensorIndicator = self.addBox(scene, mat, [size[0], size[1], 2], pos, false, false);
       doorSensorIndicator.isPickable = false;
@@ -296,10 +296,10 @@ var world_Arena = new function() {
     }
 
     let doorSensors = [];
-    doorSensors.push(addSensor([19.9,19.9],[-50,-65,-0.1], sensorBlue, blueDoors[0]));
-    doorSensors.push(addSensor([15.9,15.9],[48,-67,-0.1], sensorBlue, blueDoors[0]));
-    doorSensors.push(addSensor([19.9,19.9],[50,65,-0.1], sensorYellow, yellowDoors[0]));
-    doorSensors.push(addSensor([15.9,15.9],[-48,67,-0.1], sensorYellow, yellowDoors[0]));
+    doorSensors.push(addSensor([19.9, 19.9], [-50, -65, -0.1], sensorBlue, blueDoors[0]));
+    doorSensors.push(addSensor([15.9, 15.9], [48, -67, -0.1], sensorBlue, blueDoors[0]));
+    doorSensors.push(addSensor([19.9, 19.9], [50, 65, -0.1], sensorYellow, yellowDoors[0]));
+    doorSensors.push(addSensor([15.9, 15.9], [-48, 67, -0.1], sensorYellow, yellowDoors[0]));
 
     // Crates
     let crates = [
@@ -310,36 +310,36 @@ var world_Arena = new function() {
 
     // Magnetics
     let magnetics = [
-      [-86,43.5,0],
-      [-68,43.5,0],
-      [-50,43.5,0],
-      [-86,-43.5,0],
-      [-68,-43.5,0],
-      [86,-43.5,0],
-      [68,-43.5,0],
-      [50,-43.5,0],
-      [86,43.5,0],
-      [68,43.5,0],
+      [-86, 43.5, 0],
+      [-68, 43.5, 0],
+      [-50, 43.5, 0],
+      [-86, -43.5, 0],
+      [-68, -43.5, 0],
+      [86, -43.5, 0],
+      [68, -43.5, 0],
+      [50, -43.5, 0],
+      [86, 43.5, 0],
+      [68, 43.5, 0],
       [self.mulberry32() * 44 - 22, self.mulberry32() * 120 - 60, 0],
       [self.mulberry32() * 44 - 22, self.mulberry32() * 120 - 60, 0],
       [self.mulberry32() * 44 - 22, self.mulberry32() * 120 - 60, 0],
       [self.mulberry32() * 44 - 22, self.mulberry32() * 120 - 60, 0],
       [self.mulberry32() * 44 - 22, self.mulberry32() * 120 - 60, 0],
     ];
-    let colors = ['red','red','green','green','blue'];
+    let colors = ['red', 'red', 'green', 'green', 'blue'];
     colors = self.shuffleArray(colors);
     colors = colors.concat(colors);
-    colors = colors.concat(['blue','blue','blue','blue','blue']);
+    colors = colors.concat(['blue', 'blue', 'blue', 'blue', 'blue']);
     self.game.magnetics = self.addMagnetics(scene, magnetics, colors);
-    for (let i=0; i<10; i++) {
+    for (let i = 0; i < 10; i++) {
       self.game.magnetics[i].originalPosition = self.game.magnetics[i].position.clone();
       self.game.magnetics[i].originalRotationQuaternion = self.game.magnetics[i].rotationQuaternion.clone();
     }
-    for (let i=10; i<15; i++) {
+    for (let i = 10; i < 15; i++) {
       self.game.magnetics[i].originalPosition = 'random';
       self.game.magnetics[i].originalRotationQuaternion = self.game.magnetics[i].rotationQuaternion.clone();
     }
-    for (let i=0; i<15; i++) {
+    for (let i = 0; i < 15; i++) {
       if (self.game.magnetics[i].color == 'blue') {
         self.game.magnetics[i].timeout = 60000;
       } else {
@@ -367,13 +367,13 @@ var world_Arena = new function() {
     self.game.TIME_LIMIT = 5 * 60 * 1000;
 
     // set the render and score drawing functions
-    self.render = function(delta){
+    self.render = function (delta) {
       self.renderDefault(delta);
 
       const DOOR_SPEED = 0.005;
-      doorSensors.forEach(function(doorSensor) {
+      doorSensors.forEach(function (doorSensor) {
         let intersect = false;
-        for (let i=0; i<robots.length; i++) {
+        for (let i = 0; i < robots.length; i++) {
           if (
             robots[i].body != null
             && doorSensor.intersectsPoint(robots[i].body.absolutePosition)
@@ -382,8 +382,8 @@ var world_Arena = new function() {
             break;
           }
         }
-        if (! intersect) {
-          for (let i=0; i<crateMeshes.length; i++) {
+        if (!intersect) {
+          for (let i = 0; i < crateMeshes.length; i++) {
             if (doorSensor.intersectsPoint(crateMeshes[i].absolutePosition)) {
               intersect = true;
               break;
@@ -407,7 +407,7 @@ var world_Arena = new function() {
   };
 
   // Sumo map
-  this.loadSumo = function(scene) {
+  this.loadSumo = function (scene) {
     // Set standby game state
     self.game = {
       state: 'standby',
@@ -427,7 +427,7 @@ var world_Arena = new function() {
       friction: self.options.groundFriction,
       restitution: self.options.groundRestitution
     };
-    self.addCylinder(scene, groundMat, [10, 200], [0,0,-10], false, physicsOptions);
+    self.addCylinder(scene, groundMat, [10, 200], [0, 0, -10], false, physicsOptions);
 
     // set time limits
     self.game.TIME_LIMIT = 2 * 60 * 1000;
@@ -441,7 +441,7 @@ var world_Arena = new function() {
   };
 
   // Island map
-  this.loadIsland = function(scene) {
+  this.loadIsland = function (scene) {
     // Set standby game state
     self.game = {
       state: 'standby',
@@ -490,7 +490,7 @@ var world_Arena = new function() {
   };
 
   // set the render function
-  this.renderDefault = function(delta) {
+  this.renderDefault = function (delta) {
     // Run every 200ms
     self.game.renderTimeout += delta;
     if (self.game.renderTimeout > 200) {
@@ -501,8 +501,8 @@ var world_Arena = new function() {
 
     if (self.game.state == 'started') {
       if (self.options.challenge == 'collector') {
-        self.game.scoreZones.forEach(function(scoreZone){
-          self.game.magnetics.forEach(function(magnetic){
+        self.game.scoreZones.forEach(function (scoreZone) {
+          self.game.magnetics.forEach(function (magnetic) {
             if (scoreZone.intersectsPoint(magnetic.absolutePosition)) {
               if (scoreZone.color == magnetic.color) {
                 self.game['team' + scoreZone.team] += 2;
@@ -511,7 +511,7 @@ var world_Arena = new function() {
               }
               magnetic.position.y = -10;
               magnetic.physicsImpostor.setMass = 0;
-              setTimeout(function(){
+              setTimeout(function () {
                 magnetic.physicsImpostor.setMass = 10;
                 if (magnetic.originalPosition == 'random') {
                   magnetic.position.y = 0.25;
@@ -534,7 +534,7 @@ var world_Arena = new function() {
   };
 
   // Build Info panel for time only
-  this.buildTimeOnlyInfoPanel = function() {
+  this.buildTimeOnlyInfoPanel = function () {
     if (typeof arenaPanel == 'undefined') {
       setTimeout(self.buildFourPlayerInfoPanel, 1000);
       return;
@@ -544,7 +544,7 @@ var world_Arena = new function() {
     arenaPanel.clearWorldInfoPanel();
     let $info = $(
       '<div class="mono row">' +
-        '<div class="center time"></div>' +
+      '<div class="center time"></div>' +
       '</div>'
     );
     arenaPanel.drawWorldInfo($info);
@@ -555,7 +555,7 @@ var world_Arena = new function() {
   };
 
   // Build Info panel for 4 players (no teams)
-  this.buildFourPlayerInfoPanel = function() {
+  this.buildFourPlayerInfoPanel = function () {
     if (typeof arenaPanel == 'undefined') {
       setTimeout(self.buildFourPlayerInfoPanel, 1000);
       return;
@@ -565,15 +565,15 @@ var world_Arena = new function() {
     arenaPanel.clearWorldInfoPanel();
     let $info = $(
       '<div class="mono row">' +
-        '<div class="center time"></div>' +
+      '<div class="center time"></div>' +
       '</div>' +
       '<div class="mono row">' +
-        '<div class="p0"></div>' +
-        '<div class="p2"></div>' +
+      '<div class="p0"></div>' +
+      '<div class="p2"></div>' +
       '</div>' +
       '<div class="mono row">' +
-        '<div class="p1"></div>' +
-        '<div class="p3"></div>' +
+      '<div class="p1"></div>' +
+      '<div class="p3"></div>' +
       '</div>'
     );
     arenaPanel.drawWorldInfo($info);
@@ -585,14 +585,14 @@ var world_Arena = new function() {
       $p2: $info.find('.p2'),
       $p3: $info.find('.p3'),
     };
-    self.infoPanel.$p0.on('animationend', function() {this.classList.remove('animate')});
-    self.infoPanel.$p1.on('animationend', function() {this.classList.remove('animate')});
-    self.infoPanel.$p2.on('animationend', function() {this.classList.remove('animate')});
-    self.infoPanel.$p3.on('animationend', function() {this.classList.remove('animate')});
+    self.infoPanel.$p0.on('animationend', function () { this.classList.remove('animate') });
+    self.infoPanel.$p1.on('animationend', function () { this.classList.remove('animate') });
+    self.infoPanel.$p2.on('animationend', function () { this.classList.remove('animate') });
+    self.infoPanel.$p3.on('animationend', function () { this.classList.remove('animate') });
   };
 
   // Build Info panel for 2 teams
-  this.buildTwoTeamsInfoPanel = function() {
+  this.buildTwoTeamsInfoPanel = function () {
     if (typeof arenaPanel == 'undefined') {
       setTimeout(self.buildTwoTeamsInfoPanel, 1000);
       return;
@@ -602,11 +602,11 @@ var world_Arena = new function() {
     arenaPanel.clearWorldInfoPanel();
     let $info = $(
       '<div class="mono row">' +
-        '<div class="center time"></div>' +
+      '<div class="center time"></div>' +
       '</div>' +
       '<div class="mono row">' +
-        '<div class="teamA"></div>' +
-        '<div class="teamB"></div>' +
+      '<div class="teamA"></div>' +
+      '<div class="teamB"></div>' +
       '</div>'
     );
     arenaPanel.drawWorldInfo($info);
@@ -616,12 +616,12 @@ var world_Arena = new function() {
       $teamA: $info.find('.teamA'),
       $teamB: $info.find('.teamB'),
     };
-    self.infoPanel.$teamA.on('animationend', function() {this.classList.remove('animate')});
-    self.infoPanel.$teamB.on('animationend', function() {this.classList.remove('animate')});
+    self.infoPanel.$teamA.on('animationend', function () { this.classList.remove('animate') });
+    self.infoPanel.$teamB.on('animationend', function () { this.classList.remove('animate') });
   };
 
   // Set the function for drawing scores
-  this.drawWorldInfoDefault = function() {
+  this.drawWorldInfoDefault = function () {
     if (typeof self.infoPanel == 'undefined') {
       setTimeout(self.drawWorldInfoDefault, 1000);
       return;
@@ -647,7 +647,7 @@ var world_Arena = new function() {
         }
       }
 
-      time = sign + Math.floor(time/60) + ':' + ('0' + time % 60).slice(-2);
+      time = sign + Math.floor(time / 60) + ':' + ('0' + time % 60).slice(-2);
     }
     time = 'Time: ' + time;
 
@@ -676,16 +676,16 @@ var world_Arena = new function() {
   };
 
   // Notify world of paintball hit. Used by robot.
-  this.paintBallHit = function(robot, paintballImpostor, hit) {
+  this.paintBallHit = function (robot, paintballImpostor, hit) {
     if (self.options.challenge == 'island') {
-      self.game['p'+robot.player] -= 1;
-      self.game['p'+paintballImpostor.object.color] += 2;
+      self.game['p' + robot.player] -= 1;
+      self.game['p' + paintballImpostor.object.color] += 2;
     }
   };
 
   // Reset game state
-  this.reset = function() {
-    setTimeout(function(){
+  this.reset = function () {
+    setTimeout(function () {
       if (typeof self.game != 'undefined') {
         self.game.state = 'ready';
       }
@@ -693,13 +693,13 @@ var world_Arena = new function() {
   };
 
   // Called by babylon and filled by individual challenges
-  this.render = function(delta) {};
+  this.render = function (delta) { };
 
   // Draw world info panel and filled by individual challenges
-  this.drawWorldInfo = function() {};
+  this.drawWorldInfo = function () { };
 
   // startSim
-  this.startSim = function() {
+  this.startSim = function () {
     if (typeof self.game != 'undefined') {
       self.game.state = 'started';
       self.game.startTime = Date.now();
@@ -707,14 +707,14 @@ var world_Arena = new function() {
   };
 
   // stop simulator
-  this.stopSim = function() {
+  this.stopSim = function () {
     if (typeof self.game != 'undefined') {
       self.game.state = 'stopped';
     }
   };
 
   // Set the random number seed
-  this.setSeed = function(seed) {
+  this.setSeed = function (seed) {
     if (typeof seed == 'undefined' || seed == null) {
       self.seed = Date.now();
     } else {
@@ -723,7 +723,7 @@ var world_Arena = new function() {
   };
 
   // Generate random number
-  this.mulberry32 = function() {
+  this.mulberry32 = function () {
     var t = self.seed += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
     t ^= t + Math.imul(t ^ t >>> 7, t | 61);
@@ -733,19 +733,19 @@ var world_Arena = new function() {
   };
 
   // shuffle array
-  this.shuffleArray = function(arr) {
-    var i = arr.length, k , temp;      // k is to generate random index and temp is to swap the values
-    while(--i > 0){
-       k = Math.floor(self.mulberry32() * (i+1));
-       temp = arr[k];
-       arr[k] = arr[i];
-       arr[i] = temp;
+  this.shuffleArray = function (arr) {
+    var i = arr.length, k, temp;      // k is to generate random index and temp is to swap the values
+    while (--i > 0) {
+      k = Math.floor(self.mulberry32() * (i + 1));
+      temp = arr[k];
+      arr[k] = arr[i];
+      arr[i] = temp;
     }
     return arr;
   };
 
   // Load image into tile
-  this.loadImageTile = function (scene, imageSrc, size, pos=[0,0,0], physicsOptions=null) {
+  this.loadImageTile = function (scene, imageSrc, size, pos = [0, 0, 0], physicsOptions = null) {
     var mat = new BABYLON.StandardMaterial('image', scene);
     var texture = new BABYLON.Texture(imageSrc, scene);
     mat.diffuseTexture = texture;
@@ -754,25 +754,25 @@ var world_Arena = new function() {
 
     var faceUV = new Array(6);
     for (var i = 0; i < 6; i++) {
-        faceUV[i] = new BABYLON.Vector4(0, 0, 0, 0);
+      faceUV[i] = new BABYLON.Vector4(0, 0, 0, 0);
     }
     faceUV[4] = new BABYLON.Vector4(0, 0, 1, 1);
 
-    if (! physicsOptions) {
+    if (!physicsOptions) {
       physicsOptions = {
         mass: 0,
         friction: self.options.groundFriction,
         restitution: self.options.groundRestitution
       };
     }
-    let tile = self.addBox(scene, mat, size, pos, false, physicsOptions, true, [0, Math.PI/2, 0], faceUV);
+    let tile = self.addBox(scene, mat, size, pos, false, physicsOptions, true, [0, Math.PI / 2, 0], faceUV);
     tile.receiveShadows = true;
 
     return tile;
   };
 
   // Add magnetic
-  this.addMagnetics = function(scene, magnetics, colors) {
+  this.addMagnetics = function (scene, magnetics, colors) {
     let materials = {
       red: new BABYLON.StandardMaterial('red', scene),
       green: new BABYLON.StandardMaterial('green', scene),
@@ -788,7 +788,7 @@ var world_Arena = new function() {
     };
 
     let magMeshes = [];
-    for (let i=0; i<magnetics.length; i++) {
+    for (let i = 0; i < magnetics.length; i++) {
       let magnetic = null;
       magnetic = self.addBox(scene, materials[colors[i]], [5, 5, 0.5], magnetics[i], true, physicsOptions);
       magnetic.color = colors[i];
@@ -798,10 +798,10 @@ var world_Arena = new function() {
   };
 
   // Add walls
-  this.addWalls = function(scene, wallMat, walls) {
+  this.addWalls = function (scene, wallMat, walls) {
     let meshes = [];
 
-    walls.forEach(function(wall) {
+    walls.forEach(function (wall) {
       if (wall[0].length < 3) {
         wall[0].push(20);
       }
@@ -828,7 +828,7 @@ var world_Arena = new function() {
 
     var faceUV = new Array(6);
     for (var i = 0; i < 6; i++) {
-        faceUV[i] = new BABYLON.Vector4(0, 0, 1, 1);
+      faceUV[i] = new BABYLON.Vector4(0, 0, 1, 1);
     }
 
     let physicsOptions = {
@@ -837,7 +837,7 @@ var world_Arena = new function() {
     };
 
     let meshes = [];
-    crates.forEach(function(crate) {
+    crates.forEach(function (crate) {
       let size = [crate[0], crate[0], crate[0]];
       meshes.push(self.addBox(scene, mat, size, crate[1], false, physicsOptions, true, [0, 0, 0], faceUV));
     });
@@ -846,7 +846,7 @@ var world_Arena = new function() {
   };
 
   // Add box
-  this.addBox = function(scene, material, size, pos, magnetic=false, physicsOptions=true, visible=true, rot=[0,0,0], faceUV=null) {
+  this.addBox = function (scene, material, size, pos, magnetic = false, physicsOptions = true, visible = true, rot = [0, 0, 0], faceUV = null) {
     var boxOptions = {
       width: size[0],
       depth: size[1],
@@ -869,8 +869,8 @@ var world_Arena = new function() {
     box.position.y = pos[2] + size[2] / 2;
     box.position.z = pos[1];
     box.rotation.x = rot[0];
-    box.rotation.y = rot[1];
-    box.rotation.z = rot[2];
+    box.rotation.y = rot[2];
+    box.rotation.z = rot[1];
 
     let mass = 0;
     if (magnetic) {
@@ -899,7 +899,7 @@ var world_Arena = new function() {
   };
 
   // Add a cylinder
-  this.addCylinder = function (scene, material, size, pos, magnetic=false, physicsOptions=true, visible=true, rot=[0,0,0], faceUV=null) {
+  this.addCylinder = function (scene, material, size, pos, magnetic = false, physicsOptions = true, visible = true, rot = [0, 0, 0], faceUV = null) {
     var cylinderOptions = {
       height: size[0],
       diameter: size[1],
@@ -921,8 +921,8 @@ var world_Arena = new function() {
     cylinder.position.y = pos[2] + size[0] / 2;
     cylinder.position.z = pos[1];
     cylinder.rotation.x = rot[0];
-    cylinder.rotation.y = rot[1];
-    cylinder.rotation.z = rot[2];
+    cylinder.rotation.y = rot[2];
+    cylinder.rotation.z = rot[1];
 
     let mass = 0;
     if (magnetic) {

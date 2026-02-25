@@ -148,6 +148,17 @@ Colors = {
   }
 }
 
+
+// Helper: compute rotation quaternion using global (extrinsic) axes
+// Each rotation is independent around the fixed global X, Y, Z axes
+function globalRotationQuaternion(rx, ry, rz) {
+  let qx = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, rx);
+  let qy = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, ry);
+  let qz = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, rz);
+  // Extrinsic XYZ order: Q = Qz * Qy * Qx
+  return qz.multiply(qy).multiply(qx);
+}
+
 // Color sensor. Uses a camera to capture image and extract average RGB values
 function ColorSensor(scene, parent, pos, rot, port, options) {
   var self = this;
@@ -156,9 +167,9 @@ function ColorSensor(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.mask = [];
   this.maskSize = 0;
@@ -203,9 +214,7 @@ function ColorSensor(scene, parent, pos, rot, port, options) {
     body.parent = parent;
 
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     var eyeMat = babylon.getMaterial(scene, 'E60000');
     self.eye = BABYLON.MeshBuilder.CreateSphere('colorSensorEye', { diameterX: 1, diameterY: 1, diameterZ: 0.6, segments: 3 }, scene);
@@ -450,8 +459,8 @@ function BoxBlock(scene, parent, pos, rot, options) {
   this.type = 'Box';
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -516,9 +525,7 @@ function BoxBlock(scene, parent, pos, rot, options) {
     body.parent = parent;
 
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
   };
 
   this.setOptions = function (options) {
@@ -552,8 +559,8 @@ function CylinderBlock(scene, parent, pos, rot, options) {
   this.type = 'Cylinder';
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -602,9 +609,7 @@ function CylinderBlock(scene, parent, pos, rot, options) {
     body.parent = parent;
 
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
   };
 
   this.setOptions = function (options) {
@@ -637,8 +642,8 @@ function SphereBlock(scene, parent, pos, rot, options) {
   this.type = 'Sphere';
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -677,9 +682,7 @@ function SphereBlock(scene, parent, pos, rot, options) {
     body.parent = parent;
 
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
   };
 
   this.setOptions = function (options) {
@@ -712,9 +715,9 @@ function UltrasonicSensor(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -734,9 +737,7 @@ function UltrasonicSensor(scene, parent, pos, rot, port, options) {
       },
       scene
     );
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     var bodyMat = new BABYLON.StandardMaterial('ultrasonicSensorBody', scene);
     var bodyTexture = new BABYLON.Texture('textures/robot/ultrasonic.png', scene);
@@ -870,7 +871,7 @@ function GyroSensor(scene, parent, pos, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
   this.yawRotation = {
     angularVelocity: 0,
     actualRotation: 0,
@@ -1050,7 +1051,7 @@ function GPSSensor(scene, parent, pos, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
   this.rotation = new BABYLON.Vector3(0, 0, 0);
 
   this.init = function () {
@@ -1105,8 +1106,8 @@ function GPSSensor(scene, parent, pos, port, options) {
   this.getPosition = function () {
     return [
       self.body.absolutePosition.x,
-      self.body.absolutePosition.y,
-      self.body.absolutePosition.z
+      self.body.absolutePosition.z,
+      self.body.absolutePosition.y
     ];
   };
 
@@ -1121,9 +1122,9 @@ function MagnetActuator(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.power = 0;
 
@@ -1185,9 +1186,7 @@ function MagnetActuator(scene, parent, pos, rot, port, options) {
     body.visibility = false;
     body.parent = parent;
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     var attractorMat = babylon.getMaterial(scene, '808080');
 
@@ -1342,9 +1341,9 @@ function ArmActuator(scene, parent, pos, rot, port, options) {
 
   this.components = [];
 
-  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   // Used in Python
   this.modes = {
@@ -1422,9 +1421,7 @@ function ArmActuator(scene, parent, pos, rot, port, options) {
     body.visibility = false;
     body.parent = parent;
     body.position = self.bodyPosition;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     var armBaseMat = babylon.getMaterial(scene, self.options.baseColor);
 
@@ -1686,9 +1683,9 @@ function LaserRangeSensor(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -1727,9 +1724,7 @@ function LaserRangeSensor(scene, parent, pos, rot, port, options) {
       },
       scene
     );
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     // Prep rays
@@ -1814,9 +1809,9 @@ function SwivelActuator(scene, parent, pos, rot, port, options) {
 
   this.components = [];
 
-  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   // Used in Python
   this.modes = {
@@ -1896,9 +1891,7 @@ function SwivelActuator(scene, parent, pos, rot, port, options) {
     self.body.material = swivelBodyMat;
     body.parent = parent;
     body.position = self.bodyPosition;
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     var platformMat = babylon.getMaterial(scene, self.options.platformColor);
@@ -2076,9 +2069,9 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
 
   this.components = [];
 
-  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   // Used in Python
   this.modes = {
@@ -2161,9 +2154,7 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
     body.visibility = 0;
     body.parent = parent;
     body.position = self.bodyPosition;
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     // Load 3D model for visual representation
     self.loadModel();
@@ -2675,9 +2666,9 @@ function PaintballLauncherActuator(scene, parent, pos, rot, port, options) {
 
   this.components = [];
 
-  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.ammo = -1;
 
@@ -2762,9 +2753,7 @@ function PaintballLauncherActuator(scene, parent, pos, rot, port, options) {
     self.body.visibility = 0;
     body.parent = parent;
     body.position = self.bodyPosition;
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     var base = BABYLON.MeshBuilder.CreateBox('launcherBase', { height: 0.5, width: 2, depth: 9 }, scene);
@@ -3065,7 +3054,7 @@ function Pen(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
   this.rotation = new BABYLON.Vector3(0, 0, 0);
 
   this.isDown = false;
@@ -3263,9 +3252,9 @@ function TouchSensor(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.pressed = false;
 
@@ -3295,9 +3284,7 @@ function TouchSensor(scene, parent, pos, rot, port, options) {
     body.parent = parent;
 
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     var fakeSensorMat = babylon.getMaterial(scene, 'E60000');
     let sensorOptions = {
@@ -3376,9 +3363,9 @@ function LinearActuator(scene, parent, pos, rot, port, options) {
 
   this.components = [];
 
-  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.bodyPosition = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   // Used in Python
   this.modes = {
@@ -3468,9 +3455,7 @@ function LinearActuator(scene, parent, pos, rot, port, options) {
     self.body.material = mainBodyMat;
     body.parent = parent;
     body.position = self.bodyPosition;
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
 
     var platformMat = babylon.getMaterial(scene, self.options.platformColor);
@@ -3643,8 +3628,8 @@ function WheelPassive(scene, parent, pos, rot, options) {
 
   this.components = [];
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -3758,9 +3743,9 @@ function CameraSensor(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -3801,9 +3786,7 @@ function CameraSensor(scene, parent, pos, rot, port, options) {
     body.parent = parent;
 
     body.position = self.position;
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     // Create camera and RTT
     self.rttCam = new BABYLON.FreeCamera('Camera', self.position, scene, false);
@@ -4081,9 +4064,9 @@ function LidarSensor(scene, parent, pos, rot, port, options) {
   this.port = port;
   this.options = null;
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
-  this.initialQuaternion = new BABYLON.Quaternion.FromEulerAngles(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
+  this.initialQuaternion = globalRotationQuaternion(rot[0], rot[2], rot[1]);
 
   this.init = function () {
     self.setOptions(options);
@@ -4114,9 +4097,7 @@ function LidarSensor(scene, parent, pos, rot, port, options) {
       },
       scene
     );
-    body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL)
-    body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL)
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
     var bodyMat = new BABYLON.StandardMaterial('lidarSensorBody', scene);
     var bodyTexture = new BABYLON.Texture('textures/robot/lidar.png', scene);
@@ -4192,8 +4173,8 @@ function ModelBlock(scene, parent, pos, rot, options) {
   this.options = null;
   this.components = [];
 
-  this.position = new BABYLON.Vector3(pos[0], pos[1], pos[2]);
-  this.rotation = new BABYLON.Vector3(rot[0], rot[1], rot[2]);
+  this.position = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+  this.rotation = new BABYLON.Vector3(rot[0], rot[2], rot[1]);
 
   // Async init - must be called and awaited by the caller
   this.init = async function () {
@@ -4220,9 +4201,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       );
       body.parent = parent;
       body.position = self.position;
-      body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
       return;
     }
 
@@ -4278,9 +4257,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       );
       body.parent = parent;
       body.position = self.position;
-      body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
       return;
     }
     // Clean up temporary blob URL
@@ -4369,9 +4346,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       );
       body.parent = parent;
       body.position = self.position;
-      body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
       // Create a root transform node for all STL meshes
       let stlRoot = new BABYLON.TransformNode('stlRoot_model', scene);
@@ -4459,9 +4434,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       );
       body.parent = parent;
       body.position = self.position;
-      body.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-      body.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
+      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
 
       // Scale and attach model visual to the bounding box
       // glTF models set rotationQuaternion by default, must clear for Euler rotation
