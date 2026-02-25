@@ -1015,6 +1015,7 @@ var builder = new function () {
     self.$settingsArea = $('.settingsArea');
     self.$objectID = $('.objectID');
     self.$undo = $('.undo');
+    self.$redo = $('.redo');
 
     self.$navs.click(self.tabClicked);
     self.$fileMenu.click(self.toggleFileMenu);
@@ -1025,6 +1026,23 @@ var builder = new function () {
     self.$cloneObject.click(self.cloneObject);
     self.$deleteObject.click(self.deleteObject);
     self.$undo.click(self.undo);
+    self.$redo.click(self.redo);
+
+    // Initialize UndoManager
+    self.undoMgr = new UndoManager({
+      getState: function () { return JSON.stringify(self.worldOptions); },
+      setState: function (s) { self.worldOptions = JSON.parse(s); },
+      onStateChange: function () { self.resetScene(); },
+      onStackChange: function () { self.updateUndoRedoButtons(); },
+      maxHistory: 50
+    });
+    self.undoMgr.setupKeyboardShortcuts();
+
+    // Camera preset buttons
+    $('.cameraPresetBtn').click(function () {
+      var preset = $(this).data('preset');
+      cameraUtils.setCameraPreset(preset);
+    });
 
     babylon.scene.physicsEnabled = false;
     babylon.setCameraMode('arc');
@@ -1035,8 +1053,10 @@ var builder = new function () {
     babylon.world.animate = false;
     babylon.world.overrideHide = true;
 
-    self.saveHistory();
     self.resetScene();
+
+    // Setup double-click auto-focus
+    cameraUtils.setupDoubleClickFocus();
   };
 
   // Setup drag
@@ -1479,28 +1499,46 @@ var builder = new function () {
     }
   };
 
-  // Save history
+  // Save history (delegates to UndoManager)
   this.saveHistory = function () {
-    if (typeof self.editHistory == 'undefined') {
-      self.editHistory = [];
+    if (self.undoMgr) {
+      self.undoMgr.save();
     }
-
-    self.editHistory.push(JSON.stringify(self.worldOptions));
   };
 
   // Clear history
   this.clearHistory = function () {
-    if (typeof self.editHistory != 'undefined') {
-      self.editHistory = [];
+    if (self.undoMgr) {
+      self.undoMgr.clear();
     }
   };
 
   // Undo
   this.undo = function () {
-    if (typeof self.editHistory != 'undefined' && self.editHistory.length > 0) {
-      var lastDesign = self.editHistory.pop();
-      self.worldOptions = JSON.parse(lastDesign);
-      self.resetScene();
+    if (self.undoMgr) {
+      self.undoMgr.undo();
+    }
+  };
+
+  // Redo
+  this.redo = function () {
+    if (self.undoMgr) {
+      self.undoMgr.redo();
+    }
+  };
+
+  // Update undo/redo button states
+  this.updateUndoRedoButtons = function () {
+    if (!self.$undo || !self.$redo) return;
+    if (self.undoMgr && self.undoMgr.canUndo()) {
+      self.$undo.removeClass('disabled').attr('title', 'Undo (Ctrl+Z)');
+    } else {
+      self.$undo.addClass('disabled').removeAttr('title');
+    }
+    if (self.undoMgr && self.undoMgr.canRedo()) {
+      self.$redo.removeClass('disabled').attr('title', 'Redo (Ctrl+Y)');
+    } else {
+      self.$redo.addClass('disabled').removeAttr('title');
     }
   };
 

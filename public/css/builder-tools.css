@@ -1,0 +1,106 @@
+/**
+ * Builder Tools CSS — Camera Presets & Undo/Redo enhancements
+ * Shared between Robot Configurator and World Builder
+ */
+
+/* ===========================
+   Camera Preset Buttons
+   =========================== */
+.cameraPresets {
+    position: absolute;
+    bottom: 14px;
+    right: calc(24em + 14px);
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    z-index: 3;
+    pointer-events: auto;
+}
+
+.cameraPresetBtn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: "Poppins", sans-serif;
+    letter-spacing: 0.03em;
+    color: #e0f7ff;
+    background: rgba(0, 40, 55, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(9, 195, 219, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.cameraPresetBtn:hover {
+    background: rgba(9, 195, 219, 0.25);
+    border-color: rgba(9, 195, 219, 0.6);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(9, 195, 219, 0.3);
+}
+
+.cameraPresetBtn:active {
+    transform: translateY(0px);
+    background: rgba(9, 195, 219, 0.4);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ===========================
+   Undo/Redo disabled state
+   =========================== */
+.componentsWindow .buttons div.disabled,
+.objectsWindow .buttons div.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none;
+}
+
+.componentsWindow .buttons div.disabled:hover,
+.objectsWindow .buttons div.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===========================
+   Keyboard shortcut hints
+   =========================== */
+.undo::after,
+.redo::after {
+    content: none;
+}
+
+.componentsWindow .buttons .undo,
+.objectsWindow .buttons .undo {
+    position: relative;
+}
+
+.componentsWindow .buttons .redo,
+.objectsWindow .buttons .redo {
+    position: relative;
+}
+
+/* Tooltip with shortcut on hover */
+.componentsWindow .buttons .undo[title]:hover::after,
+.objectsWindow .buttons .undo[title]:hover::after,
+.componentsWindow .buttons .redo[title]:hover::after,
+.objectsWindow .buttons .redo[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 20, 30, 0.95);
+    color: #e0f7ff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}

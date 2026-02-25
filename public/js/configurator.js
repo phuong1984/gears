@@ -2012,6 +2012,7 @@ var configurator = new function () {
     self.$componentList = $('.componentsList');
     self.$settingsArea = $('.settingsArea');
     self.$undo = $('.undo');
+    self.$redo = $('.redo');
 
     self.$navs.click(self.tabClicked);
     self.$fileMenu.click(self.toggleFileMenu);
@@ -2021,16 +2022,35 @@ var configurator = new function () {
     self.$addComponent.click(self.addComponent);
     self.$deleteComponent.click(self.deleteComponent);
     self.$undo.click(self.undo);
+    self.$redo.click(self.redo);
 
     self.$robotName.change(self.setRobotName);
+
+    // Initialize UndoManager
+    self.undoMgr = new UndoManager({
+      getState: function () { return JSON.stringify(robot.options); },
+      setState: function (s) { robot.options = JSON.parse(s); },
+      onStateChange: function () { self.resetScene(); },
+      onStackChange: function () { self.updateUndoRedoButtons(); },
+      maxHistory: 50
+    });
+    self.undoMgr.setupKeyboardShortcuts();
+
+    // Camera preset buttons
+    $('.cameraPresetBtn').click(function () {
+      var preset = $(this).data('preset');
+      cameraUtils.setCameraPreset(preset);
+    });
 
     babylon.scene.physicsEnabled = false;
     babylon.setCameraMode('arc')
     babylon.renders.push(self.render);
 
-    self.saveHistory();
     self.resetScene();
     self.saveRobotOptions();
+
+    // Setup double-click auto-focus
+    cameraUtils.setupDoubleClickFocus();
   };
 
   // Apply pointerDragBehavior to selected mesh
@@ -2157,28 +2177,46 @@ var configurator = new function () {
     }
   }
 
-  // Save history
+  // Save history (delegates to UndoManager)
   this.saveHistory = function () {
-    if (typeof self.editHistory == 'undefined') {
-      self.editHistory = [];
+    if (self.undoMgr) {
+      self.undoMgr.save();
     }
-
-    self.editHistory.push(JSON.stringify(robot.options));
   };
 
   // Clear history
   this.clearHistory = function () {
-    if (typeof self.editHistory != 'undefined') {
-      self.editHistory = [];
+    if (self.undoMgr) {
+      self.undoMgr.clear();
     }
   };
 
   // Undo
   this.undo = function () {
-    if (typeof self.editHistory != 'undefined' && self.editHistory.length > 0) {
-      var lastDesign = self.editHistory.pop();
-      robot.options = JSON.parse(lastDesign);
-      self.resetScene();
+    if (self.undoMgr) {
+      self.undoMgr.undo();
+    }
+  };
+
+  // Redo
+  this.redo = function () {
+    if (self.undoMgr) {
+      self.undoMgr.redo();
+    }
+  };
+
+  // Update undo/redo button states
+  this.updateUndoRedoButtons = function () {
+    if (!self.$undo || !self.$redo) return;
+    if (self.undoMgr && self.undoMgr.canUndo()) {
+      self.$undo.removeClass('disabled').attr('title', 'Undo (Ctrl+Z)');
+    } else {
+      self.$undo.addClass('disabled').removeAttr('title');
+    }
+    if (self.undoMgr && self.undoMgr.canRedo()) {
+      self.$redo.removeClass('disabled').attr('title', 'Redo (Ctrl+Y)');
+    } else {
+      self.$redo.addClass('disabled').removeAttr('title');
     }
   };
 

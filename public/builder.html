@@ -19,6 +19,7 @@
 
   <link rel="stylesheet" href="css/main.css?v=1d6f38da">
   <link rel="stylesheet" href="css/widgets.css?v=101e46c3">
+  <link rel="stylesheet" href="css/builder-tools.css?v=1">
 
   <script src="jquery/jquery-3.7.1.slim.min.js"></script>
 
@@ -64,7 +65,8 @@
           </div>
           <div class="objectsList"></div>
           <div class="buttons">
-            <div class="undo">Undo</div>
+            <div class="undo disabled">Undo</div>
+            <div class="redo disabled">Redo</div>
           </div>
         </div>
         <div class="objectID"></div>
@@ -72,6 +74,12 @@
           <div class="settingsArea"></div>
         </div>
 
+        <div class="cameraPresets">
+          <div class="cameraPresetBtn" data-preset="front" title="Front View (Numpad 1)">Front</div>
+          <div class="cameraPresetBtn" data-preset="right" title="Right View (Numpad 3)">Right</div>
+          <div class="cameraPresetBtn" data-preset="top" title="Top View (Numpad 7)">Top</div>
+          <div class="cameraPresetBtn" data-preset="default3d" title="Default 3D View (Numpad 5)">3D</div>
+        </div>
       </div>
     </div>
   </main>
@@ -95,6 +103,8 @@
   <script src="js/builtInImages.js?v=b19ef42d"></script>
   <script src="js/builtInModels.js?v=82f73098"></script>
   <script src="js/GenConfig.js?v=683ff770"></script>
+  <script src="js/common/undoManager.js?v=1"></script>
+  <script src="js/common/cameraUtils.js?v=1"></script>
   <script src="js/builder.js?v=0aba6272"></script>
 
 </body>
