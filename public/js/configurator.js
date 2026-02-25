@@ -2509,52 +2509,115 @@ var configurator = new function () {
       return;
     }
 
-    let $body = $('<div class="selectComponent"></div>');
-    let $select = $('<select></select>');
-    let $description = $('<div class="description"><div class="text"></div></div>');
+    // Icon map for categories
+    var CATEGORY_ICONS = {
+      'Blocks': '🧱', 'Sensors': '📡', 'Actuators': '⚙️', 'Models': '🎨', 'Others': '📦'
+    };
 
-    let groups = [];
-    self.componentTemplates.forEach(function (componentTemplate) {
-      if (groups.indexOf(componentTemplate.category) == -1) {
-        groups.push(componentTemplate.category);
-      }
+    let $body = $('<div class="catalogDialog"></div>');
+
+    // Search bar
+    let $searchRow = $('<div class="catalogSearch"></div>');
+    let $searchInput = $('<input type="text" placeholder="Search components...">');
+    let $searchCount = $('<span class="searchCount"></span>');
+    $searchRow.append($searchInput).append($searchCount);
+    $body.append($searchRow);
+
+    // Category tabs
+    let categories = [];
+    self.componentTemplates.forEach(function (t) {
+      if (categories.indexOf(t.category) === -1) categories.push(t.category);
     });
 
-    groups.forEach(function (group) {
-      let $group = $('<optgroup label="' + group + '"></optgroup>');
-      self.componentTemplates.forEach(function (componentTemplate) {
-        if (componentTemplate.category != group) {
-          return;
-        }
-        let $component = $('<option></option>');
-        $component.prop('value', componentTemplate.name);
-        $component.text(componentTemplate.name);
-        $group.append($component);
+    let $tabs = $('<div class="catalogTabs"></div>');
+    let $allTab = $('<div class="catalogTab active" data-cat="all">All</div>');
+    $tabs.append($allTab);
+    categories.forEach(function (cat) {
+      let $tab = $('<div class="catalogTab" data-cat="' + cat + '"></div>');
+      $tab.text(cat);
+      $tabs.append($tab);
+    });
+    $body.append($tabs);
+
+    // Card grid
+    let $grid = $('<div class="catalogGrid"></div>');
+    let selectedVal = null;
+
+    self.componentTemplates.forEach(function (t) {
+      let icon = CATEGORY_ICONS[t.category] || '📦';
+      let $card = $('<div class="catalogCard"></div>');
+      $card.attr('data-name', t.name);
+      $card.attr('data-category', t.category);
+      $card.html(
+        '<div class="cardIcon">' + icon + '</div>' +
+        '<div class="cardName">' + t.name + '</div>' +
+        '<div class="cardCategory">' + t.category + '</div>'
+      );
+      $card.click(function () {
+        $grid.find('.catalogCard').removeClass('selected');
+        $card.addClass('selected');
+        selectedVal = t.name;
       });
-      $select.append($group);
+      $card.dblclick(function () {
+        selectedVal = t.name;
+        confirmAdd();
+      });
+      $grid.append($card);
     });
+    $body.append($grid);
 
-    $body.append($select);
-    $body.append($description);
+    // Filter logic
+    function filterCards() {
+      let search = $searchInput.val().trim().toLowerCase();
+      let activeCat = $tabs.find('.catalogTab.active').data('cat');
+      let count = 0;
+      $grid.find('.catalogCard').each(function () {
+        let name = $(this).data('name').toLowerCase();
+        let cat = $(this).data('category');
+        let matchSearch = !search || name.indexOf(search) !== -1 || cat.toLowerCase().indexOf(search) !== -1;
+        let matchCat = activeCat === 'all' || cat === activeCat;
+        if (matchSearch && matchCat) {
+          $(this).removeClass('hide');
+          count++;
+        } else {
+          $(this).addClass('hide');
+        }
+      });
+      $searchCount.text(count + ' items');
+    }
 
+    $searchInput.on('input', filterCards);
+    $tabs.on('click', '.catalogTab', function () {
+      $tabs.find('.catalogTab').removeClass('active');
+      $(this).addClass('active');
+      filterCards();
+    });
+    filterCards();
+
+    // Buttons
     let $buttons = $(
       '<button type="button" class="cancel btn-light">Cancel</button>' +
-      '<button type="button" class="confirm btn-success">Ok</button>'
+      '<button type="button" class="confirm btn-success">Add</button>'
     );
+    let $dialog = dialog('Add Component', $body, $buttons);
 
-    let $dialog = dialog('Select Component', $body, $buttons);
-
-    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function () {
+    function confirmAdd() {
+      if (!selectedVal) { toastMsg('Please select a component first.'); return; }
       self.saveHistory();
-      let component = self.componentTemplates.find(componentTemplate => componentTemplate.name == $select.val())
+      let component = self.componentTemplates.find(function (t) { return t.name === selectedVal; });
       if (typeof $selected[0].component.components == 'undefined') {
         $selected[0].component.components = [];
       }
       $selected[0].component.components.push(JSON.parse(JSON.stringify(component.defaultConfig)));
       self.resetScene();
       $dialog.close();
-    });
+    }
+
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(confirmAdd);
+
+    // Auto-focus search
+    setTimeout(function () { $searchInput.focus(); }, 100);
   };
 
   // Delete selected component

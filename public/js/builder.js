@@ -1704,52 +1704,113 @@ var builder = new function () {
 
   // Add a new object to selected
   this.addObject = function () {
-    let $body = $('<div class="selectObject"></div>');
-    let $select = $('<select></select>');
-    let $description = $('<div class="description"><div class="text"></div></div>');
+    // Object types with categories and icons
+    var OBJECT_CATALOG = [
+      { name: 'Box', category: 'Shapes', icon: '🟧', defaultKey: 'boxDefault' },
+      { name: 'Cylinder', category: 'Shapes', icon: '🔵', defaultKey: 'cylinderDefault' },
+      { name: 'Sphere', category: 'Shapes', icon: '⚪', defaultKey: 'sphereDefault' },
+      { name: 'Model', category: 'Models', icon: '🎨', defaultKey: 'modelDefault' },
+      { name: 'Compound', category: 'Groups', icon: '📦', defaultKey: 'compoundDefault' },
+      { name: 'Hinge', category: 'Joints', icon: '🔗', defaultKey: 'hingeDefault' },
+      { name: 'Ball Joint', category: 'Joints', icon: '⚽', defaultKey: 'ballJointDefault' }
+    ];
 
-    let objectTypes = ['Box', 'Cylinder', 'Sphere', 'Model', 'Compound', 'Hinge', 'Ball Joint'];
+    let $body = $('<div class="catalogDialog"></div>');
 
-    objectTypes.forEach(function (type) {
-      let $object = $('<option></option>');
-      $object.prop('value', type);
-      $object.text(type);
-      $select.append($object);
+    // Search bar
+    let $searchRow = $('<div class="catalogSearch"></div>');
+    let $searchInput = $('<input type="text" placeholder="Search objects...">');
+    let $searchCount = $('<span class="searchCount"></span>');
+    $searchRow.append($searchInput).append($searchCount);
+    $body.append($searchRow);
+
+    // Category tabs
+    let categories = [];
+    OBJECT_CATALOG.forEach(function (o) {
+      if (categories.indexOf(o.category) === -1) categories.push(o.category);
     });
 
-    $body.append($select);
-    $body.append($description);
+    let $tabs = $('<div class="catalogTabs"></div>');
+    let $allTab = $('<div class="catalogTab active" data-cat="all">All</div>');
+    $tabs.append($allTab);
+    categories.forEach(function (cat) {
+      let $tab = $('<div class="catalogTab" data-cat="' + cat + '"></div>');
+      $tab.text(cat);
+      $tabs.append($tab);
+    });
+    $body.append($tabs);
 
+    // Card grid
+    let $grid = $('<div class="catalogGrid"></div>');
+    let selectedVal = null;
+
+    OBJECT_CATALOG.forEach(function (o) {
+      let $card = $('<div class="catalogCard"></div>');
+      $card.attr('data-name', o.name);
+      $card.attr('data-category', o.category);
+      $card.html(
+        '<div class="cardIcon">' + o.icon + '</div>' +
+        '<div class="cardName">' + o.name + '</div>' +
+        '<div class="cardCategory">' + o.category + '</div>'
+      );
+      $card.click(function () {
+        $grid.find('.catalogCard').removeClass('selected');
+        $card.addClass('selected');
+        selectedVal = o.name;
+      });
+      $card.dblclick(function () {
+        selectedVal = o.name;
+        confirmAdd();
+      });
+      $grid.append($card);
+    });
+    $body.append($grid);
+
+    // Filter logic
+    function filterCards() {
+      let search = $searchInput.val().trim().toLowerCase();
+      let activeCat = $tabs.find('.catalogTab.active').data('cat');
+      let count = 0;
+      $grid.find('.catalogCard').each(function () {
+        let name = $(this).data('name').toLowerCase();
+        let cat = $(this).data('category');
+        let matchSearch = !search || name.indexOf(search) !== -1 || cat.toLowerCase().indexOf(search) !== -1;
+        let matchCat = activeCat === 'all' || cat === activeCat;
+        if (matchSearch && matchCat) {
+          $(this).removeClass('hide');
+          count++;
+        } else {
+          $(this).addClass('hide');
+        }
+      });
+      $searchCount.text(count + ' items');
+    }
+
+    $searchInput.on('input', filterCards);
+    $tabs.on('click', '.catalogTab', function () {
+      $tabs.find('.catalogTab').removeClass('active');
+      $(this).addClass('active');
+      filterCards();
+    });
+    filterCards();
+
+    // Buttons
     let $buttons = $(
       '<button type="button" class="cancel btn-light">Cancel</button>' +
-      '<button type="button" class="confirm btn-success">Ok</button>'
+      '<button type="button" class="confirm btn-success">Add</button>'
     );
+    let $dialog = dialog('Add Object', $body, $buttons);
 
-    let $dialog = dialog('Select Object Type', $body, $buttons);
-
-    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
-    $buttons.siblings('.confirm').click(function () {
+    function confirmAdd() {
+      if (!selectedVal) { toastMsg('Please select an object type first.'); return; }
       self.saveHistory();
 
       let selected = self.getSelectedComponent()[0];
-      let object = null;
-      if ($select.val() == 'Box') {
-        object = JSON.parse(JSON.stringify(self.boxDefault));
-      } else if ($select.val() == 'Cylinder') {
-        object = JSON.parse(JSON.stringify(self.cylinderDefault));
-      } else if ($select.val() == 'Sphere') {
-        object = JSON.parse(JSON.stringify(self.sphereDefault));
-      } else if ($select.val() == 'Model') {
-        object = JSON.parse(JSON.stringify(self.modelDefault));
-      } else if ($select.val() == 'Compound') {
-        object = JSON.parse(JSON.stringify(self.compoundDefault));
-      } else if ($select.val() == 'Hinge') {
-        object = JSON.parse(JSON.stringify(self.hingeDefault));
-      } else if ($select.val() == 'Ball Joint') {
-        object = JSON.parse(JSON.stringify(self.ballJointDefault));
-      }
+      let catalogItem = OBJECT_CATALOG.find(function (o) { return o.name === selectedVal; });
+      let object = JSON.parse(JSON.stringify(self[catalogItem.defaultKey]));
 
-      if ($select.val() == 'Compound') {
+      // Validation
+      if (selectedVal == 'Compound') {
         if (selected.name == 'compound' && selected.object.objects.length == 0) {
           toastMsg('First object in a compound cannot be another compound');
           $dialog.close();
@@ -1757,7 +1818,7 @@ var builder = new function () {
         }
       }
 
-      if ($select.val() == 'Hinge') {
+      if (selectedVal == 'Hinge') {
         if (selected.name != 'compound') {
           toastMsg('Hinges can only be added to compounds');
           $dialog.close();
@@ -1769,7 +1830,7 @@ var builder = new function () {
         }
       }
 
-      if ($select.val() == 'Ball Joint') {
+      if (selectedVal == 'Ball Joint') {
         if (selected.name != 'compound') {
           toastMsg('Ball Joints can only be added to compounds');
           $dialog.close();
@@ -1785,7 +1846,7 @@ var builder = new function () {
         if (selected.object.objects.length > 0) {
           toastMsg('Hinges can only contain one object');
           $dialog.close();
-          return
+          return;
         }
       }
 
@@ -1793,7 +1854,7 @@ var builder = new function () {
         if (selected.object.objects.length > 0) {
           toastMsg('Ball Joint can only contain one object');
           $dialog.close();
-          return
+          return;
         }
       }
 
@@ -1805,7 +1866,13 @@ var builder = new function () {
 
       self.resetScene();
       $dialog.close();
-    });
+    }
+
+    $buttons.siblings('.cancel').click(function () { $dialog.close(); });
+    $buttons.siblings('.confirm').click(confirmAdd);
+
+    // Auto-focus search
+    setTimeout(function () { $searchInput.focus(); }, 100);
   };
 
   // Clone selected object
