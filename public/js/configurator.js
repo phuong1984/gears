@@ -2578,12 +2578,15 @@ var configurator = new function () {
     let selectedVal = null;
 
     self.componentTemplates.forEach(function (t) {
-      let icon = CATEGORY_ICONS[t.category] || '📦';
+      var thumbSrc = CatalogThumbnails.get(t.name);
+      var iconHTML = thumbSrc
+        ? '<div class="cardIcon"><img src="' + thumbSrc + '" alt="' + t.name + '"></div>'
+        : '<div class="cardIcon">' + (CATEGORY_ICONS[t.category] || '📦') + '</div>';
       let $card = $('<div class="catalogCard"></div>');
       $card.attr('data-name', t.name);
       $card.attr('data-category', t.category);
       $card.html(
-        '<div class="cardIcon">' + icon + '</div>' +
+        iconHTML +
         '<div class="cardName">' + t.name + '</div>' +
         '<div class="cardCategory">' + t.category + '</div>'
       );

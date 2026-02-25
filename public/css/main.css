@@ -2640,8 +2640,19 @@ ul.menuDropDownRightAlign {
 }
 
 .catalogDialog .catalogGrid .catalogCard .cardIcon {
-  font-size: 1.4em;
+  width: 48px;
+  height: 48px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4em;
+}
+
+.catalogDialog .catalogGrid .catalogCard .cardIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .catalogDialog .catalogGrid .catalogCard .cardName {

@@ -1765,11 +1765,15 @@ var builder = new function () {
     let selectedVal = null;
 
     OBJECT_CATALOG.forEach(function (o) {
+      var thumbSrc = CatalogThumbnails.get(o.name);
+      var iconHTML = thumbSrc
+        ? '<div class="cardIcon"><img src="' + thumbSrc + '" alt="' + o.name + '"></div>'
+        : '<div class="cardIcon">' + o.icon + '</div>';
       let $card = $('<div class="catalogCard"></div>');
       $card.attr('data-name', o.name);
       $card.attr('data-category', o.category);
       $card.html(
-        '<div class="cardIcon">' + o.icon + '</div>' +
+        iconHTML +
         '<div class="cardName">' + o.name + '</div>' +
         '<div class="cardCategory">' + o.category + '</div>'
       );
