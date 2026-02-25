@@ -9,6 +9,7 @@
 .cameraPresets {
     position: absolute;
     bottom: 14px;
+    /* Position inside the 3D canvas area, clearing the right settings panel */
     right: calc(24em + 14px);
     display: flex;
     flex-direction: row;
@@ -67,40 +68,244 @@
 }
 
 /* ===========================
-   Keyboard shortcut hints
+   View Cube
    =========================== */
-.undo::after,
-.redo::after {
-    content: none;
-}
-
-.componentsWindow .buttons .undo,
-.objectsWindow .buttons .undo {
-    position: relative;
-}
-
-.componentsWindow .buttons .redo,
-.objectsWindow .buttons .redo {
-    position: relative;
-}
-
-/* Tooltip with shortcut on hover */
-.componentsWindow .buttons .undo[title]:hover::after,
-.objectsWindow .buttons .undo[title]:hover::after,
-.componentsWindow .buttons .redo[title]:hover::after,
-.objectsWindow .buttons .redo[title]:hover::after {
-    content: attr(title);
+.viewCube-container {
     position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
+    bottom: 44px;
+    left: calc(18em + 44px);
+    width: 60px;
+    height: 60px;
+    perspective: 300px;
+    z-index: 3;
+    pointer-events: auto;
+}
+
+.viewCube {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.05s linear;
+}
+
+.viewCube-face {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: "Poppins", sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(9, 195, 219, 0.35);
+    border-radius: 4px;
+    transition: background 0.15s ease, color 0.15s ease;
+    backface-visibility: visible;
+}
+
+.viewCube-face.front {
+    background: rgba(0, 40, 55, 0.88);
+    color: #b0e8f5;
+    transform: translateZ(30px);
+}
+
+.viewCube-face.back {
+    background: rgba(0, 35, 50, 0.88);
+    color: #8ad0e0;
+    transform: rotateY(180deg) translateZ(30px);
+}
+
+.viewCube-face.left {
+    background: rgba(0, 35, 50, 0.88);
+    color: #8ad0e0;
+    transform: rotateY(-90deg) translateZ(30px);
+}
+
+.viewCube-face.right {
+    background: rgba(0, 35, 50, 0.88);
+    color: #8ad0e0;
+    transform: rotateY(90deg) translateZ(30px);
+}
+
+.viewCube-face.top {
+    background: rgba(0, 50, 65, 0.88);
+    color: #b0e8f5;
+    transform: rotateX(90deg) translateZ(30px);
+}
+
+.viewCube-face.bottom {
+    background: rgba(0, 30, 45, 0.88);
+    color: #6abac8;
+    transform: rotateX(-90deg) translateZ(30px);
+}
+
+.viewCube-face:hover {
+    background: rgba(9, 195, 219, 0.35) !important;
+    color: #ffffff !important;
+    border-color: rgba(9, 195, 219, 0.7);
+}
+
+/* ===========================
+   Gizmo Toolbar
+   =========================== */
+.gizmoToolbar {
+    position: absolute;
+    bottom: 14px;
+    /* Center in the canvas area between left panel (18em) and right panel (24em) */
+    left: calc(50% - 3em);
     transform: translateX(-50%);
-    background: rgba(0, 20, 30, 0.95);
-    color: #e0f7ff;
-    padding: 4px 10px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    z-index: 3;
+    pointer-events: auto;
+    background: rgba(0, 40, 55, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(9, 195, 219, 0.3);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.gizmoToolBtn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: #8ad0e0;
     border-radius: 6px;
-    font-size: 11px;
-    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.gizmoToolBtn:hover {
+    background: rgba(9, 195, 219, 0.2);
+    color: #ffffff;
+}
+
+.gizmoToolBtn.active {
+    background: rgba(9, 195, 219, 0.35);
+    color: #ffffff;
+    border-color: rgba(9, 195, 219, 0.5);
+    box-shadow: 0 0 8px rgba(9, 195, 219, 0.2);
+}
+
+.gizmoToolBtn.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
     pointer-events: none;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ===========================
+   View Cube XYZ Axes
+   =========================== */
+.viewCube-axes {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    pointer-events: none;
+}
+
+.viewCube-axis {
+    position: absolute;
+    transform-origin: 0 0 0;
+    pointer-events: none;
+}
+
+.viewCube-axis-line {
+    width: 90px;
+    height: 5px;
+    position: absolute;
+    top: -1px;
+    left: 0;
+    border-radius: 2px;
+}
+
+/* Arrowhead at the end of each axis line */
+.viewCube-axis-line::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 9px solid;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+/* Label next to arrowhead, following axis direction */
+.viewCube-axis-label {
+    position: absolute;
+    left: 100px;
+    top: -7px;
+    font-size: 15px;
+    font-weight: 1000;
+    font-family: "Poppins", sans-serif;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+
+/* X axis — red, points right (no rotation needed — along CSS +X) */
+.viewCube-axis.axis-x .viewCube-axis-line {
+    background: #e63333;
+}
+
+.viewCube-axis.axis-x .viewCube-axis-line::after {
+    border-left-color: #e63333;
+}
+
+.viewCube-axis.axis-x .viewCube-axis-label {
+    color: #e63333;
+}
+
+/* Y axis — blue (Descartes Y = BJS Z = forward/into screen) */
+.viewCube-axis.axis-y {
+    transform: rotateY(90deg);
+}
+
+.viewCube-axis.axis-y .viewCube-axis-line {
+    background: #4d66f2;
+}
+
+.viewCube-axis.axis-y .viewCube-axis-line::after {
+    border-left-color: #4d66f2;
+}
+
+.viewCube-axis.axis-y .viewCube-axis-label {
+    color: #4d66f2;
+}
+
+/* Z axis — green (Descartes Z = BJS Y = up) */
+.viewCube-axis.axis-z {
+    transform: rotateZ(-90deg);
+}
+
+.viewCube-axis.axis-z .viewCube-axis-line {
+    background: #33bf33;
+}
+
+.viewCube-axis.axis-z .viewCube-axis-line::after {
+    border-left-color: #33bf33;
+}
+
+.viewCube-axis.axis-z .viewCube-axis-label {
+    color: #33bf33;
+    /* Counter-rotate so text reads horizontally even though axis points up */
+    transform: rotateZ(90deg);
 }

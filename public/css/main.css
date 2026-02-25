@@ -2006,8 +2006,18 @@ ul.menuDropDownRightAlign {
   font-family: "Poppins", sans-serif;
 }
 
-.settingsWindow .slider .axisLabel:nth-of-type(1) {
-  color: #ff6b6b;
+/* Color-code axis labels to match gizmo arrow colors (Descartes coordinates) */
+/* X = red, Y = blue (Descartes Y = BJS Z), Z = green (Descartes Z = BJS Y) */
+.settingsWindow .slider .axisLabel.axis-x {
+  color: #e63333;
+}
+
+.settingsWindow .slider .axisLabel.axis-y {
+  color: #4d66f2;
+}
+
+.settingsWindow .slider .axisLabel.axis-z {
+  color: #33bf33;
 }
 
 .dialogWindow .slider .axisLabel {

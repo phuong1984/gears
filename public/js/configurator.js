@@ -1989,8 +1989,6 @@ var configurator = new function () {
     },
   ];
 
-  this.pointerDragPlaneNormal = new BABYLON.Vector3(0, 1, 0);
-
   // Run on page load
   this.init = function () {
     if (typeof babylon.scene == 'undefined') {
@@ -2046,6 +2044,16 @@ var configurator = new function () {
     babylon.setCameraMode('arc')
     babylon.renders.push(self.render);
 
+    // Initialize Gizmo
+    self.gizmo = new CustomGizmo(babylon.scene);
+    self.gizmoMode = 'move'; // 'move' | 'rotate' | 'scale' (only 'move' available in Phase 2)
+
+    // Gizmo Toolbar
+    self.setupGizmoToolbar();
+
+    // Initialize View Cube
+    viewCube.init(document.querySelector('.panel.active'));
+
     self.resetScene();
     self.saveRobotOptions();
 
@@ -2053,116 +2061,71 @@ var configurator = new function () {
     cameraUtils.setupDoubleClickFocus();
   };
 
-  // Apply pointerDragBehavior to selected mesh
-  this.applyDragToSelected = function () {
+  // Apply gizmo to selected component mesh
+  this.applyGizmoToSelected = function () {
     let selected = self.$componentList.find('li.selected');
     if (selected.length < 1) {
+      if (self.gizmo) self.gizmo.detach();
       return;
     }
 
     let index = selected[0].componentIndex;
-    if (typeof index != 'undefined') {
-      let dragBody = robot.getComponentByIndex(index).body;
-      let dragBodyPos;
+    if (typeof index == 'undefined') {
+      if (self.gizmo) self.gizmo.detach();
+      return;
+    }
 
-      if (dragBody.getBehaviorByName('PointerDrag')) {
-        return;
-      }
+    let component = robot.getComponentByIndex(index);
+    if (!component || !component.body) {
+      if (self.gizmo) self.gizmo.detach();
+      return;
+    }
 
-      let selected = self.$componentList.find('li.selected');
-      if (typeof selected[0].component == 'undefined') {
-        return;
-      }
+    let dragBody = component.body;
+    let componentData = selected[0].component;
+    if (typeof componentData == 'undefined') {
+      if (self.gizmo) self.gizmo.detach();
+      return;
+    }
 
-      function notClose(a, b) {
-        if (Math.abs(a - b) > 0.01) {
-          return true;
-        }
-        return false;
-      }
+    function notClose(a, b) {
+      return Math.abs(a - b) > 0.01;
+    }
 
-      // Object drag start
-      function dragStart(event) {
-        dragBodyPos = dragBody.position.clone();
-      }
-
-      // Object drag
-      function drag(event) {
-        let delta = event.delta;
-
-        if (dragBody.parent) {
-          let matrix = dragBody.parent.getWorldMatrix().clone().invert();
-          matrix.setTranslation(BABYLON.Vector3.Zero());
-          delta = BABYLON.Vector3.TransformCoordinates(delta, matrix);
-        }
-
-        dragBodyPos.addInPlace(delta);
-
-        if (notClose(selected[0].component.position[0], dragBodyPos.x)) {
-          dragBody.position.x = self.roundToSnap(dragBodyPos.x, self.snapStep[0]);
-        }
-        if (notClose(selected[0].component.position[1], dragBodyPos.z)) {
-          dragBody.position.z = self.roundToSnap(dragBodyPos.z, self.snapStep[1]);
-        }
-        if (notClose(selected[0].component.position[2], dragBodyPos.y)) {
-          dragBody.position.y = self.roundToSnap(dragBodyPos.y, self.snapStep[2]);
-        }
-      }
-
-      // Object drag end
-      function dragEnd(event) {
+    self.gizmo.attach(dragBody, {
+      onDragStart: function (axisName) {
+        // Saved before drag, so undo can revert
+      },
+      onDragEnd: function (axisName, newPos) {
         self.saveHistory();
         let pos = dragBody.position;
 
-        if (dragBody.parent == null && typeof dragBody.component.parent != 'undefined') {
+        if (dragBody.parent == null && typeof dragBody.component != 'undefined' && typeof dragBody.component.parent != 'undefined') {
           pos = pos.subtract(dragBody.component.parent.absolutePosition);
         }
 
-        if (notClose(selected[0].component.position[0], pos.x)) {
-          selected[0].component.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
+        // Map BabylonJS coords → Descartes coords (X=X, Y=Z, Z=Y)
+        if (notClose(componentData.position[0], pos.x)) {
+          componentData.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
         }
-        if (notClose(selected[0].component.position[1], pos.z)) {
-          selected[0].component.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
+        if (notClose(componentData.position[1], pos.z)) {
+          componentData.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
         }
-        if (notClose(selected[0].component.position[2], pos.y)) {
-          selected[0].component.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
+        if (notClose(componentData.position[2], pos.y)) {
+          componentData.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
         }
         self.resetScene(false);
-      };
+      }
+    });
+  };
 
-      let pointerDragBehavior = new BABYLON.PointerDragBehavior({ dragPlaneNormal: self.pointerDragPlaneNormal });
-      pointerDragBehavior.useObjectOrientationForDragging = false;
-      pointerDragBehavior.moveAttached = false;
-
-      pointerDragBehavior.onDragStartObservable.add(dragStart);
-      pointerDragBehavior.onDragObservable.add(drag);
-      pointerDragBehavior.onDragEndObservable.add(dragEnd);
-
-      dragBody.isPickable = true;
-      dragBody.addBehavior(pointerDragBehavior);
-    }
+  // Legacy alias (applyDragToSelected) — now delegates to gizmo
+  this.applyDragToSelected = function () {
+    self.applyGizmoToSelected();
   };
 
   // Runs every frame
   this.render = function (delta) {
-    let camera = babylon.scene.activeCamera;
-    let dir = camera.getTarget().subtract(camera.position);
-    let x2 = dir.x ** 2;
-    let y2 = dir.y ** 2;
-    let z2 = dir.z ** 2;
-    let max = Math.max(x2, y2, z2);
-
-    self.pointerDragPlaneNormal.x = 0;
-    self.pointerDragPlaneNormal.y = 0;
-    self.pointerDragPlaneNormal.z = 0;
-    if (x2 == max) {
-      self.pointerDragPlaneNormal.x = 1;
-    } else if (y2 == max) {
-      self.pointerDragPlaneNormal.y = 1;
-    } else {
-      self.pointerDragPlaneNormal.z = 1;
-    }
-
     if (self.wireframe && typeof self.wireframe.body != 'undefined') {
       self.wireframe.body.computeWorldMatrix(true);
       // Sync wireframe position/rotation with body
@@ -2175,7 +2138,54 @@ var configurator = new function () {
         }
       }
     }
+
+    // Update gizmo position/scale
+    if (self.gizmo) self.gizmo.update();
+
+    // Update view cube rotation
+    viewCube.update();
   }
+
+  // Setup gizmo toolbar (Move / Rotate / Scale buttons + keyboard shortcuts)
+  this.setupGizmoToolbar = function () {
+    var $toolbar = $('.gizmoToolbar');
+    var $buttons = $toolbar.find('.gizmoToolBtn');
+
+    $buttons.each(function () {
+      var $btn = $(this);
+      var mode = $btn.data('mode');
+
+      // Only 'move' is available in Phase 2
+      if (mode === 'move') {
+        $btn.removeClass('disabled');
+        $btn.click(function () {
+          self.setGizmoMode(mode);
+        });
+      }
+    });
+
+    // Keyboard shortcuts: W = Move, E = Rotate, R = Scale
+    $(document).on('keydown', function (e) {
+      // Don't trigger when typing in input fields
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'w' || e.key === 'W') {
+        self.setGizmoMode('move');
+      }
+      // E and R are reserved for future Rotate/Scale gizmos (Phase 3)
+    });
+  };
+
+  // Set the active gizmo mode and update toolbar UI
+  this.setGizmoMode = function (mode) {
+    self.gizmoMode = mode;
+    var $buttons = $('.gizmoToolbar .gizmoToolBtn');
+    $buttons.removeClass('active');
+    $buttons.filter('[data-mode="' + mode + '"]').addClass('active');
+
+    // Re-attach gizmo with new mode if a component is selected
+    self.applyGizmoToSelected();
+  };
 
   // Save history (delegates to UndoManager)
   this.saveHistory = function () {

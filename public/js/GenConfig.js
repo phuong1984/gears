@@ -749,6 +749,7 @@ function GenConfig(caller, $settingsArea) {
 
     // Axis labels for Descartes coordinate system
     let axisLabels = ['X', 'Y', 'Z'];
+    let axisClasses = ['axis-x', 'axis-y', 'axis-z'];
 
     currentOptions[opt.option].forEach(function (currentOption, i) {
       let slider = null;
@@ -763,8 +764,8 @@ function GenConfig(caller, $settingsArea) {
         });
       }
 
-      // Add axis label before the slider
-      let $label = $('<span class="axisLabel">' + axisLabels[i] + '</span>');
+      // Add axis label before the slider with color-coded class
+      let $label = $('<span class="axisLabel ' + axisClasses[i] + '">' + axisLabels[i] + '</span>');
       slider.prepend($label);
 
       $div.append(slider);
