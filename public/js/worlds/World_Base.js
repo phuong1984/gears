@@ -69,7 +69,7 @@ var World_Base = function () {
   this.objectDefault = {
     type: 'box',
     position: [0, 0, 0],
-    rotationMode: 'degrees',
+    rotationMode: 'radians',
     rotation: [0, 0, 0],
     animationMode: 'none',
     animationKeys: [],

@@ -2093,27 +2093,42 @@ var configurator = new function () {
     }
 
     self.gizmo.attach(dragBody, {
+      mode: self.gizmoMode,
       onDragStart: function (axisName) {
         // Saved before drag, so undo can revert
       },
-      onDragEnd: function (axisName, newPos) {
+      onDragEnd: function (axisName, result) {
         self.saveHistory();
-        let pos = dragBody.position;
 
-        if (dragBody.parent == null && typeof dragBody.component != 'undefined' && typeof dragBody.component.parent != 'undefined') {
-          pos = pos.subtract(dragBody.component.parent.absolutePosition);
+        if (self.gizmoMode === 'rotate') {
+          // result = Euler rotation from BabylonJS (radians)
+          // Configurator stores rotation in radians (slider has deg2rad flag for display)
+          // Map BJS → Descartes (X=X, Y=Z, Z=Y) with Right-Hand Rule (negate)
+          if (componentData.rotation) {
+            componentData.rotation[0] = -result.x;
+            componentData.rotation[1] = -result.z;
+            componentData.rotation[2] = -result.y;
+          }
+        } else {
+          // result = position
+          let pos = dragBody.position;
+
+          if (dragBody.parent == null && typeof dragBody.component != 'undefined' && typeof dragBody.component.parent != 'undefined') {
+            pos = pos.subtract(dragBody.component.parent.absolutePosition);
+          }
+
+          // Map BabylonJS coords → Descartes coords (X=X, Y=Z, Z=Y)
+          if (notClose(componentData.position[0], pos.x)) {
+            componentData.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
+          }
+          if (notClose(componentData.position[1], pos.z)) {
+            componentData.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
+          }
+          if (notClose(componentData.position[2], pos.y)) {
+            componentData.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
+          }
         }
 
-        // Map BabylonJS coords → Descartes coords (X=X, Y=Z, Z=Y)
-        if (notClose(componentData.position[0], pos.x)) {
-          componentData.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
-        }
-        if (notClose(componentData.position[1], pos.z)) {
-          componentData.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
-        }
-        if (notClose(componentData.position[2], pos.y)) {
-          componentData.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
-        }
         self.resetScene(false);
       }
     });
@@ -2155,8 +2170,8 @@ var configurator = new function () {
       var $btn = $(this);
       var mode = $btn.data('mode');
 
-      // Only 'move' is available in Phase 2
-      if (mode === 'move') {
+      // move and rotate available in Phase 3
+      if (mode === 'move' || mode === 'rotate') {
         $btn.removeClass('disabled');
         $btn.click(function () {
           self.setGizmoMode(mode);
@@ -2171,8 +2186,10 @@ var configurator = new function () {
 
       if (e.key === 'w' || e.key === 'W') {
         self.setGizmoMode('move');
+      } else if (e.key === 'e' || e.key === 'E') {
+        self.setGizmoMode('rotate');
       }
-      // E and R are reserved for future Rotate/Scale gizmos (Phase 3)
+      // R is reserved for future Scale gizmo (Phase 3)
     });
   };
 

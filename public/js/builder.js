@@ -207,6 +207,7 @@ var builder = new function () {
         min: '-180',
         max: '180',
         step: '5',
+        deg2rad: true,
         reset: true
       },
       {
@@ -381,6 +382,7 @@ var builder = new function () {
         min: '-180',
         max: '180',
         step: '5',
+        deg2rad: true,
         reset: true
       },
       {
@@ -543,6 +545,7 @@ var builder = new function () {
         min: '-180',
         max: '180',
         step: '5',
+        deg2rad: true,
         reset: true
       },
       {
@@ -705,6 +708,7 @@ var builder = new function () {
         min: '-180',
         max: '180',
         step: '5',
+        deg2rad: true,
         reset: true
       },
       {
@@ -864,6 +868,7 @@ var builder = new function () {
         min: '-180',
         max: '180',
         step: '5',
+        deg2rad: true,
         reset: true
       },
       {
@@ -914,6 +919,7 @@ var builder = new function () {
         min: '-180',
         max: '180',
         step: '5',
+        deg2rad: true,
         reset: true
       },
       {
@@ -1087,8 +1093,8 @@ var builder = new function () {
       var $btn = $(this);
       var mode = $btn.data('mode');
 
-      // Only 'move' is available in Phase 2
-      if (mode === 'move') {
+      // move and rotate available in Phase 3
+      if (mode === 'move' || mode === 'rotate') {
         $btn.removeClass('disabled');
         $btn.click(function () {
           self.setGizmoMode(mode);
@@ -1103,8 +1109,10 @@ var builder = new function () {
 
       if (e.key === 'w' || e.key === 'W') {
         self.setGizmoMode('move');
+      } else if (e.key === 'e' || e.key === 'E') {
+        self.setGizmoMode('rotate');
       }
-      // E and R are reserved for future Rotate/Scale gizmos (Phase 3)
+      // R is reserved for future Scale gizmo
     });
   };
 
@@ -1468,28 +1476,42 @@ var builder = new function () {
     }
 
     self.gizmo.attach(mesh, {
+      mode: self.gizmoMode,
       onDragStart: function (axisName) {
         // Saved before drag for undo
       },
-      onDragEnd: function (axisName, newPos) {
+      onDragEnd: function (axisName, result) {
         self.saveHistory();
-        let pos = mesh.position.clone();
 
-        if (typeof mesh.pseudoParent != 'undefined') {
-          let matrix = mesh.pseudoParent.getWorldMatrix().clone().invert();
-          pos = BABYLON.Vector3.TransformCoordinates(pos, matrix);
+        if (self.gizmoMode === 'rotate') {
+          // result = Euler rotation from BabylonJS (radians)
+          // Store radians (same as configurator), Map BJS → Descartes (X=X, Y=Z, Z=Y) with RHR (negate)
+          if (objectData.rotation) {
+            objectData.rotation[0] = -result.x;
+            objectData.rotation[1] = -result.z;
+            objectData.rotation[2] = -result.y;
+          }
+        } else {
+          // result = position
+          let pos = mesh.position.clone();
+
+          if (typeof mesh.pseudoParent != 'undefined') {
+            let matrix = mesh.pseudoParent.getWorldMatrix().clone().invert();
+            pos = BABYLON.Vector3.TransformCoordinates(pos, matrix);
+          }
+
+          // Map BabylonJS coords → Descartes coords (X=X, Y=Z, Z=Y)
+          if (notClose(objectData.position[0], pos.x)) {
+            objectData.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
+          }
+          if (notClose(objectData.position[1], pos.z)) {
+            objectData.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
+          }
+          if (notClose(objectData.position[2], pos.y)) {
+            objectData.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
+          }
         }
 
-        // Map BabylonJS coords → Descartes coords (X=X, Y=Z, Z=Y)
-        if (notClose(objectData.position[0], pos.x)) {
-          objectData.position[0] = self.roundToSnap(pos.x, self.snapStep[0]);
-        }
-        if (notClose(objectData.position[1], pos.z)) {
-          objectData.position[1] = self.roundToSnap(pos.z, self.snapStep[1]);
-        }
-        if (notClose(objectData.position[2], pos.y)) {
-          objectData.position[2] = self.roundToSnap(pos.y, self.snapStep[2]);
-        }
         self.resetScene(false);
       }
     });
