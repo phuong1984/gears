@@ -2572,26 +2572,32 @@ var configurator = new function () {
   };
 
   // Reset scene
+  let resetSceneTimeout = null;
   this.resetScene = async function (reloadComponents = true) {
-    if (typeof self.cameraRadius == 'undefined') {
-      self.cameraRadius = 40;
-    } else {
-      self.cameraRadius = babylon.scene.cameras[0].radius;
+    if (resetSceneTimeout) {
+      clearTimeout(resetSceneTimeout);
     }
-    await babylon.resetScene();
-    babylon.scene.physicsEnabled = false;
-    self.setupPickingRay();
-    babylon.scene.cameras[0].radius = self.cameraRadius;
-    if (reloadComponents) {
-      self.$robotName.val(robot.options.name);
-      self.loadIntoComponentsWindow(robot.options);
-      self.showComponentOptions(robot.options);
-    }
-    let $target = self.$componentList.find('li.selected');
-    self.showComponentOptions($target[0].component);
-    self.highlightSelected();
-    self.applyDragToSelected();
-  }
+    resetSceneTimeout = setTimeout(async () => {
+      if (typeof self.cameraRadius == 'undefined') {
+        self.cameraRadius = 40;
+      } else {
+        self.cameraRadius = babylon.scene.cameras[0].radius;
+      }
+      await babylon.resetScene();
+      babylon.scene.physicsEnabled = false;
+      self.setupPickingRay();
+      babylon.scene.cameras[0].radius = self.cameraRadius;
+      if (reloadComponents) {
+        self.$robotName.val(robot.options.name);
+        self.loadIntoComponentsWindow(robot.options);
+        self.showComponentOptions(robot.options);
+      }
+      let $target = self.$componentList.find('li.selected');
+      self.showComponentOptions($target[0].component);
+      self.highlightSelected();
+      self.applyDragToSelected();
+    }, 50);
+  };
 
   // Add a new component to selected
   this.addComponent = function () {

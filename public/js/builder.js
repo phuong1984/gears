@@ -1565,6 +1565,8 @@ var builder = new function () {
           }
         } else if (self.gizmoMode === 'scale') {
           // result = BJS scaling vector (x, y, z)
+          console.log(`[DEBUG GLB] Gizmo DragEnd (Scale) - Result: x=${result.x.toFixed(4)}, y=${result.y.toFixed(4)}, z=${result.z.toFixed(4)}`);
+
           // Map BJS scaling → objectData dimensions
           // World Builder objects: size[0]=width(X), size[1]=depth(Y), size[2]=height(Z)
           // BJS X=Descartes X, BJS Y=Descartes Z, BJS Z=Descartes Y
@@ -1573,6 +1575,7 @@ var builder = new function () {
             objectData.size[0] = Math.max(0.1, Math.round(objectData.size[0] * result.x * 10) / 10);
             objectData.size[1] = Math.max(0.1, Math.round(objectData.size[1] * result.z * 10) / 10);
             objectData.size[2] = Math.max(0.1, Math.round(objectData.size[2] * result.y * 10) / 10);
+            console.log(`[DEBUG GLB] Adjusted objectData.size: ${objectData.size[0]}, ${objectData.size[1]}, ${objectData.size[2]}`);
           } else if (typeof objectData.size !== 'undefined' && typeof objectData.size === 'number') {
             // Sphere: size is a single number
             var avgScale = (result.x + result.y + result.z) / 3;
@@ -1580,7 +1583,9 @@ var builder = new function () {
           }
           if (typeof objectData.modelScale !== 'undefined') {
             var avgScaleM = (result.x + result.y + result.z) / 3;
+            let oldScale = objectData.modelScale;
             objectData.modelScale = Math.max(0.1, Math.round(objectData.modelScale * avgScaleM * 10) / 10);
+            console.log(`[DEBUG GLB] Adjusted modelScale from ${oldScale} to ${objectData.modelScale} (avgScaleM=${avgScaleM.toFixed(4)})`);
           }
         } else {
           // result = position
@@ -1790,32 +1795,38 @@ var builder = new function () {
   };
 
   // Reset scene
+  let resetSceneTimeout = null;
   this.resetScene = function (reloadComponents = true) {
-    simPanel.hideWorldInfoPanel();
-    worlds[0].setOptions(self.worldOptions).then(function () {
-      return babylon.resetScene();
-    }).then(function () {
-      babylon.scene.physicsEnabled = false;
-      self.setupPickingRay();
-      if (reloadComponents) {
-        let selected = self.$objectsList.find('li.selected');
-        let childList = self.$objectsList.find('li');
-        let selectedIndex = [...childList].indexOf(selected[0]);
+    if (resetSceneTimeout) {
+      clearTimeout(resetSceneTimeout);
+    }
+    resetSceneTimeout = setTimeout(() => {
+      simPanel.hideWorldInfoPanel();
+      worlds[0].setOptions(self.worldOptions).then(function () {
+        return babylon.resetScene();
+      }).then(function () {
+        babylon.scene.physicsEnabled = false;
+        self.setupPickingRay();
+        if (reloadComponents) {
+          let selected = self.$objectsList.find('li.selected');
+          let childList = self.$objectsList.find('li');
+          let selectedIndex = [...childList].indexOf(selected[0]);
 
-        self.loadIntoObjectsWindow(self.worldOptions);
+          self.loadIntoObjectsWindow(self.worldOptions);
 
-        childList = self.$objectsList.find('li');
-        if (typeof childList[selectedIndex] != 'undefined') {
-          childList.removeClass('selected');
-          $(childList[selectedIndex]).addClass('selected');
+          childList = self.$objectsList.find('li');
+          if (typeof childList[selectedIndex] != 'undefined') {
+            childList.removeClass('selected');
+            $(childList[selectedIndex]).addClass('selected');
+          }
         }
-      }
-      let selected = self.$objectsList.find('li.selected');
-      self.showObjectOptions(selected[0]);
-      self.highlightSelected();
-      self.applyDragToSelected();
-    });
-  }
+        let selected = self.$objectsList.find('li.selected');
+        self.showObjectOptions(selected[0]);
+        self.highlightSelected();
+        self.applyDragToSelected(); // Attach gizmo wrapper to selected component
+      });
+    }, 50); // Debounce slider overlaps
+  };
 
   // Add a new object to selected
   this.addObject = function () {

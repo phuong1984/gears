@@ -201,9 +201,12 @@ function Robot() {
             // Apply default material if STL mesh has none
             for (let i = 0; i < modelMeshes.length; i++) {
               if (!modelMeshes[i].material) {
-                let defaultMat = new BABYLON.StandardMaterial('bodySTLDefault_' + i, scene);
-                defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
-                defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                let defaultMat = scene.getMaterialByID('bodySTLDefault_' + i);
+                if (!defaultMat) {
+                  defaultMat = new BABYLON.StandardMaterial('bodySTLDefault_' + i, scene);
+                  defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+                  defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                }
                 modelMeshes[i].material = defaultMat;
               }
             }
@@ -302,6 +305,10 @@ function Robot() {
               modelMeshes[i].isPickable = false;
               // Apply body color to submeshes that have a material
               if (modelMeshes[i].material) {
+                // Break cache link for scene rebuilds
+                modelMeshes[i].material = modelMeshes[i].material.clone('cloned_body_mat_' + i);
+                // Assign properties of bodyMat to cloned material if needed, or simply replace it:
+                // Actually Robot body is meant to reflect the bodyMat color entirely.
                 modelMeshes[i].material = bodyMat;
               }
             }
@@ -326,10 +333,13 @@ function Robot() {
       // Rear caster
       if (options.caster) {
 
-        var casterMat = new BABYLON.StandardMaterial('caster', scene);
-        casterMat.diffuseColor = new BABYLON.Color3(0.6, 0.6, 0.6);
-        casterMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
-        casterMat.freeze();
+        var casterMat = scene.getMaterialByID('caster');
+        if (!casterMat) {
+          casterMat = new BABYLON.StandardMaterial('caster', scene);
+          casterMat.diffuseColor = new BABYLON.Color3(0.6, 0.6, 0.6);
+          casterMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+          casterMat.freeze();
+        }
 
         let casterOptions = {
           diameter: options.wheelDiameter,

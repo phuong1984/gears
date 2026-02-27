@@ -4289,9 +4289,12 @@ function ModelBlock(scene, parent, pos, rot, options) {
       // Apply default material if STL mesh has none
       for (let i = 0; i < meshes.length; i++) {
         if (!meshes[i].material) {
-          let defaultMat = new BABYLON.StandardMaterial('stlDefaultMat_model_' + i, scene);
-          defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
-          defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+          let defaultMat = scene.getMaterialByID('stlDefaultMat_model_' + i);
+          if (!defaultMat) {
+            defaultMat = new BABYLON.StandardMaterial('stlDefaultMat_model_' + i, scene);
+            defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+            defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+          }
           meshes[i].material = defaultMat;
         }
       }
@@ -4453,19 +4456,36 @@ function ModelBlock(scene, parent, pos, rot, options) {
       meshes[0].parent = body;
       meshes[0].visibility = 0; // Root node invisible, submeshes remain visible
 
-      // Apply model color to submeshes
+      // Apply model color to submeshes and break loader material cache link
+      let customColor3 = null;
       if (self.options.modelColor && self.options.modelColor !== '') {
         // gen.color stores as #RRGGBBaa, truncate to #RRGGBB for Color3
         let colorHex = self.options.modelColor;
         if (colorHex[0] !== '#') colorHex = '#' + colorHex;
         colorHex = colorHex.substring(0, 7);
-        let color3 = BABYLON.Color3.FromHexString(colorHex);
-        for (let i = 1; i < meshes.length; i++) {
-          if (meshes[i].material) {
-            let newMat = new BABYLON.StandardMaterial('modelColor_' + i, scene);
-            newMat.diffuseColor = color3;
-            meshes[i].material = newMat;
+        customColor3 = BABYLON.Color3.FromHexString(colorHex);
+      }
+
+      for (let i = 1; i < meshes.length; i++) {
+        if (meshes[i].material) {
+          let newMat;
+          if (customColor3) {
+            let matID = 'modelColor_' + i;
+            newMat = scene.getMaterialByID(matID);
+            if (!newMat) {
+              newMat = new BABYLON.StandardMaterial(matID, scene);
+            }
+            newMat.diffuseColor = customColor3;
+          } else {
+            // Clone the existing material to break the GLTF loader cache link
+            // Avoid infinite clones on scene rebuilds by checking ID first
+            let cloneID = 'cloned_model_mat_' + i;
+            newMat = scene.getMaterialByID(cloneID);
+            if (!newMat) {
+              newMat = meshes[i].material.clone(cloneID);
+            }
           }
+          meshes[i].material = newMat;
         }
       }
 

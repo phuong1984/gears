@@ -218,20 +218,10 @@ var babylon = new function () {
       self.scene.actionManager = null;
     }
 
-    // Remove all meshes - use while loop because dispose() may recursively
-    // remove child meshes from the array, changing its length mid-iteration
+    // Remove all meshes, but preserve materials and textures so that GLTF Loader cache remains valid!
+    // dispose(false, false) ensures we don't cascade the disposal to the mesh's materials.
     while (self.scene.meshes.length > 0) {
-      self.scene.meshes[self.scene.meshes.length - 1].dispose(false, true);
-    }
-
-    // Remove all materials
-    while (self.scene.materials.length > 0) {
-      self.scene.materials[0].dispose();
-    }
-
-    // Remove all textures
-    while (self.scene.textures.length > 0) {
-      self.scene.textures[0].dispose();
+      self.scene.meshes[self.scene.meshes.length - 1].dispose(false, false);
     }
 
     // Remove extra cameras (keep main camera)
@@ -321,10 +311,13 @@ var babylon = new function () {
       self.setCameraMode(); // Set after loading mesh as camera may be locked to mesh
 
       // For camera visualization
-      self.rttViewMat = new BABYLON.StandardMaterial("RTT mat", self.scene);
+      self.rttViewMat = self.scene.getMaterialByID("RTT mat");
+      if (!self.rttViewMat) {
+        self.rttViewMat = new BABYLON.StandardMaterial("RTT mat", self.scene);
+        self.rttViewMat.emissiveColor = new BABYLON.Color3(1, 1, 1);
+        self.rttViewMat.disableLighting = true;
+      }
       // self.rttViewMat.diffuseTexture = robot.getComponentByPort('in1').renderTarget;
-      self.rttViewMat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-      self.rttViewMat.disableLighting = true;
 
       self.rttView = BABYLON.MeshBuilder.CreateGround("RTT", { width: 1, height: 1 }, self.scene);
       self.rttView.rotation.x = -Math.PI / 2;
