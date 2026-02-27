@@ -246,14 +246,14 @@ function Robot() {
             // Apply model rotation
             if (options.bodyModelRotation) {
               stlRoot.rotation.x = options.bodyModelRotation[0];
-              stlRoot.rotation.y = options.bodyModelRotation[1];
-              stlRoot.rotation.z = options.bodyModelRotation[2];
+              stlRoot.rotation.y = options.bodyModelRotation[2];
+              stlRoot.rotation.z = options.bodyModelRotation[1];
             }
             // Apply model position offset
             if (options.bodyModelPosition) {
               stlRoot.position.x += options.bodyModelPosition[0];
-              stlRoot.position.y += options.bodyModelPosition[1];
-              stlRoot.position.z += options.bodyModelPosition[2];
+              stlRoot.position.y += options.bodyModelPosition[2];
+              stlRoot.position.z += options.bodyModelPosition[1];
             }
 
             stlRoot.parent = body;
@@ -284,14 +284,14 @@ function Robot() {
             modelMeshes[0].rotationQuaternion = null;
             if (options.bodyModelRotation) {
               modelMeshes[0].rotation.x = options.bodyModelRotation[0];
-              modelMeshes[0].rotation.y = options.bodyModelRotation[1];
-              modelMeshes[0].rotation.z = options.bodyModelRotation[2];
+              modelMeshes[0].rotation.y = options.bodyModelRotation[2];
+              modelMeshes[0].rotation.z = options.bodyModelRotation[1];
             }
             // Apply model position offset
             if (options.bodyModelPosition) {
               modelMeshes[0].position.x = options.bodyModelPosition[0];
-              modelMeshes[0].position.y = options.bodyModelPosition[1];
-              modelMeshes[0].position.z = options.bodyModelPosition[2];
+              modelMeshes[0].position.y = options.bodyModelPosition[2];
+              modelMeshes[0].position.z = options.bodyModelPosition[1];
             }
 
             // Parent model to body so it moves with physics
