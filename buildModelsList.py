@@ -9,7 +9,7 @@ URL_ROOT = MODELS_ROOT_DIR.replace('public/', '')
 models_list = []
 category_list = []
 
-match_gltf = re.compile('(gltf|glb)$', re.IGNORECASE)
+match_gltf = re.compile('(gltf|glb|stl)$', re.IGNORECASE)
 
 for category in os.listdir(MODELS_ROOT_DIR):
     category_dir = MODELS_ROOT_DIR + '/' + category
