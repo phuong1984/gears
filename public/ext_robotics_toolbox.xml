@@ -154,6 +154,369 @@
     </block>
   </category>
 
+  <category name="#blk-motion#" colour="#5b67a5">
+    <block type="move_tank">
+      <field name="units">PERCENT</field>
+      <value name="left">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="right">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="move_tank_for">
+      <field name="units">PERCENT</field>
+      <field name="units2">ROTATIONS</field>
+      <value name="left">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="right">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="duration">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="move_steering">
+      <field name="units">PERCENT</field>
+      <value name="steering">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="speed">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="move_steering_for">
+      <field name="units">PERCENT</field>
+      <field name="units2">ROTATIONS</field>
+      <value name="steering">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="speed">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="duration">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="stop">
+      <field name="stop_action">HOLD</field>
+    </block>
+    <block type="set_movement_motors">
+      <field name="left_port">A</field>
+      <field name="right_port">B</field>
+    </block>
+  </category>
+  <category name="#blk-motor#" colour="#5b67a5">
+    <block type="run_motor">
+      <field name="port">A</field>
+      <field name="unit">PERCENT</field>
+      <value name="speed">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="run_motor_for">
+      <field name="port">A</field>
+      <field name="unit">PERCENT</field>
+      <field name="unit2">ROTATIONS</field>
+      <field name="block">BLOCK</field>
+      <value name="speed">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="duration">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="run_motor_to">
+      <field name="port">A</field>
+      <field name="unit">PERCENT</field>
+      <field name="block">BLOCK</field>
+      <value name="speed">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="degrees">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="stop_motor">
+      <field name="port">A</field>
+      <field name="stop_action">BRAKE</field>
+    </block>
+    <block type="speed">
+      <field name="port">A</field>
+    </block>
+    <block type="position">
+      <field name="port">A</field>
+    </block>
+    <block type="reset_motor">
+      <field name="port">BOTH</field>
+    </block>
+  </category>
+  <category name="#blk-sensors#" colour="#5ba58c">
+    <block type="tw_color" hidden="true">
+    </block>
+    <block type="color_sensor">
+      <field name="type">INTENSITY</field>
+      <field name="port">AUTO</field>
+    </block>
+    <block type="color">
+      <field name="color">BLACK</field>
+      <field name="type">NUMBER</field>
+    </block>
+    <block type="ultrasonic_sensor">
+      <field name="port">AUTO</field>
+      <field name="units">CM</field>
+    </block>
+    <block type="laser_sensor">
+      <field name="port">AUTO</field>
+      <field name="units">CM</field>
+    </block>
+    <block type="gyro_sensor">
+      <field name="type">ANGLE</field>
+      <field name="port">AUTO</field>
+    </block>
+    <block type="reset_gyro">
+      <field name="port">AUTO</field>
+    </block>
+    <block type="gps_sensor">
+      <field name="type">X</field>
+      <field name="port">AUTO</field>
+    </block>
+    <block type="touch_state">
+      <field name="state">PRESSED</field>
+      <field name="port">AUTO</field>
+    </block>
+    <block type="wait_for_state">
+      <field name="state">PRESSED</field>
+      <field name="port">AUTO</field>
+    </block>
+    <block type="button_state">
+      <field name="button">CENTER</field>
+      <field name="state">PRESSED</field>
+    </block>
+    <block type="wait_until_button">
+      <field name="button">CENTER</field>
+      <field name="state">PRESSED</field>
+    </block>
+    <block type="camera_capture_image">
+      <field name="port">AUTO</field>
+    </block>
+    <block type="camera_get_rgb">
+      <field name="port">AUTO</field>
+    </block>
+    <block type="camera_get_hsv">
+      <field name="port">AUTO</field>
+    </block>
+    <block type="camera_find_blobs">
+      <field name="port">AUTO</field>
+      <value name="minH">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+      <value name="maxH">
+        <shadow type="math_number">
+          <field name="NUM">140</field>
+        </shadow>
+      </value>
+      <value name="minS">
+        <shadow type="math_number">
+          <field name="NUM">80</field>
+        </shadow>
+      </value>
+      <value name="maxS">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+      <value name="minV">
+        <shadow type="math_number">
+          <field name="NUM">20</field>
+        </shadow>
+      </value>
+      <value name="maxV">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+      <value name="pixels_threshold">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="lidar_sensor">
+      <field name="port">AUTO</field>
+    </block>
+  </category>
+  <category name="#blk-sound#" colour="#a5745b">
+    <block type="say">
+      <field name="block">NO_BLOCK</field>
+      <value name="text">
+        <shadow type="text">
+          <field name="TEXT">Hello world</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="beep">
+      <field name="block">NO_BLOCK</field>
+    </block>
+    <block type="play_tone">
+      <field name="block">NO_BLOCK</field>
+      <value name="frequency">
+        <shadow type="math_number">
+          <field name="NUM">400</field>
+        </shadow>
+      </value>
+      <value name="duration">
+        <shadow type="math_number">
+          <field name="NUM">0.5</field>
+        </shadow>
+      </value>
+    </block>
+  </category>
+  <category name="#blk-pen-category#" colour="#a5745b">
+    <block type="penDown">
+    </block>
+    <block type="penUp">
+    </block>
+    <block type="penSetColor">
+      <value name="red">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="green">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="blue">
+        <shadow type="math_number">
+          <field name="NUM">0.5</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="penSetWidth">
+      <value name="width">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+  </category>
+  <category name="#blk-experimental-category#" colour="#a55b80">
+    <block type="object_tracker">
+      <field name="type">X</field>
+      <field name="robot">0</field>
+    </block>
+    <block type="radio_send">
+      <value name="value">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="radio_available"></block>
+    <block type="radio_read"></block>
+    <block type="radio_read_content"></block>
+    <block type="radio_empty"></block>
+    <block type="plotter_init"></block>
+    <block type="plotter_showHide"></block>
+    <block type="plotter_clear"></block>
+    <block type="plotter_drawGrid"></block>
+    <block type="plotter_setColor"></block>
+    <block type="plotter_setPointSize">
+      <value name="size">
+        <shadow type="math_number">
+          <field name="NUM">2</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="plotter_drawPoint">
+      <value name="x">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="y">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="plotter_drawLine">
+      <value name="x1">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="y1">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="x2">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+      <value name="y2">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="plotter_drawTriangle">
+      <value name="x">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="y">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="dir">
+        <shadow type="math_number">
+          <field name="NUM">90</field>
+        </shadow>
+      </value>
+    </block>
+
+  </category>
+
   <category name="#blk-control#" colour="#9fa55b">
     <block type="comment"></block>
     <block type="sleep">
