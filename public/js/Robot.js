@@ -148,63 +148,171 @@ function Robot() {
         try {
           // Determine plugin extension for blob/data URLs (they have no file extension)
           let pluginExtension = null;
-          if (options.bodyModelURL.startsWith('blob:') || options.bodyModelURL.startsWith('data:')) {
-            let fileName = options._bodyModelFileName || '';
-            if (fileName.toLowerCase().endsWith('.gltf')) {
+          let loadURL = options.bodyModelURL;
+          let tempBlobURL = null;
+          if (loadURL.startsWith('blob:') || loadURL.startsWith('data:')) {
+            let fileName = options._bodyModelFileName || options._modelFileName || '';
+            if (fileName.toLowerCase().endsWith('.stl')) {
+              pluginExtension = '.stl';
+            } else if (fileName.toLowerCase().endsWith('.gltf')) {
               pluginExtension = '.gltf';
             } else {
               pluginExtension = '.glb';
             }
+
+            // BabylonJS STL loader doesn't support data: URLs,
+            // convert to blob URL (same fix as MotorActuator/ModelBlock)
+            if (pluginExtension === '.stl' && loadURL.startsWith('data:')) {
+              let response = await fetch(loadURL);
+              let blob = await response.blob();
+              tempBlobURL = URL.createObjectURL(blob);
+              loadURL = tempBlobURL;
+            }
           }
 
           let modelResults = await BABYLON.SceneLoader.ImportMeshAsync(
-            null, '', options.bodyModelURL, scene, null, pluginExtension
+            null, '', loadURL, scene, null, pluginExtension
           );
           let modelMeshes = modelResults.meshes;
+
+          // Clean up temporary blob URL
+          if (tempBlobURL) { URL.revokeObjectURL(tempBlobURL); }
 
           // Make body box invisible (used for physics only)
           body.visibility = 0;
 
-          // Scale the model
+          // Detect if this is an STL file
+          let fileName = options._bodyModelFileName || options._modelFileName || '';
+          let modelURL = options.bodyModelURL || '';
+          let isSTL = false;
+          if (fileName.toLowerCase().endsWith('.stl')) {
+            isSTL = true;
+          } else if (modelURL && !modelURL.startsWith('blob:') && !modelURL.startsWith('data:')) {
+            let cleanUrl = modelURL.split('?')[0].split('#')[0];
+            isSTL = cleanUrl.toLowerCase().endsWith('.stl');
+          }
+
           let modelScale = options.bodyModelScale || 1;
-          modelMeshes[0].scaling.x = modelScale;
-          modelMeshes[0].scaling.y = modelScale;
-          modelMeshes[0].scaling.z = -modelScale;
 
-          // Apply model rotation
-          // glTF models set rotationQuaternion by default, which overrides .rotation
-          // Must clear it to use Euler angles from sliders
-          modelMeshes[0].rotationQuaternion = null;
-          if (options.bodyModelRotation) {
-            modelMeshes[0].rotation.x = options.bodyModelRotation[0];
-            modelMeshes[0].rotation.y = options.bodyModelRotation[1];
-            modelMeshes[0].rotation.z = options.bodyModelRotation[2];
-          }
-          // Apply model position offset
-          if (options.bodyModelPosition) {
-            modelMeshes[0].position.x = options.bodyModelPosition[0];
-            modelMeshes[0].position.y = options.bodyModelPosition[1];
-            modelMeshes[0].position.z = options.bodyModelPosition[2];
-          }
+          if (isSTL) {
+            // --- STL handling ---
+            // STL meshes have no root node, need a TransformNode container
 
-          // Parent model to body so it moves with physics
-          modelMeshes[0].parent = body;
+            // Apply default material if STL mesh has none
+            for (let i = 0; i < modelMeshes.length; i++) {
+              if (!modelMeshes[i].material) {
+                let defaultMat = new BABYLON.StandardMaterial('bodySTLDefault_' + i, scene);
+                defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+                defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+                modelMeshes[i].material = defaultMat;
+              }
+            }
 
-          // Make imported meshes unpickable and apply body color
-          for (let i = 0; i < modelMeshes.length; i++) {
-            modelMeshes[i].isPickable = false;
-            // Apply body color to submeshes that have a material
-            if (modelMeshes[i].material) {
+            // Calculate overall bounding box
+            let min = null;
+            let max = null;
+            for (let i = 0; i < modelMeshes.length; i++) {
+              modelMeshes[i].computeWorldMatrix(true);
+              let meshBounds = modelMeshes[i].getBoundingInfo().boundingBox;
+              if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
+                if (min === null) {
+                  min = meshBounds.minimumWorld.clone();
+                  max = meshBounds.maximumWorld.clone();
+                } else {
+                  min = BABYLON.Vector3.Minimize(min, meshBounds.minimumWorld);
+                  max = BABYLON.Vector3.Maximize(max, meshBounds.maximumWorld);
+                }
+              }
+            }
+            if (min === null) {
+              min = new BABYLON.Vector3(-1, -1, -1);
+              max = new BABYLON.Vector3(1, 1, 1);
+            }
+
+            let bounding = new BABYLON.BoundingInfo(min, max);
+            let center = bounding.boundingBox.center;
+
+            // Create root transform for STL meshes
+            let stlRoot = new BABYLON.TransformNode('bodyModelRoot', scene);
+            stlRoot.scaling.x = modelScale;
+            stlRoot.scaling.y = modelScale;
+            stlRoot.scaling.z = -modelScale;
+
+            // Center the model
+            stlRoot.position.x = -center.x * modelScale;
+            stlRoot.position.y = -center.y * modelScale;
+            stlRoot.position.z = center.z * modelScale;
+
+            // Apply model rotation
+            if (options.bodyModelRotation) {
+              stlRoot.rotation.x = options.bodyModelRotation[0];
+              stlRoot.rotation.y = options.bodyModelRotation[1];
+              stlRoot.rotation.z = options.bodyModelRotation[2];
+            }
+            // Apply model position offset
+            if (options.bodyModelPosition) {
+              stlRoot.position.x += options.bodyModelPosition[0];
+              stlRoot.position.y += options.bodyModelPosition[1];
+              stlRoot.position.z += options.bodyModelPosition[2];
+            }
+
+            stlRoot.parent = body;
+
+            for (let i = 0; i < modelMeshes.length; i++) {
+              modelMeshes[i].parent = stlRoot;
+              modelMeshes[i].isPickable = false;
+              // Apply body color
               modelMeshes[i].material = bodyMat;
             }
+
+            // Add shadow for model
+            if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(stlRoot);
+
+            self.bodyModel = modelMeshes;
+
+          } else {
+            // --- GLTF/GLB handling ---
+
+            // Scale the model
+            modelMeshes[0].scaling.x = modelScale;
+            modelMeshes[0].scaling.y = modelScale;
+            modelMeshes[0].scaling.z = -modelScale;
+
+            // Apply model rotation
+            // glTF models set rotationQuaternion by default, which overrides .rotation
+            // Must clear it to use Euler angles from sliders
+            modelMeshes[0].rotationQuaternion = null;
+            if (options.bodyModelRotation) {
+              modelMeshes[0].rotation.x = options.bodyModelRotation[0];
+              modelMeshes[0].rotation.y = options.bodyModelRotation[1];
+              modelMeshes[0].rotation.z = options.bodyModelRotation[2];
+            }
+            // Apply model position offset
+            if (options.bodyModelPosition) {
+              modelMeshes[0].position.x = options.bodyModelPosition[0];
+              modelMeshes[0].position.y = options.bodyModelPosition[1];
+              modelMeshes[0].position.z = options.bodyModelPosition[2];
+            }
+
+            // Parent model to body so it moves with physics
+            modelMeshes[0].parent = body;
+
+            // Make imported meshes unpickable and apply body color
+            for (let i = 0; i < modelMeshes.length; i++) {
+              modelMeshes[i].isPickable = false;
+              // Apply body color to submeshes that have a material
+              if (modelMeshes[i].material) {
+                modelMeshes[i].material = bodyMat;
+              }
+            }
+
+            // Add shadow for model
+            if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(modelMeshes[0]);
+
+            self.bodyModel = modelMeshes;
           }
-
-          // Add shadow for model
-          if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(modelMeshes[0]);
-
-          self.bodyModel = modelMeshes;
         } catch (err) {
-          console.log('Failed to load body model: ' + options.bodyModelURL + '. Using default box.');
+          console.log('Failed to load body model: ' + (options._bodyModelFileName || options._modelFileName || options.bodyModelURL) + '. Error:', err);
           body.visibility = 1;
         }
       }
