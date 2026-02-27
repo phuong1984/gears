@@ -2046,13 +2046,52 @@ var configurator = new function () {
 
     // Initialize Gizmo
     self.gizmo = new CustomGizmo(babylon.scene);
-    self.gizmoMode = 'move'; // 'move' | 'rotate' | 'scale' (only 'move' available in Phase 2)
+    self.gizmoMode = 'moveFree'; // 'moveFree' | 'movePlane' | 'move' | 'rotate' | 'scale'
 
     // Gizmo Toolbar
     self.setupGizmoToolbar();
 
     // Initialize View Cube
     viewCube.init(document.querySelector('.panel.active'));
+
+    // Install Quick Snap (Q key)
+    if (typeof SnapManager !== 'undefined') {
+      SnapManager.installQuickSnapKey(
+        function () { return robot.components || []; },
+        babylon.scene,
+        function (movedComponent) {
+          // After quick snap: write mesh position/rotation back to data model
+          if (movedComponent && movedComponent.body) {
+            var mesh = movedComponent.body;
+            // Find the component data in robot.options.components via componentIndex
+            var compData = null;
+            if (typeof movedComponent.componentIndex !== 'undefined' && robot.options && robot.options.components) {
+              compData = robot.options.components[movedComponent.componentIndex];
+            }
+            if (compData) {
+              // Position: BJS (x, y, z) → Descartes (x, z, y)
+              var pos = mesh.position;
+              if (mesh.parent && typeof mesh.component !== 'undefined' && typeof mesh.component.parent !== 'undefined') {
+                pos = pos.subtract(mesh.component.parent.absolutePosition);
+              }
+              compData.position[0] = pos.x;
+              compData.position[1] = pos.z;
+              compData.position[2] = pos.y;
+
+              // Rotation: BJS Euler (radians) → Descartes with RHR negation
+              var rot = mesh.rotationQuaternion
+                ? mesh.rotationQuaternion.toEulerAngles()
+                : mesh.rotation;
+              compData.rotation[0] = -rot.x;
+              compData.rotation[1] = -rot.z;
+              compData.rotation[2] = -rot.y;
+            }
+          }
+          self.saveHistory();
+          self.resetScene(false);
+        }
+      );
+    }
 
     self.resetScene();
     self.saveRobotOptions();
@@ -2066,6 +2105,7 @@ var configurator = new function () {
     let selected = self.$componentList.find('li.selected');
     if (selected.length < 1) {
       if (self.gizmo) self.gizmo.detach();
+      if (typeof SnapManager !== 'undefined') SnapManager.hideProximityPreview();
       return;
     }
 
@@ -2096,7 +2136,17 @@ var configurator = new function () {
       mode: self.gizmoMode,
       scaleFactor: 0.06,
       onDragStart: function (axisName) {
-        // Saved before drag, so undo can revert
+        // Hide preview during drag (drag indicators will show instead)
+        if (typeof SnapManager !== 'undefined') SnapManager.hideProximityPreview();
+      },
+      onSnapCheck: function (mesh) {
+        if (!self.magneticSnap || typeof SnapManager === 'undefined') return null;
+        // Find the component being dragged
+        var draggedComponent = mesh.component;
+        if (!draggedComponent) return null;
+        // Gather all other components from the robot
+        var allComponents = robot.components || [];
+        return SnapManager.findNearestSnap(draggedComponent, allComponents);
       },
       onDragEnd: function (axisName, result) {
         self.saveHistory();
@@ -2163,8 +2213,18 @@ var configurator = new function () {
         }
 
         self.resetScene(false);
+
+        // Re-show proximity preview after drag
+        if (typeof SnapManager !== 'undefined' && self.magneticSnap && component) {
+          SnapManager.showProximityPreview(component, robot.components || [], babylon.scene);
+        }
       }
     });
+
+    // Show proximity preview on selection
+    if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
+      SnapManager.showProximityPreview(component, robot.components || [], babylon.scene);
+    }
   };
 
   // Legacy alias (applyDragToSelected) — now delegates to gizmo
@@ -2194,7 +2254,7 @@ var configurator = new function () {
     viewCube.update();
   }
 
-  // Setup gizmo toolbar (Move / Rotate / Scale buttons + keyboard shortcuts)
+  // Setup gizmo toolbar (Move modes / Rotate / Scale buttons + keyboard shortcuts)
   this.setupGizmoToolbar = function () {
     var $toolbar = $('.gizmoToolbar');
     var $buttons = $toolbar.find('.gizmoToolBtn');
@@ -2203,8 +2263,7 @@ var configurator = new function () {
       var $btn = $(this);
       var mode = $btn.data('mode');
 
-      // move, rotate, and scale all available
-      if (mode === 'move' || mode === 'rotate' || mode === 'scale') {
+      if (mode) {
         $btn.removeClass('disabled');
         $btn.click(function () {
           self.setGizmoMode(mode);
@@ -2212,13 +2271,16 @@ var configurator = new function () {
       }
     });
 
-    // Keyboard shortcuts: W = Move, E = Rotate, R = Scale
+    // Keyboard shortcuts: W = cycle Move modes, E = Rotate, R = Scale
     $(document).on('keydown', function (e) {
       // Don't trigger when typing in input fields
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
       if (e.key === 'w' || e.key === 'W') {
-        self.setGizmoMode('move');
+        // Cycle through move modes: moveFree → movePlane → move → moveFree
+        var moveModes = ['moveFree', 'movePlane', 'move'];
+        var idx = moveModes.indexOf(self.gizmoMode);
+        self.setGizmoMode(moveModes[(idx + 1) % moveModes.length]);
       } else if (e.key === 'e' || e.key === 'E') {
         self.setGizmoMode('rotate');
       } else if (e.key === 'r' || e.key === 'R') {
@@ -3092,6 +3154,7 @@ var configurator = new function () {
 
   // Snapping
   this.snapStep = [0, 0, 0];
+  this.magneticSnap = true; // Magnetic snapping enabled by default
   this.roundToSnap = function (value, snap) {
     if (snap == 0) {
       return value;
@@ -3132,6 +3195,13 @@ var configurator = new function () {
         { html: 'Snap to Lego (xy: 0.4, z: 0.48)', line: false, callback: snapLego },
         { html: 'Snap to 0.5cm', line: false, callback: snap05 },
         { html: 'Snap to 1cm', line: false, callback: snap10 },
+        { html: '', line: true },
+        {
+          html: 'Magnetic Snap', line: false, callback: function () {
+            self.magneticSnap = !self.magneticSnap;
+            if (typeof SnapManager !== 'undefined') SnapManager.enabled = self.magneticSnap;
+          }
+        },
       ];
       var tickIndex = 0;
       if (self.snapStep[2] == 0) {
@@ -3148,6 +3218,10 @@ var configurator = new function () {
         tickIndex = 5;
       }
       menuItems[tickIndex].html = '<span class="tick">&#x2713;</span> ' + menuItems[tickIndex].html;
+      // Magnetic snap tick
+      if (self.magneticSnap) {
+        menuItems[menuItems.length - 1].html = '<span class="tick">&#x2713;</span> ' + menuItems[menuItems.length - 1].html;
+      }
 
       menuDropDown(self.$snapMenu, menuItems, { className: 'snapMenuDropDown' });
     }

@@ -196,9 +196,9 @@ var builder = new function () {
       {
         option: 'position',
         type: 'vectors',
-        min: '-100',
-        max: '100',
-        step: '1',
+        min: '-50',
+        max: '50',
+        step: '0.1',
         reset: true
       },
       {
@@ -230,9 +230,9 @@ var builder = new function () {
       {
         option: 'size',
         type: 'vectors',
-        min: '1',
-        max: '100',
-        step: '1',
+        min: '0.1',
+        max: '20',
+        step: '0.1',
         reset: true
       },
       {
@@ -371,9 +371,9 @@ var builder = new function () {
       {
         option: 'position',
         type: 'vectors',
-        min: '-100',
-        max: '100',
-        step: '1',
+        min: '-50',
+        max: '50',
+        step: '0.1',
         reset: true
       },
       {
@@ -405,9 +405,9 @@ var builder = new function () {
       {
         option: 'size',
         type: 'vectors',
-        min: '1',
-        max: '100',
-        step: '1',
+        min: '0.1',
+        max: '20',
+        step: '0.1',
         reset: true
       },
       {
@@ -534,9 +534,9 @@ var builder = new function () {
       {
         option: 'position',
         type: 'vectors',
-        min: '-100',
-        max: '100',
-        step: '1',
+        min: '-50',
+        max: '50',
+        step: '0.1',
         reset: true
       },
       {
@@ -568,9 +568,9 @@ var builder = new function () {
       {
         option: 'size',
         type: 'vectors',
-        min: '1',
-        max: '100',
-        step: '1',
+        min: '0.1',
+        max: '20',
+        step: '0.1',
         reset: true
       },
       {
@@ -697,9 +697,9 @@ var builder = new function () {
       {
         option: 'position',
         type: 'vectors',
-        min: '-100',
-        max: '100',
-        step: '1',
+        min: '-50',
+        max: '50',
+        step: '0.1',
         reset: true
       },
       {
@@ -743,9 +743,9 @@ var builder = new function () {
       {
         option: 'modelScale',
         type: 'slider',
-        min: '5',
-        max: '200',
-        step: '5',
+        min: '0.1',
+        max: '20',
+        step: '0.1',
         reset: true
       },
       {
@@ -857,9 +857,9 @@ var builder = new function () {
       {
         option: 'position',
         type: 'vectors',
-        min: '-100',
-        max: '100',
-        step: '1',
+        min: '-50',
+        max: '50',
+        step: '0.1',
         reset: true
       },
       {
@@ -874,9 +874,9 @@ var builder = new function () {
       {
         option: 'size',
         type: 'vectors',
-        min: '1',
-        max: '100',
-        step: '1',
+        min: '0.1',
+        max: '20',
+        step: '0.1',
         reset: true
       },
       {
@@ -908,9 +908,9 @@ var builder = new function () {
       {
         option: 'position',
         type: 'vectors',
-        min: '-100',
-        max: '100',
-        step: '1',
+        min: '-50',
+        max: '50',
+        step: '0.1',
         reset: true
       },
       {
@@ -925,9 +925,9 @@ var builder = new function () {
       {
         option: 'size',
         type: 'slider',
-        min: '1',
-        max: '100',
-        step: '1',
+        min: '0.1',
+        max: '20',
+        step: '0.1',
         reset: true
       },
       {
@@ -946,7 +946,9 @@ var builder = new function () {
 
   this.objectDefault = {
     ...world_Custom.objectDefault,
-    position: [0, 0, 20],
+    position: [0, 0, 8],
+    size: [1, 1, 1],        // Match robot builder defaults (was [10, 10, 10])
+    modelScale: 1,           // Match robot builder defaults (was 10)
   };
 
   this.boxDefault = {
@@ -983,9 +985,9 @@ var builder = new function () {
   this.hingeDefault = {
     type: 'hinge',
     objects: [],
-    position: [0, 0, 20],
+    position: [0, 0, 8],
     rotation: [0, 0, 0],
-    size: [10, 2, 0],
+    size: [1, 0.2, 0],
     hide: true,
     speed: 0,
     maxForce: 0,
@@ -994,9 +996,9 @@ var builder = new function () {
   this.ballJointDefault = {
     type: 'ballJoint',
     objects: [],
-    position: [0, 0, 20],
+    position: [0, 0, 8],
     rotation: [0, 0, 0],
-    size: 2,
+    size: 0.2,
     hide: true,
   };
 
@@ -1056,7 +1058,7 @@ var builder = new function () {
 
     // Initialize Gizmo
     self.gizmo = new CustomGizmo(babylon.scene);
-    self.gizmoMode = 'move';
+    self.gizmoMode = 'moveFree';
 
     // Gizmo Toolbar
     self.setupGizmoToolbar();
@@ -1066,6 +1068,57 @@ var builder = new function () {
 
     babylon.world.animate = false;
     babylon.world.overrideHide = true;
+
+    // Install Quick Snap (Q key)
+    if (typeof SnapManager !== 'undefined') {
+      SnapManager.installQuickSnapKey(
+        function () {
+          // Wrap all worldBaseObject meshes as pseudo-components
+          return babylon.scene.meshes
+            .filter(function (m) { return m.id && m.id.indexOf('worldBaseObject_') === 0; })
+            .map(function (m) { return { type: 'unknown', options: {}, body: m }; });
+        },
+        babylon.scene,
+        function (movedComponent) {
+          // After quick snap: write mesh position/rotation back to data model
+          if (movedComponent && movedComponent.body) {
+            var mesh = movedComponent.body;
+            // Find the matching object data in the objectsList by mesh ID
+            var objectData = null;
+            self.$objectsList.find('li').each(function () {
+              if (typeof this.objectIndex !== 'undefined' && this.name) {
+                var meshId = 'worldBaseObject_' + this.name + this.objectIndex;
+                if (meshId === mesh.id) {
+                  objectData = this.object;
+                  return false; // break
+                }
+              }
+            });
+            if (objectData && objectData.position && objectData.rotation) {
+              // Position: BJS (x, y, z) → Descartes (x, z, y)
+              var pos = mesh.position.clone();
+              if (typeof mesh.pseudoParent !== 'undefined') {
+                var matrix = mesh.pseudoParent.getWorldMatrix().clone().invert();
+                pos = BABYLON.Vector3.TransformCoordinates(pos, matrix);
+              }
+              objectData.position[0] = pos.x;
+              objectData.position[1] = pos.z;
+              objectData.position[2] = pos.y;
+
+              // Rotation: BJS Euler (radians) → Descartes with RHR negation
+              var rot = mesh.rotationQuaternion
+                ? mesh.rotationQuaternion.toEulerAngles()
+                : mesh.rotation;
+              objectData.rotation[0] = -rot.x;
+              objectData.rotation[1] = -rot.z;
+              objectData.rotation[2] = -rot.y;
+            }
+          }
+          self.saveHistory();
+          self.resetScene(false);
+        }
+      );
+    }
 
     self.resetScene();
 
@@ -1084,7 +1137,7 @@ var builder = new function () {
 
 
 
-  // Setup gizmo toolbar (Move / Rotate / Scale buttons + keyboard shortcuts)
+  // Setup gizmo toolbar (Move modes / Rotate / Scale buttons + keyboard shortcuts)
   this.setupGizmoToolbar = function () {
     var $toolbar = $('.gizmoToolbar');
     var $buttons = $toolbar.find('.gizmoToolBtn');
@@ -1093,8 +1146,7 @@ var builder = new function () {
       var $btn = $(this);
       var mode = $btn.data('mode');
 
-      // move, rotate, and scale all available
-      if (mode === 'move' || mode === 'rotate' || mode === 'scale') {
+      if (mode) {
         $btn.removeClass('disabled');
         $btn.click(function () {
           self.setGizmoMode(mode);
@@ -1102,13 +1154,16 @@ var builder = new function () {
       }
     });
 
-    // Keyboard shortcuts: W = Move, E = Rotate, R = Scale
+    // Keyboard shortcuts: W = cycle Move modes, E = Rotate, R = Scale
     $(document).on('keydown', function (e) {
       // Don't trigger when typing in input fields
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
       if (e.key === 'w' || e.key === 'W') {
-        self.setGizmoMode('move');
+        // Cycle through move modes: moveFree → movePlane → move → moveFree
+        var moveModes = ['moveFree', 'movePlane', 'move'];
+        var idx = moveModes.indexOf(self.gizmoMode);
+        self.setGizmoMode(moveModes[(idx + 1) % moveModes.length]);
       } else if (e.key === 'e' || e.key === 'E') {
         self.setGizmoMode('rotate');
       } else if (e.key === 'r' || e.key === 'R') {
@@ -1454,6 +1509,7 @@ var builder = new function () {
     let selected = self.$objectsList.find('li.selected');
     if (selected.length < 1 || typeof selected[0].objectIndex == 'undefined') {
       if (self.gizmo) self.gizmo.detach();
+      if (typeof SnapManager !== 'undefined') SnapManager.hideProximityPreview();
       return;
     }
 
@@ -1478,8 +1534,23 @@ var builder = new function () {
 
     self.gizmo.attach(mesh, {
       mode: self.gizmoMode,
+      scaleFactor: 0.06,
       onDragStart: function (axisName) {
-        // Saved before drag for undo
+        // Hide preview during drag (drag indicators will show instead)
+        if (typeof SnapManager !== 'undefined') SnapManager.hideProximityPreview();
+      },
+      onSnapCheck: function (dragMesh) {
+        if (!self.magneticSnap || typeof SnapManager === 'undefined') return null;
+        // Wrap this mesh as a pseudo-component for SnapManager
+        var draggedComponent = { type: 'unknown', options: {}, body: dragMesh };
+        // Gather all worldBaseObject meshes except the dragged one
+        var allMeshes = babylon.scene.meshes.filter(function (m) {
+          return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== dragMesh;
+        });
+        var pseudoComponents = allMeshes.map(function (m) {
+          return { type: 'unknown', options: {}, body: m };
+        });
+        return SnapManager.findNearestSnap(draggedComponent, pseudoComponents);
       },
       onDragEnd: function (axisName, result) {
         self.saveHistory();
@@ -1533,8 +1604,32 @@ var builder = new function () {
         }
 
         self.resetScene(false);
+
+        // Re-show proximity preview after drag
+        if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
+          var dragComp = { type: 'unknown', options: {}, body: mesh };
+          var otherMeshes = babylon.scene.meshes.filter(function (m) {
+            return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== mesh;
+          });
+          var others = otherMeshes.map(function (m) {
+            return { type: 'unknown', options: {}, body: m };
+          });
+          SnapManager.showProximityPreview(dragComp, others, babylon.scene);
+        }
       }
     });
+
+    // Show proximity preview on selection
+    if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
+      var selectedComp = { type: 'unknown', options: {}, body: mesh };
+      var allOtherMeshes = babylon.scene.meshes.filter(function (m) {
+        return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== mesh;
+      });
+      var allOthers = allOtherMeshes.map(function (m) {
+        return { type: 'unknown', options: {}, body: m };
+      });
+      SnapManager.showProximityPreview(selectedComp, allOthers, babylon.scene);
+    }
   };
 
   // Legacy alias — now delegates to gizmo
@@ -2286,6 +2381,7 @@ var builder = new function () {
 
   // Snapping
   this.snapStep = [0, 0, 0];
+  this.magneticSnap = true; // Magnetic snapping enabled by default
   this.roundToSnap = function (value, snap) {
     if (snap == 0) {
       return value;
@@ -2330,6 +2426,13 @@ var builder = new function () {
         { html: 'Snap to 0.5cm', line: false, callback: snap05 },
         { html: 'Snap to 1cm', line: false, callback: snap10 },
         { html: 'Snap to 5cm', line: false, callback: snap50 },
+        { html: '', line: true },
+        {
+          html: 'Magnetic Snap', line: false, callback: function () {
+            self.magneticSnap = !self.magneticSnap;
+            if (typeof SnapManager !== 'undefined') SnapManager.enabled = self.magneticSnap;
+          }
+        },
       ];
       var tickIndex = 0;
       if (self.snapStep[2] == 0) {
@@ -2348,6 +2451,10 @@ var builder = new function () {
         tickIndex = 6;
       }
       menuItems[tickIndex].html = '<span class="tick">&#x2713;</span> ' + menuItems[tickIndex].html;
+      // Magnetic snap tick
+      if (self.magneticSnap) {
+        menuItems[menuItems.length - 1].html = '<span class="tick">&#x2713;</span> ' + menuItems[menuItems.length - 1].html;
+      }
 
       menuDropDown(self.$snapMenu, menuItems, { className: 'snapMenuDropDown' });
     }

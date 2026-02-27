@@ -1,26 +1,29 @@
 /**
  * CustomGizmo — Position, Rotation & Scale manipulation gizmo
- * Supports three modes:
- *   - 'move':   colored axis arrows (Red=X, Green=Z(BJS Y), Blue=Y(BJS Z))
- *   - 'rotate': colored torus rings for rotation around each axis
- *   - 'scale':  colored axis lines with cube handles for scaling
- * Each handle constrains interaction to a single axis (= axis locking)
+ * Supports five modes:
+ *   - 'moveFree':  click & drag object directly for free movement (camera-facing plane)
+ *   - 'movePlane': arrows where each axis constrains to the perpendicular plane
+ *   - 'move':      arrows constrained to a single axis
+ *   - 'rotate':    colored torus rings for rotation around each axis
+ *   - 'scale':     colored axis lines with cube handles for scaling
  * Descartes coordinate mapping: BJS X=X, BJS Y=Z, BJS Z=Y
  */
 function CustomGizmo(scene) {
     var self = this;
     this.scene = scene;
-    this.arrows = {};   // move mode elements
+    this.arrows = {};   // move/movePlane mode: axis arrows
     this.rings = {};    // rotate mode elements
     this.scaleHandles = {}; // scale mode elements
+    this.freeDragBehavior = null; // moveFree mode: PointerDragBehavior on target mesh
     this.rootNode = null;
     this.targetMesh = null;
     this.isActive = false;
-    this.mode = 'move'; // 'move', 'rotate', or 'scale'
+    this.mode = 'move'; // 'moveFree', 'movePlane', 'move', 'rotate', 'scale'
 
     // Callbacks
     this.onDragStartCb = null;
     this.onDragEndCb = null;
+    this.onSnapCheckCb = null;  // Called during move-mode drag: fn(mesh) → {snapOffset} or null
 
     // Config — Move
     var SHAFT_LENGTH = 0.8;
@@ -28,6 +31,7 @@ function CustomGizmo(scene) {
     var CONE_HEIGHT = 0.2;
     var CONE_RADIUS = 0.07;
     var SCALE_FACTOR = 0.24;
+    // (plane handles and center sphere removed — now handled by toolbar modes)
 
     // Config — Rotate
     var TORUS_DIAMETER = 1.6;
@@ -66,6 +70,7 @@ function CustomGizmo(scene) {
         self.scaleFactor = opts.scaleFactor || SCALE_FACTOR;
         self.onDragStartCb = opts.onDragStart || null;
         self.onDragEndCb = opts.onDragEnd || null;
+        self.onSnapCheckCb = opts.onSnapCheck || null;
 
         self.rootNode = new BABYLON.TransformNode('gizmoRoot', scene);
         mesh.computeWorldMatrix(true);
@@ -83,10 +88,19 @@ function CustomGizmo(scene) {
             self._createScaleHandle('x', COLORS.x, new BABYLON.Vector3(1, 0, 0));
             self._createScaleHandle('y', COLORS.y, new BABYLON.Vector3(0, 1, 0));
             self._createScaleHandle('z', COLORS.z, new BABYLON.Vector3(0, 0, 1));
+        } else if (self.mode === 'moveFree') {
+            // Free drag: attach directly to target mesh, no gizmo visual
+            self._createFreeDrag();
+        } else if (self.mode === 'movePlane') {
+            // Plane drag: arrows but each axis -> perpendicular plane
+            self._createArrow('x', COLORS.x, new BABYLON.Vector3(1, 0, 0), true);
+            self._createArrow('y', COLORS.y, new BABYLON.Vector3(0, 1, 0), true);
+            self._createArrow('z', COLORS.z, new BABYLON.Vector3(0, 0, 1), true);
         } else {
-            self._createArrow('x', COLORS.x, new BABYLON.Vector3(1, 0, 0));
-            self._createArrow('y', COLORS.y, new BABYLON.Vector3(0, 1, 0));
-            self._createArrow('z', COLORS.z, new BABYLON.Vector3(0, 0, 1));
+            // Axis move: arrows constrained to single axis
+            self._createArrow('x', COLORS.x, new BABYLON.Vector3(1, 0, 0), false);
+            self._createArrow('y', COLORS.y, new BABYLON.Vector3(0, 1, 0), false);
+            self._createArrow('z', COLORS.z, new BABYLON.Vector3(0, 0, 1), false);
         }
 
         self.isActive = true;
@@ -95,7 +109,14 @@ function CustomGizmo(scene) {
 
     // ===================== MOVE MODE: Arrows =====================
 
-    this._createArrow = function (axisName, color, axisDir) {
+    /**
+     * Create an arrow handle for move or movePlane mode.
+     * @param {string} axisName
+     * @param {BABYLON.Color3} color
+     * @param {BABYLON.Vector3} axisDir
+     * @param {boolean} [usePlaneDrag] — if true, drag on plane perpendicular to axis
+     */
+    this._createArrow = function (axisName, color, axisDir, usePlaneDrag) {
         var mat = new BABYLON.StandardMaterial('gizmoMat_' + axisName, scene);
         mat.emissiveColor = color;
         mat.disableLighting = true;
@@ -137,31 +158,136 @@ function CustomGizmo(scene) {
             arrowNode.rotation.x = Math.PI / 2;
         }
 
-        // Drag behavior constrained to axis
-        var dragBehavior = new BABYLON.PointerDragBehavior({ dragAxis: axisDir });
+        // Drag behavior: axis-constrained or plane-constrained
+        var dragBehavior = usePlaneDrag
+            ? new BABYLON.PointerDragBehavior({ dragPlaneNormal: axisDir })
+            : new BABYLON.PointerDragBehavior({ dragAxis: axisDir });
         dragBehavior.useObjectOrientationForDragging = false;
         dragBehavior.moveAttached = false;
+
+        // Snap state tracking for breakaway
+        var _snapState = {
+            isSnapped: false,       // Currently locked to a snap point
+            coolingDown: false,     // After breakaway, blocks re-snap until out of range
+            accumDrag: 0,           // Accumulated drag distance while snapped
+            breakawayThreshold: 2.0 // Distance to drag before breaking free
+        };
 
         dragBehavior.onDragStartObservable.add(function () {
             shaft.material = hoverMat;
             cone.material = hoverMat;
+            _snapState.isSnapped = false;
+            _snapState.coolingDown = false;
+            _snapState.accumDrag = 0;
             if (self.onDragStartCb) self.onDragStartCb(axisName);
         });
 
         dragBehavior.onDragObservable.add(function (event) {
             var delta = event.delta;
+
+            // In plane mode, enforce constraint: remove any drift along the plane normal
+            if (usePlaneDrag) {
+                var dot = BABYLON.Vector3.Dot(delta, axisDir);
+                delta = delta.subtract(axisDir.scale(dot));
+            }
+
             if (self.targetMesh.parent) {
                 var matrix = self.targetMesh.parent.getWorldMatrix().clone().invert();
                 matrix.setTranslation(BABYLON.Vector3.Zero());
                 delta = BABYLON.Vector3.TransformCoordinates(delta, matrix);
             }
             self.targetMesh.position.addInPlace(delta);
+
+            // Magnetic snap check (all move modes)
+            if ((self.mode === 'move' || self.mode === 'movePlane') && self.onSnapCheckCb) {
+                var shiftBypass = (typeof SnapManager !== 'undefined' && SnapManager.shiftHeld);
+
+                // Helper: in plane mode, project snap offset onto the drag plane
+                var constrainOffset = function (offset) {
+                    if (usePlaneDrag && offset) {
+                        var d = BABYLON.Vector3.Dot(offset, axisDir);
+                        return offset.subtract(axisDir.scale(d));
+                    }
+                    return offset;
+                };
+
+                if (_snapState.isSnapped) {
+                    // Currently snapped — check for breakaway
+                    _snapState.accumDrag += delta.length();
+                    if (_snapState.accumDrag > _snapState.breakawayThreshold || shiftBypass) {
+                        // Break free!
+                        _snapState.isSnapped = false;
+                        _snapState.coolingDown = true; // Block re-snap
+                        _snapState.accumDrag = 0;
+                        if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                    } else {
+                        // Still snapped — re-apply
+                        var snapResult = self.onSnapCheckCb(self.targetMesh);
+                        if (snapResult && snapResult.snapOffset) {
+                            var so = constrainOffset(snapResult.snapOffset);
+                            if (self.targetMesh.parent) {
+                                var invP = self.targetMesh.parent.getWorldMatrix().clone().invert();
+                                invP.setTranslation(BABYLON.Vector3.Zero());
+                                self.targetMesh.position.addInPlace(
+                                    BABYLON.Vector3.TransformCoordinates(so, invP)
+                                );
+                            } else {
+                                self.targetMesh.position.addInPlace(so);
+                            }
+                            if (typeof SnapManager !== 'undefined') {
+                                SnapManager.showSnapIndicator(snapResult, scene);
+                            }
+                        } else {
+                            _snapState.isSnapped = false;
+                            _snapState.accumDrag = 0;
+                            if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                        }
+                    }
+                } else if (_snapState.coolingDown) {
+                    // Cooling down after breakaway — wait until out of snap range
+                    var checkResult = self.onSnapCheckCb(self.targetMesh);
+                    if (!checkResult) {
+                        // Out of range — cooldown complete, allow re-snap
+                        _snapState.coolingDown = false;
+                    }
+                    if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                } else if (!shiftBypass) {
+                    // Free — look for new snap
+                    var snapResult = self.onSnapCheckCb(self.targetMesh);
+                    if (snapResult && snapResult.snapOffset) {
+                        _snapState.isSnapped = true;
+                        _snapState.accumDrag = 0;
+                        var so = constrainOffset(snapResult.snapOffset);
+                        if (self.targetMesh.parent) {
+                            var invParent = self.targetMesh.parent.getWorldMatrix().clone().invert();
+                            invParent.setTranslation(BABYLON.Vector3.Zero());
+                            self.targetMesh.position.addInPlace(
+                                BABYLON.Vector3.TransformCoordinates(so, invParent)
+                            );
+                        } else {
+                            self.targetMesh.position.addInPlace(so);
+                        }
+                        if (typeof SnapManager !== 'undefined') {
+                            SnapManager.showSnapIndicator(snapResult, scene);
+                        }
+                    } else {
+                        if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                    }
+                } else {
+                    if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                }
+            }
+
             self.update();
         });
 
         dragBehavior.onDragEndObservable.add(function () {
             shaft.material = mat;
             cone.material = mat;
+            _snapState.isSnapped = false;
+            _snapState.coolingDown = false;
+            _snapState.accumDrag = 0;
+            if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
             if (self.onDragEndCb) self.onDragEndCb(axisName, self.targetMesh.position.clone());
         });
 
@@ -180,6 +306,82 @@ function CustomGizmo(scene) {
             }));
 
         self.arrows[axisName] = { node: arrowNode, shaft: shaft, cone: cone, labelPlane: labelPlane, mat: mat, hoverMat: hoverMat, drag: dragBehavior };
+    };
+
+    // ===================== MOVE FREE MODE: Direct mesh drag =====================
+
+    /**
+     * Attach a free-drag behavior directly to the target mesh.
+     * No gizmo visual is created — user clicks and drags the object itself.
+     */
+    this._createFreeDrag = function () {
+        var dragBehavior = new BABYLON.PointerDragBehavior({});
+        dragBehavior.useObjectOrientationForDragging = false;
+        dragBehavior.moveAttached = false;
+
+        var _snapState = { isSnapped: false, coolingDown: false, accumDrag: 0, breakawayThreshold: 2.0 };
+
+        dragBehavior.onDragStartObservable.add(function () {
+            if (scene.activeCamera) scene.activeCamera.detachControl();
+            _snapState.isSnapped = false; _snapState.coolingDown = false; _snapState.accumDrag = 0;
+            if (self.onDragStartCb) self.onDragStartCb('free');
+        });
+
+        dragBehavior.onDragObservable.add(function (event) {
+            var delta = event.delta;
+            if (self.targetMesh.parent) {
+                var matrix = self.targetMesh.parent.getWorldMatrix().clone().invert();
+                matrix.setTranslation(BABYLON.Vector3.Zero());
+                delta = BABYLON.Vector3.TransformCoordinates(delta, matrix);
+            }
+            self.targetMesh.position.addInPlace(delta);
+
+            // Snap check
+            if (self.onSnapCheckCb) {
+                var shiftBypass = (typeof SnapManager !== 'undefined' && SnapManager.shiftHeld);
+                if (_snapState.isSnapped) {
+                    _snapState.accumDrag += delta.length();
+                    if (_snapState.accumDrag > _snapState.breakawayThreshold || shiftBypass) {
+                        _snapState.isSnapped = false; _snapState.coolingDown = true; _snapState.accumDrag = 0;
+                        if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                    } else {
+                        var sr = self.onSnapCheckCb(self.targetMesh);
+                        if (sr && sr.snapOffset) {
+                            if (self.targetMesh.parent) {
+                                var inv = self.targetMesh.parent.getWorldMatrix().clone().invert();
+                                inv.setTranslation(BABYLON.Vector3.Zero());
+                                self.targetMesh.position.addInPlace(BABYLON.Vector3.TransformCoordinates(sr.snapOffset, inv));
+                            } else { self.targetMesh.position.addInPlace(sr.snapOffset); }
+                            if (typeof SnapManager !== 'undefined') SnapManager.showSnapIndicator(sr, scene);
+                        } else { _snapState.isSnapped = false; _snapState.accumDrag = 0; if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator(); }
+                    }
+                } else if (_snapState.coolingDown) {
+                    if (!self.onSnapCheckCb(self.targetMesh)) _snapState.coolingDown = false;
+                    if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+                } else if (!shiftBypass) {
+                    var sr = self.onSnapCheckCb(self.targetMesh);
+                    if (sr && sr.snapOffset) {
+                        _snapState.isSnapped = true; _snapState.accumDrag = 0;
+                        if (self.targetMesh.parent) {
+                            var inv = self.targetMesh.parent.getWorldMatrix().clone().invert();
+                            inv.setTranslation(BABYLON.Vector3.Zero());
+                            self.targetMesh.position.addInPlace(BABYLON.Vector3.TransformCoordinates(sr.snapOffset, inv));
+                        } else { self.targetMesh.position.addInPlace(sr.snapOffset); }
+                        if (typeof SnapManager !== 'undefined') SnapManager.showSnapIndicator(sr, scene);
+                    } else { if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator(); }
+                } else { if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator(); }
+            }
+        });
+
+        dragBehavior.onDragEndObservable.add(function () {
+            if (scene.activeCamera) scene.activeCamera.attachControl();
+            _snapState.isSnapped = false; _snapState.coolingDown = false; _snapState.accumDrag = 0;
+            if (typeof SnapManager !== 'undefined') SnapManager.hideSnapIndicator();
+            if (self.onDragEndCb) self.onDragEndCb('free', self.targetMesh.position.clone());
+        });
+
+        self.targetMesh.addBehavior(dragBehavior);
+        self.freeDragBehavior = dragBehavior;
     };
 
     // ===================== ROTATE MODE: Torus Rings =====================
@@ -524,6 +726,12 @@ function CustomGizmo(scene) {
             s.node.dispose();
         }
         self.scaleHandles = {};
+
+        // Clean up free drag behavior
+        if (self.freeDragBehavior && self.targetMesh) {
+            self.targetMesh.removeBehavior(self.freeDragBehavior);
+            self.freeDragBehavior = null;
+        }
 
         if (self.rootNode) { self.rootNode.dispose(); self.rootNode = null; }
         self.targetMesh = null;

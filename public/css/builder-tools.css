@@ -207,6 +207,12 @@
     pointer-events: none;
 }
 
+.gizmoToolSep {
+    width: 1px;
+    margin: 4px 2px;
+    background: rgba(9, 195, 219, 0.3);
+}
+
 /* ===========================
    View Cube XYZ Axes
    =========================== */

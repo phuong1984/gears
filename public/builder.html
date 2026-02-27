@@ -75,7 +75,10 @@
         </div>
 
         <div class="gizmoToolbar">
-          <div class="gizmoToolBtn active" data-mode="move" title="Move (W)">✥</div>
+          <div class="gizmoToolBtn active" data-mode="moveFree" title="Move Freely (W)">✋</div>
+          <div class="gizmoToolBtn disabled" data-mode="movePlane" title="Move in Plane (W)">⬔</div>
+          <div class="gizmoToolBtn disabled" data-mode="move" title="Move on Axis (W)">✥</div>
+          <div class="gizmoToolSep"></div>
           <div class="gizmoToolBtn disabled" data-mode="rotate" title="Rotate (E)">⟳</div>
           <div class="gizmoToolBtn disabled" data-mode="scale" title="Scale (R)">⤡</div>
         </div>
@@ -110,6 +113,8 @@
   <script src="js/GenConfig.js?v=683ff770"></script>
   <script src="js/common/undoManager.js?v=1"></script>
   <script src="js/common/cameraUtils.js?v=1"></script>
+  <script src="js/common/snapPointsDB.js?v=1"></script>
+  <script src="js/common/snapManager.js?v=1"></script>
   <script src="js/common/customGizmo.js?v=1"></script>
   <script src="js/common/catalogThumbnails.js?v=1"></script>
   <script src="js/common/viewCube.js?v=1"></script>

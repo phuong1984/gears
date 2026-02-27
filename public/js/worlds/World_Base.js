@@ -1078,7 +1078,7 @@ var World_Base = function () {
 
     // No URL provided - return a visible placeholder box
     if (!options.modelURL || options.modelURL === '') {
-      var mesh = BABYLON.MeshBuilder.CreateBox(id, { width: 10, depth: 10, height: 10 }, scene);
+      var mesh = BABYLON.MeshBuilder.CreateBox(id, { width: 1, depth: 1, height: 1 }, scene);
       mesh.material = options.material || babylon.getMaterial(scene, 'A3CF0D');
       mesh.position = options.position;
       mesh.rotation = options.rotation;
