@@ -2106,12 +2106,16 @@ var configurator = new function () {
     if (selected.length < 1) {
       if (self.gizmo) self.gizmo.detach();
       if (typeof SnapManager !== 'undefined') SnapManager.hideProximityPreview();
+      $('#gizmoSepSnap, #gizmoBtnSnap').hide();
       return;
     }
+
+    $('#gizmoSepSnap, #gizmoBtnSnap').show().removeClass('disabled');
 
     let index = selected[0].componentIndex;
     if (typeof index == 'undefined') {
       if (self.gizmo) self.gizmo.detach();
+      $('#gizmoSepSnap, #gizmoBtnSnap').hide();
       return;
     }
 
@@ -2271,7 +2275,7 @@ var configurator = new function () {
       }
     });
 
-    // Keyboard shortcuts: W = cycle Move modes, E = Rotate, R = Scale
+    // Keyboard shortcuts: W = cycle Move modes, E = Rotate, R = Scale, S = Edit Snap
     $(document).on('keydown', function (e) {
       // Don't trigger when typing in input fields
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -2285,6 +2289,50 @@ var configurator = new function () {
         self.setGizmoMode('rotate');
       } else if (e.key === 'r' || e.key === 'R') {
         self.setGizmoMode('scale');
+      } else if (e.key === 's' || e.key === 'S') {
+        if (!$('#gizmoBtnSnap').hasClass('disabled') && $('#gizmoBtnSnap').is(':visible')) {
+          $('#gizmoBtnSnap').click();
+        }
+      }
+    });
+
+    $('#gizmoBtnSnap').click(function () {
+      if ($(this).hasClass('disabled')) return;
+      let selected = self.$componentList.find('li.selected');
+      if (selected.length < 1) return;
+
+      let index = selected[0].componentIndex;
+      if (typeof index == 'undefined') return;
+
+      let component = robot.getComponentByIndex(index);
+      if (!component || !component.body) {
+        console.warn('[SnapBtn Cfg] component or body is null.', 'component=', component, 'body=', component?.body);
+        return;
+      }
+
+      let componentData = selected[0].component;
+
+      console.log('[SnapBtn Cfg] Opening editor.', 'type=', componentData?.type, 'modelURL=', componentData?.options?.modelURL, 'mesh=', component.body?.name);
+
+      if (window.SnapPointEditor) {
+        window.SnapPointEditor.open({
+          mesh: component.body,
+          componentData: componentData
+        });
+      }
+    });
+
+    // Refresh snap point preview after editor saves
+    window.addEventListener('snapPointsUpdated', function () {
+      if (typeof SnapManager === 'undefined' || !self.magneticSnap) return;
+      let selected = self.$componentList.find('li.selected');
+      if (selected.length < 1) return;
+      let index = selected[0].componentIndex;
+      if (typeof index === 'undefined') return;
+      let component = robot.getComponentByIndex(index);
+      if (component) {
+        SnapManager.hideProximityPreview();
+        SnapManager.showProximityPreview(component, robot.components || [], babylon.scene);
       }
     });
   };

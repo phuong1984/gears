@@ -1154,7 +1154,7 @@ var builder = new function () {
       }
     });
 
-    // Keyboard shortcuts: W = cycle Move modes, E = Rotate, R = Scale
+    // Keyboard shortcuts: W = cycle Move modes, E = Rotate, R = Scale, S = Edit Snap
     $(document).on('keydown', function (e) {
       // Don't trigger when typing in input fields
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -1168,6 +1168,34 @@ var builder = new function () {
         self.setGizmoMode('rotate');
       } else if (e.key === 'r' || e.key === 'R') {
         self.setGizmoMode('scale');
+      } else if (e.key === 's' || e.key === 'S') {
+        if (!$('#gizmoBtnSnap').hasClass('disabled') && $('#gizmoBtnSnap').is(':visible')) {
+          $('#gizmoBtnSnap').click();
+        }
+      }
+    });
+
+    $('#gizmoBtnSnap').click(function () {
+      if ($(this).hasClass('disabled')) return;
+      let selected = self.$objectsList.find('li.selected');
+      if (selected.length < 1 || typeof selected[0].objectIndex == 'undefined') {
+        console.log('[SnapBtn] No valid selection. selected.length=', selected.length, 'objectIndex=', selected.length > 0 ? selected[0].objectIndex : 'N/A');
+        return;
+      }
+
+      let objectData = selected[0].object;
+      let id = 'worldBaseObject_' + selected[0].name + selected[0].objectIndex;
+      let mesh = babylon.scene.getMeshByID(id);
+
+      console.log('[SnapBtn] selected.name=', selected[0].name, 'objectIndex=', selected[0].objectIndex, 'id=', id, 'mesh=', mesh, 'objectData=', objectData);
+
+      if (mesh && window.SnapPointEditor) {
+        window.SnapPointEditor.open({
+          mesh: mesh,
+          componentData: objectData
+        });
+      } else {
+        console.warn('[SnapBtn] Cannot open: mesh=', mesh, 'SnapPointEditor=', !!window.SnapPointEditor);
       }
     });
   };
@@ -1510,8 +1538,11 @@ var builder = new function () {
     if (selected.length < 1 || typeof selected[0].objectIndex == 'undefined') {
       if (self.gizmo) self.gizmo.detach();
       if (typeof SnapManager !== 'undefined') SnapManager.hideProximityPreview();
+      $('#gizmoSepSnap, #gizmoBtnSnap').hide();
       return;
     }
+
+    $('#gizmoSepSnap, #gizmoBtnSnap').show().removeClass('disabled');
 
     let id = 'worldBaseObject_' + selected[0].name + selected[0].objectIndex;
     let mesh = babylon.scene.getMeshByID(id);
