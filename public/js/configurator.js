@@ -2622,8 +2622,8 @@ var configurator = new function () {
 
       let $components = self.$componentList.find('li');
 
-      if (component) {
-        // Click on component → select it
+      if (component && component !== true && component.componentIndex !== undefined) {
+        // Click on a real component → select it and show gizmo
         $components.removeClass('selected');
         let $target = self.$componentList.find('li[componentIndex=' + component.componentIndex + ']');
         if ($target.length > 0) {
@@ -2636,6 +2636,21 @@ var configurator = new function () {
         self.highlightSelected();
         $('.gizmoToolbar').show();
         self.applyDragToSelected();
+      } else if (component === true) {
+        // Click on robot body → select body item, but no gizmo/toolbar
+        $components.removeClass('selected');
+        $($components[0]).addClass('selected');
+        self.showComponentOptions($components[0].component);
+        // No wireframe for body
+        let wireframe = babylon.scene.getMeshByID('wireframeComponentSelector');
+        if (wireframe) wireframe.dispose();
+        // No gizmo for body
+        self.applyGizmoToSelected();
+        $('.gizmoToolbar').hide();
+        if (typeof SnapManager !== 'undefined') {
+          SnapManager.hideProximityPreview();
+          SnapManager.hideSnapPoints();
+        }
       } else {
         // Click on empty space / non-component → deselect all
         $components.removeClass('selected');
