@@ -1802,11 +1802,30 @@ var builder = new function () {
 
   // Setup picking ray
   this.setupPickingRay = function () {
+    let _pickDownPos = null;
+
+    babylon.scene.onPointerDown = function (e) {
+      if (e.button !== 0) return;
+      _pickDownPos = { x: e.clientX, y: e.clientY };
+    };
+
     babylon.scene.onPointerUp = function (e, hit) {
       if (e.button != 0) {
         return;
       }
 
+      // Distinguish click vs drag
+      if (_pickDownPos) {
+        let dx = e.clientX - _pickDownPos.x;
+        let dy = e.clientY - _pickDownPos.y;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) {
+          _pickDownPos = null;
+          return;
+        }
+      }
+      _pickDownPos = null;
+
+      // Check if clicked on a world object
       if (hit.pickedMesh != null && hit.pickedMesh.id.match(/^worldBaseObject_/) != null) {
         let index = hit.pickedMesh.id.match(/[0-9]+$/);
         if (index) {
@@ -1817,10 +1836,31 @@ var builder = new function () {
               childList.removeClass('selected');
               $(child).addClass('selected');
               self.objectSelect(child);
-              break;
+              $('.gizmoToolbar').show();
+              return;
             }
           }
         }
+      }
+
+      // Click on empty space / ground / non-object → deselect
+      let childList = self.$objectsList.find('li');
+      childList.removeClass('selected');
+      // Select 'Objects' header as default
+      let $objectsHeader = childList.filter(function () { return this.name === 'objects'; });
+      if ($objectsHeader.length > 0) {
+        $objectsHeader.addClass('selected');
+        self.showObjectOptions($objectsHeader[0]);
+      }
+      // Hide gizmo, wireframe, and snap preview
+      let wireframe = babylon.scene.getMeshByID('wireframeObjectSelector');
+      if (wireframe) wireframe.dispose();
+      // applyGizmoToSelected handles no-selection: detaches gizmo + hides snap button
+      self.applyGizmoToSelected();
+      $('.gizmoToolbar').hide();
+      if (typeof SnapManager !== 'undefined') {
+        SnapManager.hideProximityPreview();
+        SnapManager.hideSnapPoints();
       }
     }
   };
@@ -2121,6 +2161,9 @@ var builder = new function () {
   this.highlightSelected = function () {
     let $selected = self.$objectsList.find('li.selected');
     if ($selected.length < 1) {
+      // No selection — just dispose wireframe if exists
+      let wf = babylon.scene.getMeshByID('wireframeObjectSelector');
+      if (wf) wf.dispose();
       return;
     }
 

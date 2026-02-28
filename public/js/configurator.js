@@ -2580,11 +2580,31 @@ var configurator = new function () {
 
   // Setup picking ray
   this.setupPickingRay = function () {
+    let _pickDownPos = null;
+
+    babylon.scene.onPointerDown = function (e) {
+      if (e.button !== 0) return;
+      _pickDownPos = { x: e.clientX, y: e.clientY };
+    };
+
     babylon.scene.onPointerUp = function (e, hit) {
       if (e.button != 0) {
         return;
       }
 
+      // Distinguish click vs drag: if mouse moved > 5px, it's a drag — skip
+      if (_pickDownPos) {
+        let dx = e.clientX - _pickDownPos.x;
+        let dy = e.clientY - _pickDownPos.y;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) {
+          _pickDownPos = null;
+          return;
+        }
+      }
+      _pickDownPos = null;
+
+      // Try to find component from picked mesh
+      let component = null;
       if (hit.pickedMesh != null) {
         function getComponent(mesh) {
           if (typeof mesh.component != 'undefined') {
@@ -2597,23 +2617,40 @@ var configurator = new function () {
             return null;
           }
         }
+        component = getComponent(hit.pickedMesh);
+      }
 
-        let $components = self.$componentList.find('li');
+      let $components = self.$componentList.find('li');
 
-        let component = getComponent(hit.pickedMesh);
-        if (component) {
-          $components.removeClass('selected');
-          let $target = self.$componentList.find('li[componentIndex=' + component.componentIndex + ']');
-          if ($target.length > 0) {
-            $target.addClass('selected');
-            self.showComponentOptions($target[0].component);
-          } else {
-            $($components[0]).addClass('selected');
-            self.showComponentOptions($components[0].component);
-          }
-
-          self.highlightSelected();
-          self.applyDragToSelected();
+      if (component) {
+        // Click on component → select it
+        $components.removeClass('selected');
+        let $target = self.$componentList.find('li[componentIndex=' + component.componentIndex + ']');
+        if ($target.length > 0) {
+          $target.addClass('selected');
+          self.showComponentOptions($target[0].component);
+        } else {
+          $($components[0]).addClass('selected');
+          self.showComponentOptions($components[0].component);
+        }
+        self.highlightSelected();
+        $('.gizmoToolbar').show();
+        self.applyDragToSelected();
+      } else {
+        // Click on empty space / non-component → deselect all
+        $components.removeClass('selected');
+        // Clear right panel (no component selected)
+        self.$settingsArea.empty();
+        // Dispose wireframe highlight
+        let wireframe = babylon.scene.getMeshByID('wireframeComponentSelector');
+        if (wireframe) wireframe.dispose();
+        // Detach gizmo and hide toolbar
+        self.applyGizmoToSelected();
+        $('.gizmoToolbar').hide();
+        // Hide all snap point markers
+        if (typeof SnapManager !== 'undefined') {
+          SnapManager.hideProximityPreview();
+          SnapManager.hideSnapPoints();
         }
       }
     }
@@ -2809,6 +2846,9 @@ var configurator = new function () {
   this.highlightSelected = function () {
     let $selected = self.$componentList.find('li.selected');
     if ($selected.length < 1) {
+      // No selection — just dispose wireframe if exists
+      let wf = babylon.scene.getMeshByID('wireframeComponentSelector');
+      if (wf) wf.dispose();
       return;
     }
 

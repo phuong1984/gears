@@ -409,6 +409,7 @@ class SnapPointEditorClass {
         this.camera.wheelPrecision = 50;
         this.camera.minZ = 0.01;
         this.camera.lowerRadiusLimit = 0.1;
+        this.camera.zoomToMouseLocation = true;
 
         // Lighting
         let hLight = new BABYLON.HemisphericLight("editorHLight", new BABYLON.Vector3(0, 1, 0), this.scene);
