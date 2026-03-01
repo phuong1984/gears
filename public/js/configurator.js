@@ -2357,14 +2357,43 @@ var configurator = new function () {
 
     // Refresh snap point preview after editor saves
     window.addEventListener('snapPointsUpdated', function () {
-      if (typeof SnapManager === 'undefined' || !self.magneticSnap) return;
+      console.log('%c[Configurator] snapPointsUpdated fired', 'color: orange; font-weight: bold');
+      if (typeof SnapManager === 'undefined' || !self.magneticSnap) {
+        console.log('[Configurator] SnapManager undefined or magneticSnap off, skipping');
+        return;
+      }
       let selected = self.$componentList.find('li.selected');
-      if (selected.length < 1) return;
+      if (selected.length < 1) {
+        console.log('[Configurator] No component selected, skipping');
+        return;
+      }
       SnapManager.hideProximityPreview();
       let index = selected[0].componentIndex;
       if (typeof index !== 'undefined') {
         let component = robot.getComponentByIndex(index);
         if (component) {
+          // Sync snapPoints from raw config to runtime component
+          // (setOptions may have dropped snapPoints as unrecognized)
+          let rawOpts = selected[0].component && selected[0].component.options;
+          if (rawOpts && rawOpts.snapPoints && component.options) {
+            component.options.snapPoints = rawOpts.snapPoints;
+          }
+          // DEBUG: Log snap points and body info
+          console.log('[Configurator] snapPointsUpdated: comp.type=' + component.type
+            + ', comp.options.snapPoints=', component.options?.snapPoints);
+          if (component.body) {
+            component.body.computeWorldMatrix(true);
+            console.log('[Configurator] body.position=', component.body.position.toString(),
+              'body.scaling=', component.body.scaling.toString(),
+              'body.rotationQuaternion=', component.body.rotationQuaternion?.toString());
+            // Log world-space snap points
+            let worldPts = SnapManager.getWorldSnapPoints(component);
+            worldPts.forEach(function (wp, i) {
+              console.log('[Configurator] worldSnapPt[' + i + '] "' + wp.name + '": worldPos=' + wp.worldPos.toString()
+                + ' worldNormal=' + wp.worldNormal.toString()
+                + ' localPos=' + JSON.stringify(wp.localPos));
+            });
+          }
           SnapManager.showProximityPreview(component, self._getComponentsWithBody(), babylon.scene);
         }
       } else {

@@ -19,6 +19,8 @@ class SnapPointEditorClass {
         this.selectedPointIndex = -1;
         this.pointMarkers = []; // Mesh markers in the editor scene
         this._modelSize = 1; // Estimated size for marker scaling
+        this._bboxCenterLocal = null; // BBox center in BJS local space
+        this._bboxCenterDesc = null; // BBox center in Descartes [X, Y, Z]
 
         // Hover preview state
         this._lastPickResult = null;
@@ -26,6 +28,26 @@ class SnapPointEditorClass {
         this._previewNormal = null;
 
         this.ui = {};
+    }
+
+    /**
+     * Get the modelScale for the current component.
+     * Editor works at native model scale (1x), but the configurator's body
+     * bounding box is sized at modelScale. Snap point positions must be
+     * scaled accordingly when saving/loading.
+     *
+     * Configurator: componentData.options.modelScale
+     * World Builder: componentData.modelScale (flat object, no nested options)
+     */
+    _getModelScale() {
+        if (!this.componentData) return 1;
+        let opts = this.componentData.options || {};
+        // Body uses bodyModelScale
+        if (this.componentType === '__body__') {
+            return opts.bodyModelScale || 1;
+        }
+        // Check nested options first (Robot Configurator), then top-level (World Builder)
+        return opts.modelScale || this.componentData.modelScale || 1;
     }
 
     /**
@@ -124,22 +146,44 @@ class SnapPointEditorClass {
 
     _loadExistingData() {
         this.snapPoints = [];
+        let modelScale = this._getModelScale();
+        let isModel = this.modelURL || (this.isBuiltIn && this.componentType !== '__body__');
+
+        const parsePt = (p) => {
+            let lp = p.localPos || p.position || [0, 0, 0];
+            let unscaled = [...lp];
+            let norm = [...(p.normal || [0, 0, 1])];
+
+            // Fix Z-axis flip during load: Models are Z-flipped in Configurator, but snap points are relative to the unflipped body
+            if (isModel) {
+                unscaled[1] = -unscaled[1]; // Descartes Y (BJS Z)
+                norm[1] = -norm[1]; // Flip normal to match
+            }
+            return {
+                name: p.name,
+                role: p.role || 'surface',
+                position: unscaled,
+                normal: norm,
+                _needsBboxOff: true // Flag to tell _fitCameraToEditorMesh to add bboxCenter offset
+            };
+        };
 
         // 1. Built-in model: ưu tiên localStorage, sau đó DB gốc (by modelURL)
         if (this.isBuiltIn && this.modelURL) {
             const localKey = 'snap_custom_' + this.modelURL;
             const localData = localStorage.getItem(localKey);
+            let rawPts = null;
             if (localData) {
-                try {
-                    this.snapPoints = JSON.parse(localData);
-                    return;
-                } catch (e) { console.error(e); }
+                try { rawPts = JSON.parse(localData); } catch (e) { console.error(e); }
             } else if (typeof SNAP_POINTS_DB !== 'undefined' && SNAP_POINTS_DB[this.modelURL]) {
                 const dbData = SNAP_POINTS_DB[this.modelURL].snapPoints;
-                if (dbData) {
-                    this.snapPoints = JSON.parse(JSON.stringify(dbData));
-                    return;
-                }
+                if (dbData) rawPts = JSON.parse(JSON.stringify(dbData));
+            }
+            if (rawPts && rawPts.length > 0) {
+                console.log('[SnapEditor] LOAD built-in: scale=' + modelScale + ', rawPts[0].localPos=', rawPts[0].localPos);
+                this.snapPoints = rawPts.map(p => parsePt(p));
+                console.log('[SnapEditor] LOAD result: snapPoints[0].position=', this.snapPoints[0].position);
+                return;
             }
         }
 
@@ -147,23 +191,12 @@ class SnapPointEditorClass {
         if (this.componentType === '__body__' && this.componentData?.options?.bodySnapPoints) {
             let pts = this.componentData.options.bodySnapPoints;
             if (pts.length > 0) {
-                // Saved positions include bodyModelScale; editor shows at native scale
-                let scale = (this.componentData?.options?.bodyModelScale) || 1;
-                this.snapPoints = pts.map(p => {
-                    let lp = p.localPos || p.position || [0, 0, 0];
-                    return {
-                        name: p.name,
-                        role: p.role || 'surface',
-                        position: [lp[0] / scale, lp[1] / scale, lp[2] / scale],
-                        normal: [...(p.normal || [0, 0, 1])]
-                    };
-                });
+                this.snapPoints = pts.map(p => parsePt(p));
                 return;
             }
         }
 
         // 2. Lookup by component type (e.g., 'UltrasonicSensor', 'ColorSensor')
-        // Skip __body__ here — body model in editor is at native scale, not bodyModelScale
         if (this.componentType && this.componentType !== '__body__' && typeof SNAP_POINTS_DB !== 'undefined' && SNAP_POINTS_DB[this.componentType]) {
             let dbEntry = SNAP_POINTS_DB[this.componentType];
             let pts;
@@ -173,13 +206,11 @@ class SnapPointEditorClass {
                 pts = dbEntry.snapPoints;
             }
             if (pts && pts.length > 0) {
-                // DB uses localPos/normal format, editor uses position/normal
-                this.snapPoints = pts.map(p => ({
-                    name: p.name,
-                    role: p.role || 'surface',
-                    position: [...(p.localPos || p.position || [0, 0, 0])],
-                    normal: [...(p.normal || [0, 0, 1])]
-                }));
+                // For component types, if they don't have a modelURL, they might be primitives without scale.
+                // But parsePt with scale=1 handles it if modelScale is not used.
+                // Actually, let's just use scale=1 if it's from dbEntry! SnapPointsDB usually stores Native scale coords.
+                // Wait! Primitives in SnapPointsDB are in native scale (1:1), so scale=1.
+                this.snapPoints = pts.map(p => parsePt(p));
                 return;
             }
         }
@@ -191,31 +222,22 @@ class SnapPointEditorClass {
                 let dbEntry = SNAP_POINTS_DB[primKey];
                 let pts;
                 if (dbEntry.dynamic && typeof dbEntry.getSnapPoints === 'function') {
+                    // For dynamic primitives, pass the model options (they generate unscaled points or appropriately scaled based on options)
                     pts = dbEntry.getSnapPoints(this.componentData.options || {});
                 } else {
                     pts = dbEntry.snapPoints;
                 }
                 if (pts && pts.length > 0) {
-                    this.snapPoints = pts.map(p => ({
-                        name: p.name,
-                        role: p.role || 'surface',
-                        position: [...(p.localPos || p.position || [0, 0, 0])],
-                        normal: [...(p.normal || [0, 0, 1])]
-                    }));
+                    this.snapPoints = pts.map(p => parsePt(p));
                     return;
                 }
             }
         }
 
         // 4. User Imported: load từ componentData
-        if (this.componentData?.options?.snapPoints) {
-            let pts = this.componentData.options.snapPoints;
-            this.snapPoints = pts.map(p => ({
-                name: p.name,
-                role: p.role || 'surface',
-                position: [...(p.localPos || p.position || [0, 0, 0])],
-                normal: [...(p.normal || [0, 0, 1])]
-            }));
+        let savedPts = this.componentData?.options?.snapPoints || this.componentData?.snapPoints;
+        if (savedPts && Array.isArray(savedPts) && savedPts.length > 0) {
+            this.snapPoints = savedPts.map(p => parsePt(p));
             return;
         }
 
@@ -707,6 +729,8 @@ class SnapPointEditorClass {
             // Ẩn loading
             if (loadingEl) loadingEl.style.display = 'none';
 
+
+
             // Auto-generate snap points from model bounding box if none defined
             // (e.g., body with GLB model where box fallback was skipped)
             if (this.snapPoints.length === 0 && this.editorMesh) {
@@ -919,12 +943,56 @@ class SnapPointEditorClass {
         this._modelSize = maxDim; // Lưu để scale marker
 
         let center = bounds.max.add(bounds.min).scale(0.5);
+
+        // Compute bbox center in LOCAL space of the mesh (before position shift).
+        // This offset is the difference between GLB origin and bounding box center.
+        // The configurator body is centered at bbox center, so snap point positions
+        // must be adjusted by this offset when converting editor ↔ body coords.
+        let invMatrix = this.editorMesh.getWorldMatrix().clone().invert();
+        let localCenter = BABYLON.Vector3.TransformCoordinates(center, invMatrix);
+        // Store in BJS local and Descartes:
+        // Descartes: X = BJS X, Y = BJS Z, Z = BJS Y
+        this._bboxCenterLocal = localCenter.clone();
+        this._bboxCenterDesc = [localCenter.x, localCenter.z, localCenter.y];
+        console.log('[SnapEditor] _fitCamera: bboxCenterLocal=', localCenter.toString(),
+            'bboxCenterDesc=', this._bboxCenterDesc);
+        console.log('[SnapEditor] _fitCamera: editorMesh.scaling=', this.editorMesh.scaling.toString());
+
+        console.log('[SnapEditor] _fitCamera: center_world=', center.toString(), 'meshPos before=', this.editorMesh.position.toString());
         this.editorMesh.position.subtractInPlace(center); // Đưa về gốc tọa độ
+        this.editorMesh.computeWorldMatrix(true); // MUST recompute after position change!
+        console.log('[SnapEditor] _fitCamera: meshPos after=', this.editorMesh.position.toString());
 
         this.camera.setTarget(BABYLON.Vector3.Zero());
         this.camera.radius = maxDim * 2.2;
         this.camera.lowerRadiusLimit = maxDim * 0.1;
         this.camera.upperRadiusLimit = maxDim * 10;
+
+        // Apply bbox offset to previously loaded data if any
+        if (this.snapPoints && this.snapPoints.length > 0 && !this._appliedBboxToLoadedPts) {
+            this._appliedBboxToLoadedPts = true;
+            let bboxOff = this._bboxCenterDesc || [0, 0, 0];
+            let needsRefresh = false;
+
+            this.snapPoints.forEach(pt => {
+                if (pt._needsBboxOff) {
+                    pt.position[0] += bboxOff[0];
+                    pt.position[1] += bboxOff[1];
+                    pt.position[2] += bboxOff[2];
+                    delete pt._needsBboxOff;
+                    needsRefresh = true;
+                }
+            });
+
+            if (needsRefresh) {
+                console.log('[SnapEditor] Applied bbox offset to loaded points: ', bboxOff);
+                this._refreshPointList();
+                this._refreshMarkers();
+                if (this.selectedPointIndex >= 0) {
+                    this._populatePropsForm(this.snapPoints[this.selectedPointIndex]);
+                }
+            }
+        }
     }
 
     /**
@@ -1032,6 +1100,10 @@ class SnapPointEditorClass {
         // Chuyển sang Descartes System: Descartes X=BJS X, Descartes Y=BJS Z, Descartes Z=BJS Y
         let ptPos = [localPoint.x, localPoint.z, localPoint.y];
         let ptNorm = [localNormal.x, localNormal.z, localNormal.y];
+
+        console.log('[SnapEditor] PICK: worldPt=' + worldPoint.toString()
+            + ' localPt=' + localPoint.toString()
+            + ' descPos=' + JSON.stringify(ptPos));
 
         let newName = "point_" + (this.snapPoints.length + 1);
         let newPt = {
@@ -1147,6 +1219,9 @@ class SnapPointEditorClass {
             }
         ];
 
+        console.log('[SnapEditor] _autoFromBBox: cx_bjs=' + cx_bjs + ' cy_bjs=' + cy_bjs + ' cz_bjs=' + cz_bjs);
+        console.log('[SnapEditor] _autoFromBBox: cx_d=' + cx_d + ' cy_d=' + cy_d + ' cz_d=' + cz_d);
+
         autoPoints.forEach(p => {
             this.snapPoints.push({
                 name: p.name,
@@ -1155,6 +1230,8 @@ class SnapPointEditorClass {
                 normal: p.norm
             });
         });
+
+        console.log('[SnapEditor] _autoFromBBox: top=', this.snapPoints.find(p => p.name === 'top')?.position, 'bottom=', this.snapPoints.find(p => p.name === 'bottom')?.position);
 
         this.selectedPointIndex = this.snapPoints.length - 1;
         this._refreshPointList();
@@ -1383,12 +1460,62 @@ class SnapPointEditorClass {
 
     _saveAndApply() {
         // Convert editor format (position) to DB format (localPos)
-        let dbFormatPoints = this.snapPoints.map(p => ({
-            name: p.name,
-            localPos: [...(p.position || p.localPos || [0, 0, 0])],
-            normal: [...(p.normal || [0, 0, 1])],
-            role: p.role || 'surface'
+        // Editor positions are relative to GLB's local origin.
+        // Configurator body is centered at the bounding box center.
+        // We must: (1) subtract bbox center offset, (2) scale by modelScale.
+        let modelScale = this._getModelScale();
+        let bboxOff = this._bboxCenterDesc || [0, 0, 0]; // Descartes [X, Y, Z]
+
+        console.log('%c[SnapEditor] ===== SAVE DEBUG START =====', 'color: red; font-weight: bold');
+        console.log('[SnapEditor] SAVE: modelScale=' + modelScale
+            + ', bboxOff(Descartes)=' + JSON.stringify(bboxOff)
+            + ', bboxCenterLocal(BJS)=' + (this._bboxCenterLocal ? this._bboxCenterLocal.toString() : 'null'));
+        console.log('[SnapEditor] SAVE: componentData=', JSON.stringify({
+            type: this.componentType,
+            modelURL: this.modelURL,
+            'options.modelScale': this.componentData?.options?.modelScale,
+            'top-level modelScale': this.componentData?.modelScale,
+            isBuiltIn: this.isBuiltIn,
+            isBuiltInComponent: this.isBuiltInComponent
         }));
+
+        let isModel = this.modelURL || (this.isBuiltIn && this.componentType !== '__body__');
+
+        let dbFormatPoints = this.snapPoints.map(p => {
+            let pos = p.position || p.localPos || [0, 0, 0];
+            // Convert: GLB-origin-relative → body-center-relative
+            // WE NOW SAVE WITHOUT SCALE! scale is applied purely at runtime in SnapManager.
+            let adjusted = [
+                pos[0] - bboxOff[0],
+                pos[1] - bboxOff[1],
+                pos[2] - bboxOff[2]
+            ];
+
+            let norm = [...(p.normal || [0, 0, 1])];
+
+            // Fix Z-axis flip during save: Models are Z-flipped in Configurator (scaling.z = -scale), 
+            // but these points are saved relative to the unflipped body box.
+            if (isModel) {
+                adjusted[1] = -adjusted[1]; // Descartes Y (BJS Z)
+                norm[1] = -norm[1];         // Flip normal as well
+            }
+
+            return {
+                name: p.name,
+                localPos: adjusted,
+                normal: norm,
+                role: p.role || 'surface'
+            };
+        });
+        dbFormatPoints.forEach((pt, i) => {
+            let srcPos = this.snapPoints[i]?.position;
+            console.log('[SnapEditor] SAVE pt[' + i + '] "' + pt.name + '": editorPos(Desc)=' + JSON.stringify(srcPos)
+                + ' - bboxOff=' + JSON.stringify(bboxOff)
+                + ' × scale=' + modelScale
+                + ' → localPos=' + JSON.stringify(pt.localPos)
+                + ' | BJS_local=(' + pt.localPos[0] + ', ' + pt.localPos[2] + ', ' + pt.localPos[1] + ')');
+        });
+        console.log('%c[SnapEditor] ===== SAVE DEBUG END =====', 'color: red; font-weight: bold');
 
         if (this.isBuiltIn && this.modelURL) {
             // Built-in model (by URL): Save to LocalStorage + update runtime DB
@@ -1402,24 +1529,15 @@ class SnapPointEditorClass {
             alert('Đã lưu cấu hình Snap Point vào Local Storage.');
         } else if (this.componentType === '__body__') {
             // Robot body: save to componentData.options.bodySnapPoints
-            // Editor works at native model scale; configurator uses bodyModelScale
-            let scale = (this.componentData?.options?.bodyModelScale) || 1;
-            let scaledPoints = dbFormatPoints.map(p => {
-                let lp = p.localPos || [0, 0, 0];
-                return {
-                    name: p.name,
-                    localPos: [lp[0] * scale, lp[1] * scale, lp[2] * scale],
-                    normal: p.normal,
-                    role: p.role
-                };
-            });
+            // Body uses bodyModelScale which is separate from modelScale.
+            // dbFormatPoints already has modelScale applied (which is bodyModelScale for body).
             if (this.componentData) {
                 if (!this.componentData.options) this.componentData.options = {};
-                this.componentData.options.bodySnapPoints = JSON.parse(JSON.stringify(scaledPoints));
+                this.componentData.options.bodySnapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
             }
             // Update runtime DB: override dynamic with static scaled points
             if (typeof SNAP_POINTS_DB !== 'undefined') {
-                SNAP_POINTS_DB['__body__'].snapPoints = JSON.parse(JSON.stringify(scaledPoints));
+                SNAP_POINTS_DB['__body__'].snapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
                 SNAP_POINTS_DB['__body__']._savedDynamic = SNAP_POINTS_DB['__body__'].dynamic;
                 SNAP_POINTS_DB['__body__'].dynamic = false;
             }
@@ -1440,8 +1558,20 @@ class SnapPointEditorClass {
         } else {
             // User-imported / custom objects: save into componentData
             if (this.componentData) {
-                if (!this.componentData.options) this.componentData.options = {};
-                this.componentData.options.snapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
+                let pts = JSON.parse(JSON.stringify(dbFormatPoints));
+                // Detect data structure:
+                // Robot Configurator: componentData.options = { modelURL, modelScale, ... }
+                // World Builder: componentData = { modelURL, modelScale, ... } (flat, no nested options)
+                let hasNestedOptions = this.componentData.options
+                    && (this.componentData.options.modelURL !== undefined
+                        || this.componentData.options.modelScale !== undefined);
+                if (hasNestedOptions) {
+                    // Configurator path: save into nested options
+                    this.componentData.options.snapPoints = pts;
+                } else {
+                    // World Builder path: save at top level
+                    this.componentData.snapPoints = pts;
+                }
             }
             alert('Đã áp dụng Snap Points cho Object này.');
         }

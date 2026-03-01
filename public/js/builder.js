@@ -1069,6 +1069,13 @@ var builder = new function () {
     babylon.world.animate = false;
     babylon.world.overrideHide = true;
 
+    // Helper: create pseudo-component from a worldBaseObject mesh
+    // Includes objectData (snapPoints, modelScale, etc.) from the mesh if available
+    function meshToPseudoComponent(m) {
+      var objData = m._worldObjectData || {};
+      return { type: objData.type || 'unknown', options: objData, body: m };
+    }
+
     // Install Quick Snap (Q key)
     if (typeof SnapManager !== 'undefined') {
       SnapManager.installQuickSnapKey(
@@ -1076,7 +1083,7 @@ var builder = new function () {
           // Wrap all worldBaseObject meshes as pseudo-components
           return babylon.scene.meshes
             .filter(function (m) { return m.id && m.id.indexOf('worldBaseObject_') === 0; })
-            .map(function (m) { return { type: 'unknown', options: {}, body: m }; });
+            .map(meshToPseudoComponent);
         },
         babylon.scene,
         function (movedComponent) {
@@ -1196,6 +1203,23 @@ var builder = new function () {
         });
       } else {
         console.warn('[SnapBtn] Cannot open: mesh=', mesh, 'SnapPointEditor=', !!window.SnapPointEditor);
+      }
+    });
+
+    // Handler for snap points updated from the editor
+    window.addEventListener('snapPointsUpdated', function () {
+      if (typeof SnapManager === 'undefined' || !self.magneticSnap) return;
+      let selected = self.$objectsList.find('li.selected');
+      if (selected.length < 1 || typeof selected[0].objectIndex === 'undefined') return;
+      SnapManager.hideProximityPreview();
+      let id = 'worldBaseObject_' + selected[0].name + selected[0].objectIndex;
+      let mesh = babylon.scene.getMeshByID(id);
+      if (mesh) {
+        let pseudoComponent = meshToPseudoComponent(mesh);
+        let allPseudoComponents = babylon.scene.meshes
+          .filter(function (m) { return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== mesh; })
+          .map(meshToPseudoComponent);
+        SnapManager.showProximityPreview(pseudoComponent, allPseudoComponents, babylon.scene);
       }
     });
   };
@@ -1573,14 +1597,12 @@ var builder = new function () {
       onSnapCheck: function (dragMesh) {
         if (!self.magneticSnap || typeof SnapManager === 'undefined') return null;
         // Wrap this mesh as a pseudo-component for SnapManager
-        var draggedComponent = { type: 'unknown', options: {}, body: dragMesh };
+        var draggedComponent = meshToPseudoComponent(dragMesh);
         // Gather all worldBaseObject meshes except the dragged one
         var allMeshes = babylon.scene.meshes.filter(function (m) {
           return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== dragMesh;
         });
-        var pseudoComponents = allMeshes.map(function (m) {
-          return { type: 'unknown', options: {}, body: m };
-        });
+        var pseudoComponents = allMeshes.map(meshToPseudoComponent);
         return SnapManager.findNearestSnap(draggedComponent, pseudoComponents);
       },
       onDragEnd: function (axisName, result) {
@@ -1643,12 +1665,13 @@ var builder = new function () {
 
         // Re-show proximity preview after drag
         if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
-          var dragComp = { type: 'unknown', options: {}, body: mesh };
+          var dragComp = { type: objectData.type || 'unknown', options: objectData, body: mesh };
           var otherMeshes = babylon.scene.meshes.filter(function (m) {
             return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== mesh;
           });
           var others = otherMeshes.map(function (m) {
-            return { type: 'unknown', options: {}, body: m };
+            var objData = m._worldObjectData || {};
+            return { type: objData.type || 'unknown', options: objData, body: m };
           });
           SnapManager.showProximityPreview(dragComp, others, babylon.scene);
         }
@@ -1657,12 +1680,13 @@ var builder = new function () {
 
     // Show proximity preview on selection
     if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
-      var selectedComp = { type: 'unknown', options: {}, body: mesh };
+      var selectedComp = { type: objectData.type || 'unknown', options: objectData, body: mesh };
       var allOtherMeshes = babylon.scene.meshes.filter(function (m) {
         return m.id && m.id.indexOf('worldBaseObject_') === 0 && m !== mesh;
       });
       var allOthers = allOtherMeshes.map(function (m) {
-        return { type: 'unknown', options: {}, body: m };
+        var objData = m._worldObjectData || {};
+        return { type: objData.type || 'unknown', options: objData, body: m };
       });
       SnapManager.showProximityPreview(selectedComp, allOthers, babylon.scene);
     }

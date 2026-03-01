@@ -680,6 +680,8 @@ var World_Base = function () {
         options.callback(mesh);
       }
       if (mesh) {
+        // Store raw objectData on mesh for SnapManager pseudo-components
+        mesh._worldObjectData = object;
         self.physicsToAdd.push([mesh, options]);
       }
     }

@@ -66,7 +66,7 @@ var SnapManager = (function () {
      * @param {Object} component — The component object (has .type, .options, .body)
      * @returns {Array} Array of snap point objects in Descartes local coords
      */
-    self.getSnapPoints = function (component) {
+    self._getRawSnapPoints = function (component) {
         if (!component) return [];
 
         var type = component.type;
@@ -76,10 +76,18 @@ var SnapManager = (function () {
         if (options.snapPoints && Array.isArray(options.snapPoints) && options.snapPoints.length > 0) {
             return options.snapPoints;
         }
+        if (component.snapPoints && Array.isArray(component.snapPoints) && component.snapPoints.length > 0) {
+            return component.snapPoints;
+        }
 
         // ── 1b. Body-specific: check bodySnapPoints ──
-        if (type === '__body__' && options.bodySnapPoints && Array.isArray(options.bodySnapPoints) && options.bodySnapPoints.length > 0) {
-            return options.bodySnapPoints;
+        if (type === '__body__') {
+            if (options.bodySnapPoints && Array.isArray(options.bodySnapPoints) && options.bodySnapPoints.length > 0) {
+                return options.bodySnapPoints;
+            }
+            if (component.bodySnapPoints && Array.isArray(component.bodySnapPoints) && component.bodySnapPoints.length > 0) {
+                return component.bodySnapPoints;
+            }
         }
 
         // ── 1c. Body with 3D model: compute from model meshes bounding box ──
@@ -105,11 +113,6 @@ var SnapManager = (function () {
                         wMax = BABYLON.Vector3.Maximize(wMax, mbb.maximumWorld);
                     }
                 }
-                console.log('[BodySnap] step1c: meshCount=' + meshCount + '/' + component._bodyModelMeshes.length,
-                    'wMin=', wMin ? wMin.toString() : 'null',
-                    'wMax=', wMax ? wMax.toString() : 'null',
-                    'bodyPos=', bodyMesh.position.toString(),
-                    'bodyScaling=', bodyMesh.scaling.toString());
                 if (wMin) {
                     // Transform AABB center to body-local space
                     var wCenter = wMin.add(wMax).scale(0.5);
@@ -123,18 +126,15 @@ var SnapManager = (function () {
                     var cx = localCenter.x;
                     var cy = localCenter.z;  // BJS Z → Descartes Y
                     var cz = localCenter.y;  // BJS Y → Descartes Z
-                    console.log('[BodySnap] wCenter=', wCenter.toString(), 'localCenter=', localCenter.toString(),
-                        'wSize=', wSize.toString(), 'hw=', hw, 'hy=', hy, 'hd=', hd,
-                        'cx=', cx, 'cy=', cy, 'cz=', cz);
                     var result = [
                         { name: 'top', localPos: [cx, cy, cz + hy], normal: [0, 0, 1], role: 'surface' },
                         { name: 'bottom', localPos: [cx, cy, cz - hy], normal: [0, 0, -1], role: 'surface' },
                         { name: 'front', localPos: [cx, cy + hd, cz], normal: [0, 1, 0], role: 'surface' },
                         { name: 'back', localPos: [cx, cy - hd, cz], normal: [0, -1, 0], role: 'surface' },
                         { name: 'right', localPos: [cx + hw, cy, cz], normal: [1, 0, 0], role: 'surface' },
-                        { name: 'left', localPos: [cx - hw, cy, cz], normal: [-1, 0, 0], role: 'surface' }
+                        { name: 'left', localPos: [cx - hw, cy, cz], normal: [-1, 0, 0], role: 'surface' },
+                        { name: '_isFromBounds', value: true } // Internal flag
                     ];
-                    console.log('[BodySnap] result:', JSON.stringify(result.map(function (p) { return p.name + '=' + JSON.stringify(p.localPos); })));
                     return result;
                 }
             } catch (e) { console.error('[BodySnap] step1c error:', e); }
@@ -153,7 +153,6 @@ var SnapManager = (function () {
         if (dbEntry) {
             // Dynamic snap points (scale with dimensions)
             if (dbEntry.dynamic && typeof dbEntry.getSnapPoints === 'function') {
-                if (type === '__body__') console.log('[BodySnap] step2 DB dynamic: using box dimensions fallback. _bodyModelMeshes=', component._bodyModelMeshes);
                 return dbEntry.getSnapPoints(options);
             }
             // Static snap points
@@ -162,7 +161,9 @@ var SnapManager = (function () {
             }
             // Explicitly null = use auto
             if (dbEntry.snapPoints === null) {
-                return self.getAutoSnapPoints(component);
+                let autoPts = self.getAutoSnapPoints(component);
+                autoPts.push({ name: '_isFromBounds', value: true });
+                return autoPts;
             }
             // Empty array = no snap points
             if (Array.isArray(dbEntry.snapPoints) && dbEntry.snapPoints.length === 0) {
@@ -171,15 +172,87 @@ var SnapManager = (function () {
         }
 
         // ── 3. Check for model-specific snap points (by URL) ──
-        if (options.modelURL && SNAP_POINTS_DB[options.modelURL]) {
-            var modelEntry = SNAP_POINTS_DB[options.modelURL];
-            if (modelEntry.snapPoints && modelEntry.snapPoints.length > 0) {
-                return modelEntry.snapPoints;
+        let modelURL = options.modelURL || component.modelURL;
+        if (modelURL) {
+            // Check LocalStorage first (user's saved custom points)
+            try {
+                var localKey = 'snap_custom_' + modelURL;
+                var localData = localStorage.getItem(localKey);
+                if (localData) {
+                    var localPts = JSON.parse(localData);
+                    if (Array.isArray(localPts) && localPts.length > 0) {
+                        return localPts;
+                    }
+                }
+            } catch (e) {
+                console.warn('[SnapManager] LocalStorage read error:', e);
+            }
+
+            // Then check hardcoded DB
+            if (typeof SNAP_POINTS_DB !== 'undefined' && SNAP_POINTS_DB[modelURL]) {
+                var modelEntry = SNAP_POINTS_DB[modelURL];
+                if (modelEntry.snapPoints && modelEntry.snapPoints.length > 0) {
+                    return modelEntry.snapPoints;
+                }
             }
         }
 
         // ── 4. Fallback: auto from bounding box ──
-        return self.getAutoSnapPoints(component);
+        let autoFallback = self.getAutoSnapPoints(component);
+        autoFallback.push({ name: '_isFromBounds', value: true });
+        return autoFallback;
+    };
+
+    /**
+     * Get snap points for a component, applying model scaling if needed.
+     */
+    self.getSnapPoints = function (component) {
+        var rawPts = self._getRawSnapPoints(component);
+        if (!rawPts || rawPts.length === 0) return [];
+
+        // Remove internal flags completely
+        var isFromBounds = false;
+        var cleanPts = [];
+        for (var i = 0; i < rawPts.length; i++) {
+            if (rawPts[i].name === '_isFromBounds') {
+                isFromBounds = true;
+            } else {
+                cleanPts.push(rawPts[i]);
+            }
+        }
+
+        var type = component.type;
+        var options = component.options || {};
+        var scale = 1.0;
+        var isModel = false;
+        var modelURL = options.modelURL || component.modelURL;
+
+        if (modelURL) {
+            isModel = true;
+            scale = options.modelScale !== undefined ? options.modelScale : (component.modelScale !== undefined ? component.modelScale : 1.0);
+        } else if (type === '__body__' && component._bodyModelMeshes && component._bodyModelMeshes.length > 0) {
+            isModel = true;
+            scale = options.bodyModelScale !== undefined ? options.bodyModelScale : 1.0;
+        }
+
+        // If it's a model and not generated from bounding box, we apply scale
+        // (Because bounding box points are already scaled via mesh extents).
+        if (isModel && !isFromBounds && scale !== 1.0 && scale !== 0) {
+            return cleanPts.map(function (p) {
+                return {
+                    name: p.name,
+                    role: p.role,
+                    normal: p.normal,
+                    localPos: [
+                        p.localPos[0] * scale,
+                        p.localPos[1] * scale,
+                        p.localPos[2] * scale
+                    ]
+                };
+            });
+        }
+
+        return cleanPts;
     };
 
     // ===========================================================================
@@ -286,6 +359,10 @@ var SnapManager = (function () {
 
         // Transform position: local → world
         var worldPos = BABYLON.Vector3.TransformCoordinates(localPosBJS, worldMatrix);
+
+        console.log('[SnapMgr] toWorldSpace "' + snapPoint.name + '": localPos=' + JSON.stringify(snapPoint.localPos)
+            + ' bjsLocal=' + localPosBJS.toString()
+            + ' worldPos=' + worldPos.toString());
 
         // Transform normal: only rotation, no translation
         var localNormalBJS = self.descartesToBJS(snapPoint.normal);

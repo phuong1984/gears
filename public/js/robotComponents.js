@@ -4456,6 +4456,15 @@ function ModelBlock(scene, parent, pos, rot, options) {
       meshes[0].parent = body;
       meshes[0].visibility = 0; // Root node invisible, submeshes remain visible
 
+      // DEBUG: Log centering info for snap point comparison
+      console.log('%c[ModelBlock] GLB centering debug', 'color: cyan; font-weight: bold');
+      console.log('[ModelBlock] bboxCenter(world,pre-clear)=', bounding.boundingBox.center.toString());
+      console.log('[ModelBlock] body size: bx=' + bx + ' by=' + by + ' bz=' + bz);
+      console.log('[ModelBlock] meshes[0].position=', meshes[0].position.toString(),
+        'meshes[0].scaling=', meshes[0].scaling.toString());
+      console.log('[ModelBlock] body.position=', body.position.toString(),
+        'modelScale=', self.options.modelScale);
+
       // Apply model color to submeshes and break loader material cache link
       let customColor3 = null;
       if (self.options.modelColor && self.options.modelColor !== '') {
@@ -4514,6 +4523,7 @@ function ModelBlock(scene, parent, pos, rot, options) {
       modelColor: '',
       modelAnimation: 'None',
       _modelFileName: '',
+      snapPoints: null,
     };
 
     for (let name in options) {

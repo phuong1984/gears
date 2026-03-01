@@ -698,6 +698,12 @@ function Robot() {
         component.componentIndex = self.componentIndex++;
       }
       if (component) {
+        // Sync snapPoints from raw config to runtime component
+        // (setOptions in many component types drops unknown properties like snapPoints)
+        if (componentConfig.options && componentConfig.options.snapPoints
+          && component.options && !component.options.snapPoints) {
+          component.options.snapPoints = componentConfig.options.snapPoints;
+        }
         if (typeof componentConfig.components != 'undefined') {
           await self.loadComponents(componentConfig.components, component.components, component.end);
         }
