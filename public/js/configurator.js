@@ -2057,7 +2057,7 @@ var configurator = new function () {
     // Install Quick Snap (Q key)
     if (typeof SnapManager !== 'undefined') {
       SnapManager.installQuickSnapKey(
-        function () { return robot.components || []; },
+        function () { return self._getComponentsWithBody(); },
         babylon.scene,
         function (movedComponent) {
           // After quick snap: write mesh position/rotation back to data model
@@ -2148,8 +2148,8 @@ var configurator = new function () {
         // Find the component being dragged
         var draggedComponent = mesh.component;
         if (!draggedComponent) return null;
-        // Gather all other components from the robot
-        var allComponents = robot.components || [];
+        // Gather all other components + body from the robot
+        var allComponents = self._getComponentsWithBody();
         return SnapManager.findNearestSnap(draggedComponent, allComponents);
       },
       onDragEnd: function (axisName, result) {
@@ -2220,20 +2220,40 @@ var configurator = new function () {
 
         // Re-show proximity preview after drag
         if (typeof SnapManager !== 'undefined' && self.magneticSnap && component) {
-          SnapManager.showProximityPreview(component, robot.components || [], babylon.scene);
+          SnapManager.showProximityPreview(component, self._getComponentsWithBody(), babylon.scene);
         }
       }
     });
 
     // Show proximity preview on selection
     if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
-      SnapManager.showProximityPreview(component, robot.components || [], babylon.scene);
+      SnapManager.showProximityPreview(component, self._getComponentsWithBody(), babylon.scene);
     }
   };
 
   // Legacy alias (applyDragToSelected) — now delegates to gizmo
   this.applyDragToSelected = function () {
     self.applyGizmoToSelected();
+  };
+
+  // Helper: get all components + a pseudo-component for body (for snap point proximity)
+  this._getComponentsWithBody = function () {
+    var comps = (robot.components || []).slice();
+    if (robot.body) {
+      comps.push({
+        type: '__body__',
+        body: robot.body,
+        options: robot.options || {},
+        _bodyModelMeshes: robot.bodyModel || null
+      });
+    }
+    return comps;
+  };
+
+  // Helper: get body pseudo-component with model bounds (if model loaded)
+  this._getBodyPseudo = function () {
+    var comps = self._getComponentsWithBody();
+    return comps.find(function (c) { return c.type === '__body__'; }) || null;
   };
 
   // Runs every frame
@@ -2302,7 +2322,20 @@ var configurator = new function () {
       if (selected.length < 1) return;
 
       let index = selected[0].componentIndex;
-      if (typeof index == 'undefined') return;
+
+      if (typeof index == 'undefined') {
+        // Body selected → open editor for body
+        if (!robot.body) return;
+        let bodyPseudo = self._getBodyPseudo();
+        if (window.SnapPointEditor && bodyPseudo) {
+          window.SnapPointEditor.open({
+            mesh: robot.body,
+            componentData: bodyPseudo,
+            modelURL: robot.options?.bodyModelURL || null
+          });
+        }
+        return;
+      }
 
       let component = robot.getComponentByIndex(index);
       if (!component || !component.body) {
@@ -2327,12 +2360,17 @@ var configurator = new function () {
       if (typeof SnapManager === 'undefined' || !self.magneticSnap) return;
       let selected = self.$componentList.find('li.selected');
       if (selected.length < 1) return;
+      SnapManager.hideProximityPreview();
       let index = selected[0].componentIndex;
-      if (typeof index === 'undefined') return;
-      let component = robot.getComponentByIndex(index);
-      if (component) {
-        SnapManager.hideProximityPreview();
-        SnapManager.showProximityPreview(component, robot.components || [], babylon.scene);
+      if (typeof index !== 'undefined') {
+        let component = robot.getComponentByIndex(index);
+        if (component) {
+          SnapManager.showProximityPreview(component, self._getComponentsWithBody(), babylon.scene);
+        }
+      } else {
+        // Body selected — show body snap points
+        let bodyPseudo = self._getBodyPseudo();
+        SnapManager.showProximityPreview(bodyPseudo, robot.components || [], babylon.scene);
       }
     });
   };
@@ -2592,6 +2630,11 @@ var configurator = new function () {
         return;
       }
 
+      // Skip picking when Quick Snap mode is active (it has its own click handling)
+      if (typeof SnapManager !== 'undefined' && SnapManager.quickSnap && SnapManager.quickSnap.active) {
+        return;
+      }
+
       // Distinguish click vs drag: if mouse moved > 5px, it's a drag — skip
       if (_pickDownPos) {
         let dx = e.clientX - _pickDownPos.x;
@@ -2635,21 +2678,26 @@ var configurator = new function () {
         }
         self.highlightSelected();
         $('.gizmoToolbar').show();
+        $('.gizmoToolbar .gizmoToolBtn').show();
         self.applyDragToSelected();
       } else if (component === true) {
-        // Click on robot body → select body item, but no gizmo/toolbar
+        // Click on robot body → select body, show snap points, show S button only
         $components.removeClass('selected');
         $($components[0]).addClass('selected');
         self.showComponentOptions($components[0].component);
         // No wireframe for body
         let wireframe = babylon.scene.getMeshByID('wireframeComponentSelector');
         if (wireframe) wireframe.dispose();
-        // No gizmo for body
-        self.applyGizmoToSelected();
-        $('.gizmoToolbar').hide();
-        if (typeof SnapManager !== 'undefined') {
-          SnapManager.hideProximityPreview();
-          SnapManager.hideSnapPoints();
+        // No gizmo axes for body (can't move body)
+        if (self.gizmo) self.gizmo.detach();
+        // Show toolbar with only S button (snap editor)
+        $('.gizmoToolbar').show();
+        $('.gizmoToolbar .gizmoToolBtn').hide();
+        $('#gizmoSepSnap, #gizmoBtnSnap').show().removeClass('disabled');
+        // Show body snap points
+        if (typeof SnapManager !== 'undefined' && self.magneticSnap) {
+          let bodyPseudo = self._getBodyPseudo();
+          SnapManager.showProximityPreview(bodyPseudo, robot.components || [], babylon.scene);
         }
       } else {
         // Click on empty space / non-component → deselect all

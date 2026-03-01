@@ -143,8 +143,28 @@ class SnapPointEditorClass {
             }
         }
 
+        // 1b. Body: check user-defined bodySnapPoints
+        if (this.componentType === '__body__' && this.componentData?.options?.bodySnapPoints) {
+            let pts = this.componentData.options.bodySnapPoints;
+            if (pts.length > 0) {
+                // Saved positions include bodyModelScale; editor shows at native scale
+                let scale = (this.componentData?.options?.bodyModelScale) || 1;
+                this.snapPoints = pts.map(p => {
+                    let lp = p.localPos || p.position || [0, 0, 0];
+                    return {
+                        name: p.name,
+                        role: p.role || 'surface',
+                        position: [lp[0] / scale, lp[1] / scale, lp[2] / scale],
+                        normal: [...(p.normal || [0, 0, 1])]
+                    };
+                });
+                return;
+            }
+        }
+
         // 2. Lookup by component type (e.g., 'UltrasonicSensor', 'ColorSensor')
-        if (this.componentType && typeof SNAP_POINTS_DB !== 'undefined' && SNAP_POINTS_DB[this.componentType]) {
+        // Skip __body__ here — body model in editor is at native scale, not bodyModelScale
+        if (this.componentType && this.componentType !== '__body__' && typeof SNAP_POINTS_DB !== 'undefined' && SNAP_POINTS_DB[this.componentType]) {
             let dbEntry = SNAP_POINTS_DB[this.componentType];
             let pts;
             if (dbEntry.dynamic && typeof dbEntry.getSnapPoints === 'function') {
@@ -200,8 +220,13 @@ class SnapPointEditorClass {
         }
 
         // 5. Fallback: Auto-generate from bounding box (same as SnapManager.getAutoSnapPoints)
-        // This ensures built-in models show their 6 face snap points in the editor
-        if (this.originalMesh) {
+        // SKIP when component has a model URL — originalMesh is the invisible primitive box,
+        // not the loaded GLB. The editor will load the actual model via _setupMeshAndCamera,
+        // and auto-generate from its real bounding box in onMeshReady.
+        if (this.modelURL) {
+            // Component with model URL: leave snapPoints empty, will auto-generate after model loads.
+            console.log('[SnapEditor] Component with model URL — skipping box fallback, auto-gen after load');
+        } else if (this.originalMesh) {
             try {
                 this.originalMesh.computeWorldMatrix(true);
                 let bb = this.originalMesh.getBoundingInfo().boundingBox;
@@ -672,6 +697,12 @@ class SnapPointEditorClass {
             // Ẩn loading
             if (loadingEl) loadingEl.style.display = 'none';
 
+            // Auto-generate snap points from model bounding box if none defined
+            // (e.g., body with GLB model where box fallback was skipped)
+            if (this.snapPoints.length === 0 && this.editorMesh) {
+                this._autoFromBBox();
+            }
+
             // Render markers
             this._refreshPointList();
             this._refreshMarkers();
@@ -1086,13 +1117,13 @@ class SnapPointEditorClass {
             },
             {
                 name: "front",
-                pos: [r(cx_d), r(localMin.z), r(cz_d)],  // Descartes Y- = BJS Z-
-                norm: [0, -1, 0]
+                pos: [r(cx_d), r(localMax.z), r(cz_d)],  // Descartes Y+ = BJS Z+ = forward
+                norm: [0, 1, 0]
             },
             {
                 name: "back",
-                pos: [r(cx_d), r(localMax.z), r(cz_d)],  // Descartes Y+ = BJS Z+
-                norm: [0, 1, 0]
+                pos: [r(cx_d), r(localMin.z), r(cz_d)],  // Descartes Y- = BJS Z- = backward
+                norm: [0, -1, 0]
             },
             {
                 name: "left",
@@ -1359,6 +1390,30 @@ class SnapPointEditorClass {
                 SNAP_POINTS_DB[this.modelURL].snapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
             }
             alert('Đã lưu cấu hình Snap Point vào Local Storage.');
+        } else if (this.componentType === '__body__') {
+            // Robot body: save to componentData.options.bodySnapPoints
+            // Editor works at native model scale; configurator uses bodyModelScale
+            let scale = (this.componentData?.options?.bodyModelScale) || 1;
+            let scaledPoints = dbFormatPoints.map(p => {
+                let lp = p.localPos || [0, 0, 0];
+                return {
+                    name: p.name,
+                    localPos: [lp[0] * scale, lp[1] * scale, lp[2] * scale],
+                    normal: p.normal,
+                    role: p.role
+                };
+            });
+            if (this.componentData) {
+                if (!this.componentData.options) this.componentData.options = {};
+                this.componentData.options.bodySnapPoints = JSON.parse(JSON.stringify(scaledPoints));
+            }
+            // Update runtime DB: override dynamic with static scaled points
+            if (typeof SNAP_POINTS_DB !== 'undefined') {
+                SNAP_POINTS_DB['__body__'].snapPoints = JSON.parse(JSON.stringify(scaledPoints));
+                SNAP_POINTS_DB['__body__']._savedDynamic = SNAP_POINTS_DB['__body__'].dynamic;
+                SNAP_POINTS_DB['__body__'].dynamic = false;
+            }
+            alert('Đã áp dụng Snap Points cho Body.');
         } else if (this.isBuiltInComponent && this.componentType) {
             // Built-in component type (UltrasonicSensor, etc.): Update runtime DB
             if (typeof SNAP_POINTS_DB !== 'undefined') {

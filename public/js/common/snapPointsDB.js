@@ -36,6 +36,27 @@
 var SNAP_POINTS_DB = {
 
     // ===========================================================================
+    // ROBOT BODY — Dynamic snap points scaled by body dimensions
+    // ===========================================================================
+    '__body__': {
+        dynamic: true,
+        getSnapPoints: function (options) {
+            // Default box body dimensions
+            var w = (options.bodyWidth || 14) / 2;
+            var d = (options.bodyLength || 16) / 2;
+            var h = (options.bodyHeight || 4) / 2;
+            return [
+                { name: 'top', localPos: [0, 0, h], normal: [0, 0, 1], role: 'surface' },
+                { name: 'bottom', localPos: [0, 0, -h], normal: [0, 0, -1], role: 'surface' },
+                { name: 'front', localPos: [0, d, 0], normal: [0, 1, 0], role: 'surface' },
+                { name: 'back', localPos: [0, -d, 0], normal: [0, -1, 0], role: 'surface' },
+                { name: 'right', localPos: [w, 0, 0], normal: [1, 0, 0], role: 'surface' },
+                { name: 'left', localPos: [-w, 0, 0], normal: [-1, 0, 0], role: 'surface' }
+            ];
+        }
+    },
+
+    // ===========================================================================
     // PRIMITIVE BLOCKS — Snap points are dynamic (scaled by actual dimensions)
     // localPos uses multiplier format: actual pos = multiplier × dimension/2
     // ===========================================================================

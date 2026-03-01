@@ -77,6 +77,69 @@ var SnapManager = (function () {
             return options.snapPoints;
         }
 
+        // ── 1b. Body-specific: check bodySnapPoints ──
+        if (type === '__body__' && options.bodySnapPoints && Array.isArray(options.bodySnapPoints) && options.bodySnapPoints.length > 0) {
+            return options.bodySnapPoints;
+        }
+
+        // ── 1c. Body with 3D model: compute from model meshes bounding box ──
+        if (type === '__body__' && component._bodyModelMeshes && component._bodyModelMeshes.length > 0) {
+            try {
+                var bodyMesh = component.body;
+                bodyMesh.computeWorldMatrix(true);
+                var bodyInv = BABYLON.Matrix.Invert(bodyMesh.getWorldMatrix());
+                var wMin = null, wMax = null;
+                var meshCount = 0;
+                for (var mi = 0; mi < component._bodyModelMeshes.length; mi++) {
+                    var mm = component._bodyModelMeshes[mi];
+                    mm.computeWorldMatrix(true);
+                    var mbb = mm.getBoundingInfo().boundingBox;
+                    if (mbb.extendSize.x === 0 && mbb.extendSize.y === 0 && mbb.extendSize.z === 0) continue;
+                    meshCount++;
+                    // Use world-space AABB min/max directly
+                    if (wMin === null) {
+                        wMin = mbb.minimumWorld.clone();
+                        wMax = mbb.maximumWorld.clone();
+                    } else {
+                        wMin = BABYLON.Vector3.Minimize(wMin, mbb.minimumWorld);
+                        wMax = BABYLON.Vector3.Maximize(wMax, mbb.maximumWorld);
+                    }
+                }
+                console.log('[BodySnap] step1c: meshCount=' + meshCount + '/' + component._bodyModelMeshes.length,
+                    'wMin=', wMin ? wMin.toString() : 'null',
+                    'wMax=', wMax ? wMax.toString() : 'null',
+                    'bodyPos=', bodyMesh.position.toString(),
+                    'bodyScaling=', bodyMesh.scaling.toString());
+                if (wMin) {
+                    // Transform AABB center to body-local space
+                    var wCenter = wMin.add(wMax).scale(0.5);
+                    var localCenter = BABYLON.Vector3.TransformCoordinates(wCenter, bodyInv);
+                    // Size is the same in world and body-local (body has no scale)
+                    var wSize = wMax.subtract(wMin);
+                    var hw = wSize.x / 2;  // half-width
+                    var hy = wSize.y / 2;  // half-height (BJS Y = up)
+                    var hd = wSize.z / 2;  // half-depth (BJS Z = forward)
+                    // Convert body-local BJS → Descartes: X=X, Y=Z(BJS), Z=Y(BJS)
+                    var cx = localCenter.x;
+                    var cy = localCenter.z;  // BJS Z → Descartes Y
+                    var cz = localCenter.y;  // BJS Y → Descartes Z
+                    console.log('[BodySnap] wCenter=', wCenter.toString(), 'localCenter=', localCenter.toString(),
+                        'wSize=', wSize.toString(), 'hw=', hw, 'hy=', hy, 'hd=', hd,
+                        'cx=', cx, 'cy=', cy, 'cz=', cz);
+                    var result = [
+                        { name: 'top', localPos: [cx, cy, cz + hy], normal: [0, 0, 1], role: 'surface' },
+                        { name: 'bottom', localPos: [cx, cy, cz - hy], normal: [0, 0, -1], role: 'surface' },
+                        { name: 'front', localPos: [cx, cy + hd, cz], normal: [0, 1, 0], role: 'surface' },
+                        { name: 'back', localPos: [cx, cy - hd, cz], normal: [0, -1, 0], role: 'surface' },
+                        { name: 'right', localPos: [cx + hw, cy, cz], normal: [1, 0, 0], role: 'surface' },
+                        { name: 'left', localPos: [cx - hw, cy, cz], normal: [-1, 0, 0], role: 'surface' }
+                    ];
+                    console.log('[BodySnap] result:', JSON.stringify(result.map(function (p) { return p.name + '=' + JSON.stringify(p.localPos); })));
+                    return result;
+                }
+            } catch (e) { console.error('[BodySnap] step1c error:', e); }
+        }
+
         // ── 2. Check semantic snap points in DB ──
         var dbEntry = null;
 
@@ -90,6 +153,7 @@ var SnapManager = (function () {
         if (dbEntry) {
             // Dynamic snap points (scale with dimensions)
             if (dbEntry.dynamic && typeof dbEntry.getSnapPoints === 'function') {
+                if (type === '__body__') console.log('[BodySnap] step2 DB dynamic: using box dimensions fallback. _bodyModelMeshes=', component._bodyModelMeshes);
                 return dbEntry.getSnapPoints(options);
             }
             // Static snap points
@@ -124,6 +188,7 @@ var SnapManager = (function () {
 
     /**
      * Generate 6 snap points (center of each face) from a mesh's bounding box.
+     * Uses hierarchy bounds (including child model meshes) if available.
      * Returns snap points in Descartes coordinates.
      *
      * @param {Object} component — The component object (has .body mesh)
@@ -135,23 +200,49 @@ var SnapManager = (function () {
 
         try {
             mesh.computeWorldMatrix(true);
-            var bb = mesh.getBoundingInfo().boundingBox;
-            // BJS bounding box extendSize is in local space
-            var ext = bb.extendSize; // BABYLON.Vector3
 
-            // BJS extendSize: x=X, y=Y(up), z=Z(forward)
-            // Descartes: X=x, Y=z(forward), Z=y(up)
-            var ex = ext.x; // Descartes X
-            var ey = ext.z; // Descartes Y (BJS Z)
-            var ez = ext.y; // Descartes Z (BJS Y)
+            var ex, ey, ez; // half-sizes in Descartes coords
+            var cx = 0, cy = 0, cz = 0; // center in Descartes coords
+
+            // Check if mesh has child meshes (e.g., loaded GLB model)
+            var childMeshes = mesh.getChildMeshes ? mesh.getChildMeshes(false) : [];
+            if (childMeshes.length > 0) {
+                // Use hierarchy bounding vectors for combined bounds
+                var bounds = mesh.getHierarchyBoundingVectors(true);
+                var meshInv = BABYLON.Matrix.Invert(mesh.getWorldMatrix());
+                // Transform world bounds to mesh-local space
+                var localMin = BABYLON.Vector3.TransformCoordinates(bounds.min, meshInv);
+                var localMax = BABYLON.Vector3.TransformCoordinates(bounds.max, meshInv);
+                // Ensure min < max (negative scaling can swap them)
+                var actualMin = BABYLON.Vector3.Minimize(localMin, localMax);
+                var actualMax = BABYLON.Vector3.Maximize(localMin, localMax);
+                var localCenter = actualMin.add(actualMax).scale(0.5);
+                var localSize = actualMax.subtract(actualMin);
+                // BJS → Descartes: X=X, Y=Z, Z=Y
+                ex = localSize.x / 2;
+                ey = localSize.z / 2;
+                ez = localSize.y / 2;
+                cx = localCenter.x;
+                cy = localCenter.z;
+                cz = localCenter.y;
+            } else {
+                // Single mesh: use its own bounding box
+                var bb = mesh.getBoundingInfo().boundingBox;
+                var ext = bb.extendSize;
+                // BJS extendSize: x=X, y=Y(up), z=Z(forward)
+                // Descartes: X=x, Y=z(forward), Z=y(up)
+                ex = ext.x;
+                ey = ext.z;
+                ez = ext.y;
+            }
 
             return [
-                { name: 'top', localPos: [0, 0, ez], normal: [0, 0, 1], role: 'surface' },
-                { name: 'bottom', localPos: [0, 0, -ez], normal: [0, 0, -1], role: 'surface' },
-                { name: 'front', localPos: [0, ey, 0], normal: [0, 1, 0], role: 'surface' },
-                { name: 'back', localPos: [0, -ey, 0], normal: [0, -1, 0], role: 'surface' },
-                { name: 'right', localPos: [ex, 0, 0], normal: [1, 0, 0], role: 'surface' },
-                { name: 'left', localPos: [-ex, 0, 0], normal: [-1, 0, 0], role: 'surface' }
+                { name: 'top', localPos: [cx, cy, cz + ez], normal: [0, 0, 1], role: 'surface' },
+                { name: 'bottom', localPos: [cx, cy, cz - ez], normal: [0, 0, -1], role: 'surface' },
+                { name: 'front', localPos: [cx, cy + ey, cz], normal: [0, 1, 0], role: 'surface' },
+                { name: 'back', localPos: [cx, cy - ey, cz], normal: [0, -1, 0], role: 'surface' },
+                { name: 'right', localPos: [cx + ex, cy, cz], normal: [1, 0, 0], role: 'surface' },
+                { name: 'left', localPos: [cx - ex, cy, cz], normal: [-1, 0, 0], role: 'surface' }
             ];
         } catch (e) {
             console.warn('SnapManager: Could not compute auto snap points', e);
@@ -577,6 +668,8 @@ var SnapManager = (function () {
 
         var selectedMesh = selectedComponent.body || selectedComponent;
         var ms = self.getMarkerScale(selectedMesh);
+        // Body is much larger than components — reduce marker size
+        if (selectedComponent.type === '__body__') ms *= 0.3;
         var previewRadius = self.PREVIEW_RADIUS * ms;
 
         // Show own snap points (Cyan, small)
@@ -626,6 +719,7 @@ var SnapManager = (function () {
                 if (isNearby) {
                     var otherMesh = other.body || other;
                     var msOther = self.getMarkerScale(otherMesh);
+                    if (other.type === '__body__') msOther *= 0.3;
                     var marker = BABYLON.MeshBuilder.CreateSphere(
                         'snapPrev_near_' + nearbyIdx, { diameter: 0.3 * msOther, segments: 6 }, scene
                     );
