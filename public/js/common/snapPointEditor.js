@@ -679,7 +679,17 @@ class SnapPointEditorClass {
             this.editorMesh.position = BABYLON.Vector3.Zero();
             this.editorMesh.rotationQuaternion = null;
             this.editorMesh.rotation = BABYLON.Vector3.Zero();
-            this.editorMesh.scaling = new BABYLON.Vector3(1, 1, 1);
+
+            // GLB models: match World Builder / Robot Configurator orientation.
+            // When BabylonJS loads a GLB, the __root__ node gets a rotationQuaternion
+            // for glTF→BabylonJS coordinate conversion. World Builder clears it and
+            // negates scaling.z to get the correct visual orientation. We must do the
+            // same here so the editor model matches the scene model exactly.
+            if (this.modelURL) {
+                this.editorMesh.scaling = new BABYLON.Vector3(1, 1, -1);
+            } else {
+                this.editorMesh.scaling = new BABYLON.Vector3(1, 1, 1);
+            }
 
             // Xóa rác markers/preview nếu có
             this.editorMesh.getChildMeshes(false).forEach(m => {
