@@ -146,6 +146,7 @@ class SnapPointEditorClass {
 
     _loadExistingData() {
         this.snapPoints = [];
+        this._appliedBboxToLoadedPts = false;
         let modelScale = this._getModelScale();
         let isModel = this.modelURL || (this.isBuiltIn && this.componentType !== '__body__');
 
