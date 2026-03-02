@@ -155,11 +155,8 @@ class SnapPointEditorClass {
             let unscaled = [...lp];
             let norm = [...(p.normal || [0, 0, 1])];
 
-            // Fix Z-axis flip during load: Models are Z-flipped in Configurator, but snap points are relative to the unflipped body
-            if (isModel) {
-                unscaled[1] = -unscaled[1]; // Descartes Y (BJS Z)
-                norm[1] = -norm[1]; // Flip normal to match
-            }
+            // No Z-axis flip needed! 
+            // The UI will operate in Unflipped Body Space natively!
             return {
                 name: p.name,
                 role: p.role || 'surface',
@@ -945,18 +942,13 @@ class SnapPointEditorClass {
 
         let center = bounds.max.add(bounds.min).scale(0.5);
 
-        // Compute bbox center in LOCAL space of the mesh (before position shift).
-        // This offset is the difference between GLB origin and bounding box center.
-        // The configurator body is centered at bbox center, so snap point positions
-        // must be adjusted by this offset when converting editor ↔ body coords.
-        let invMatrix = this.editorMesh.getWorldMatrix().clone().invert();
-        let localCenter = BABYLON.Vector3.TransformCoordinates(center, invMatrix);
-        // Store in BJS local and Descartes:
-        // Descartes: X = BJS X, Y = BJS Z, Z = BJS Y
-        this._bboxCenterLocal = localCenter.clone();
-        this._bboxCenterDesc = [localCenter.x, localCenter.z, localCenter.y];
-        console.log('[SnapEditor] _fitCamera: bboxCenterLocal=', localCenter.toString(),
-            'bboxCenterDesc=', this._bboxCenterDesc);
+        // Compute pure translation offset (World space shift of the origin)
+        // This makes Editor view strictly map to Body Space without negative scaling issues.
+        this._bboxOffBJS = this.editorMesh.position.subtract(center);
+
+        // Descartes offset from body origin to Tinkercad origin
+        this._bboxCenterDesc = [this._bboxOffBJS.x, this._bboxOffBJS.z, this._bboxOffBJS.y];
+        console.log('[SnapEditor] _fitCamera: bboxCenterDesc=', this._bboxCenterDesc);
         console.log('[SnapEditor] _fitCamera: editorMesh.scaling=', this.editorMesh.scaling.toString());
 
         console.log('[SnapEditor] _fitCamera: center_world=', center.toString(), 'meshPos before=', this.editorMesh.position.toString());
@@ -977,9 +969,9 @@ class SnapPointEditorClass {
 
             this.snapPoints.forEach(pt => {
                 if (pt._needsBboxOff) {
-                    pt.position[0] += bboxOff[0];
-                    pt.position[1] += bboxOff[1];
-                    pt.position[2] += bboxOff[2];
+                    pt.position[0] -= bboxOff[0];
+                    pt.position[1] -= bboxOff[1];
+                    pt.position[2] -= bboxOff[2];
                     delete pt._needsBboxOff;
                     needsRefresh = true;
                 }
@@ -1093,10 +1085,9 @@ class SnapPointEditorClass {
         let worldPoint = pickInfo.pickedPoint;
         let worldNormal = pickInfo.getNormal(true, true) || new BABYLON.Vector3(0, 1, 0);
 
-        // Chuyển về local space của editorMesh
-        let invMatrix = this.editorMesh.getWorldMatrix().clone().invert();
-        let localPoint = BABYLON.Vector3.TransformCoordinates(worldPoint, invMatrix);
-        let localNormal = BABYLON.Vector3.TransformNormal(worldNormal, invMatrix).normalize();
+        // P_bjs = P_world - bboxOffBJS
+        let localPoint = worldPoint.subtract(this._bboxOffBJS || BABYLON.Vector3.Zero());
+        let localNormal = worldNormal; // No flip needed
 
         // Chuyển sang Descartes System: Descartes X=BJS X, Descartes Y=BJS Z, Descartes Z=BJS Y
         let ptPos = [localPoint.x, localPoint.z, localPoint.y];
@@ -1148,35 +1139,27 @@ class SnapPointEditorClass {
             bounds = { min: bi.boundingBox.minimumWorld, max: bi.boundingBox.maximumWorld };
         }
 
-        // Transform world bounds → local space của editorMesh
-        let invMatrix = this.editorMesh.getWorldMatrix().clone().invert();
-        let corners = [
-            new BABYLON.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
-            new BABYLON.Vector3(bounds.max.x, bounds.min.y, bounds.min.z),
-            new BABYLON.Vector3(bounds.min.x, bounds.max.y, bounds.min.z),
-            new BABYLON.Vector3(bounds.max.x, bounds.max.y, bounds.min.z),
-            new BABYLON.Vector3(bounds.min.x, bounds.min.y, bounds.max.z),
-            new BABYLON.Vector3(bounds.max.x, bounds.min.y, bounds.max.z),
-            new BABYLON.Vector3(bounds.min.x, bounds.max.y, bounds.max.z),
-            new BABYLON.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
-        ];
+        // Thay vì dùng invMatrix và localMin/Max của editorMesh bị lật ngược (scaling.z=-1), 
+        // Lấy tâm và kích thước từ raw bounds, sau đó trừ đi offset giống như picking.
+        let cx = bounds.max.x + bounds.min.x; cx /= 2;
+        let cy = bounds.max.y + bounds.min.y; cy /= 2;
+        let cz = bounds.max.z + bounds.min.z; cz /= 2;
 
-        let localMin = new BABYLON.Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
-        let localMax = new BABYLON.Vector3(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+        let ex = bounds.max.x - cx;
+        let ey = bounds.max.y - cy;
+        let ez = bounds.max.z - cz;
 
-        corners.forEach(c => {
-            let localC = BABYLON.Vector3.TransformCoordinates(c, invMatrix);
-            localMin.minimizeInPlace(localC);
-            localMax.maximizeInPlace(localC);
-        });
+        let ox = this._bboxOffBJS?.x || 0;
+        let oy = this._bboxOffBJS?.y || 0;
+        let oz = this._bboxOffBJS?.z || 0;
 
-        // BabylonJS local: X=left/right, Y=up/down, Z=front/back
-        // Descartes: X_d = BJS_X, Y_d = BJS_Z (front/back), Z_d = BJS_Y (up/down)
+        let minX = cx - ex - ox; let maxX = cx + ex - ox;
+        let minY = cy - ey - oy; let maxY = cy + ey - oy;
+        let minZ = cz - ez - oz; let maxZ = cz + ez - oz;
 
-        // Tâm trong BJS local
-        let cx_bjs = (localMin.x + localMax.x) / 2;
-        let cy_bjs = (localMin.y + localMax.y) / 2;
-        let cz_bjs = (localMin.z + localMax.z) / 2;
+        let cx_bjs = cx - ox;
+        let cy_bjs = cy - oy;
+        let cz_bjs = cz - oz;
 
         // Tâm trong Descartes
         let cx_d = cx_bjs;
@@ -1190,32 +1173,32 @@ class SnapPointEditorClass {
         let autoPoints = [
             {
                 name: "top",
-                pos: [r(cx_d), r(cy_d), r(localMax.y)],  // Descartes Z+ = BJS Y+
+                pos: [r(cx_d), r(cy_d), r(maxY)],  // Descartes Z+ = BJS Y+
                 norm: [0, 0, 1]
             },
             {
                 name: "bottom",
-                pos: [r(cx_d), r(cy_d), r(localMin.y)],  // Descartes Z- = BJS Y-
+                pos: [r(cx_d), r(cy_d), r(minY)],  // Descartes Z- = BJS Y-
                 norm: [0, 0, -1]
             },
             {
                 name: "front",
-                pos: [r(cx_d), r(localMax.z), r(cz_d)],  // Descartes Y+ = BJS Z+ = forward
+                pos: [r(cx_d), r(maxZ), r(cz_d)],  // Descartes Y+ = BJS Z+ = forward
                 norm: [0, 1, 0]
             },
             {
                 name: "back",
-                pos: [r(cx_d), r(localMin.z), r(cz_d)],  // Descartes Y- = BJS Z- = backward
+                pos: [r(cx_d), r(minZ), r(cz_d)],  // Descartes Y- = BJS Z- = backward
                 norm: [0, -1, 0]
             },
             {
                 name: "left",
-                pos: [r(localMin.x), r(cy_d), r(cz_d)],  // Descartes X- = BJS X-
+                pos: [r(minX), r(cy_d), r(cz_d)],  // Descartes X- = BJS X-
                 norm: [-1, 0, 0]
             },
             {
                 name: "right",
-                pos: [r(localMax.x), r(cy_d), r(cz_d)],  // Descartes X+ = BJS X+
+                pos: [r(maxX), r(cy_d), r(cz_d)],  // Descartes X+ = BJS X+
                 norm: [1, 0, 0]
             }
         ];
@@ -1354,19 +1337,17 @@ class SnapPointEditorClass {
             return m;
         })();
 
-        let editorWorldMatrix = this.editorMesh.getWorldMatrix();
-
         this.snapPoints.forEach((pt, idx) => {
             let pos = pt.position || [0, 0, 0];
             let norm = pt.normal || [0, 1, 0];
 
-            // Descartes → BabylonJS: X_bjs=X_d, Y_bjs=Z_d, Z_bjs=Y_d
             let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
             let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
 
-            // Transform local → world của editorMesh
-            let worldPos = BABYLON.Vector3.TransformCoordinates(localPos, editorWorldMatrix);
-            let worldNorm = BABYLON.Vector3.TransformNormal(localNorm, editorWorldMatrix.getRotationMatrix()).normalize();
+            // P_world = P_ui_bjs + bboxOffBJS
+            let worldPos = localPos.add(this._bboxOffBJS || BABYLON.Vector3.Zero());
+            // Editor Mesh rotation is zero, so worldNorm equals localNorm
+            let worldNorm = localNorm;
 
             // Sphere marker
             let sphere = BABYLON.MeshBuilder.CreateSphere("snapSphere_" + idx, {
@@ -1435,9 +1416,62 @@ class SnapPointEditorClass {
         let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
         let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
 
-        let editorWorldMatrix = this.editorMesh.getWorldMatrix();
-        let worldPos = BABYLON.Vector3.TransformCoordinates(localPos, editorWorldMatrix);
-        let worldNorm = BABYLON.Vector3.TransformNormal(localNorm, editorWorldMatrix.getRotationMatrix()).normalize();
+        // P_world = P_ui_bjs + bboxOffBJS
+        let worldPos = localPos.add(this._bboxOffBJS || BABYLON.Vector3.Zero());
+        // Editor Mesh rotation is always Zero, so worldNorm equals localNorm
+        let worldNorm = localNorm;
+
+        let normalLen = this._modelSize * 0.18;
+
+        group.sphere.position = worldPos.clone();
+
+        if (group.cyl) {
+            group.cyl.position = worldPos.add(worldNorm.scale(normalLen / 2));
+            let axisY = new BABYLON.Vector3(0, 1, 0);
+            let dot = BABYLON.Vector3.Dot(axisY, worldNorm);
+            if (Math.abs(dot) < 0.9999) {
+                let cross = BABYLON.Vector3.Cross(axisY, worldNorm);
+                let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+                group.cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
+            } else if (dot < 0) {
+                group.cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
+            } else {
+                group.cyl.rotationQuaternion = BABYLON.Quaternion.Identity();
+            }
+        }
+    }
+
+    _highlightMarker(idx) {
+        if (!this.scene) return;
+
+        let yellowMat = this.scene.getMaterialByName("snapYellow");
+        let redMat = this.scene.getMaterialByName("snapRed");
+
+        this.pointMarkers.forEach((group, i) => {
+            if (group.sphere) {
+                group.sphere.material = (group.idx === idx) ? redMat : yellowMat;
+            }
+        });
+    }
+
+    _updateMarkerTransform(idx) {
+        if (idx < 0 || idx >= this.pointMarkers.length) return;
+        if (!this.editorMesh) return;
+
+        let pt = this.snapPoints[idx];
+        let group = this.pointMarkers[idx];
+        if (!group || !group.sphere) return;
+
+        let pos = pt.position || [0, 0, 0];
+        let norm = pt.normal || [0, 1, 0];
+
+        let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+        let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
+
+        // P_world = P_ui_bjs + bboxOffBJS
+        let worldPos = localPos.add(this._bboxOffBJS || BABYLON.Vector3.Zero());
+        // Editor Mesh rotation is always Zero, so worldNorm equals localNorm
+        let worldNorm = localNorm;
 
         let normalLen = this._modelSize * 0.18;
 
@@ -1484,22 +1518,16 @@ class SnapPointEditorClass {
 
         let dbFormatPoints = this.snapPoints.map(p => {
             let pos = p.position || p.localPos || [0, 0, 0];
-            // Convert: GLB-origin-relative → body-center-relative
-            // WE NOW SAVE WITHOUT SCALE! scale is applied purely at runtime in SnapManager.
+            // Convert: Tinkercad-origin-relative → body-center-relative
+            // WE NOW SAVE WITHOUT SCALE AND WITHOUT Z-FLIP!
+            // UI pos = localPos - bboxOff -> localPos = pos + bboxOff
             let adjusted = [
-                pos[0] - bboxOff[0],
-                pos[1] - bboxOff[1],
-                pos[2] - bboxOff[2]
+                pos[0] + bboxOff[0],
+                pos[1] + bboxOff[1],
+                pos[2] + bboxOff[2]
             ];
 
             let norm = [...(p.normal || [0, 0, 1])];
-
-            // Fix Z-axis flip during save: Models are Z-flipped in Configurator (scaling.z = -scale), 
-            // but these points are saved relative to the unflipped body box.
-            if (isModel) {
-                adjusted[1] = -adjusted[1]; // Descartes Y (BJS Z)
-                norm[1] = -norm[1];         // Flip normal as well
-            }
 
             return {
                 name: p.name,
