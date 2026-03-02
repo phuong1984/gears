@@ -109,13 +109,8 @@ class SnapPointEditorClass {
     }
 
     close() {
-        if (this._axesEngine) {
-            this._axesEngine.dispose();
-            this._axesEngine = null;
-        }
-        if (this._axesContainer && this._axesContainer.parentNode) {
-            this._axesContainer.parentNode.removeChild(this._axesContainer);
-            this._axesContainer = null;
+        if (this.editorViewCube) {
+            this.editorViewCube = null;
         }
         // Cleanup preview marker
         if (this._previewMarker) { this._previewMarker.dispose(); this._previewMarker = null; }
@@ -303,6 +298,12 @@ class SnapPointEditorClass {
                         </div>
                         <div class="snap-editor-loading" id="snap-editor-loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#aaa;font-size:1rem;pointer-events:none;">
                             <i class="fas fa-spinner fa-spin"></i> Đang tải model...
+                        </div>
+                        <div class="cameraPresets">
+                            <div class="cameraPresetBtn" data-preset="front" data-preset-right="back" title="Left Click: Front&#10;Right Click: Back">Front/Back</div>
+                            <div class="cameraPresetBtn" data-preset="left" data-preset-right="right" title="Left Click: Left&#10;Right Click: Right">Left/Right</div>
+                            <div class="cameraPresetBtn" data-preset="top" data-preset-right="bottom" title="Left Click: Top&#10;Right Click: Bottom">Top/Bottom</div>
+                            <div class="cameraPresetBtn" data-preset="default3d" title="Default 3D View (Numpad 5)">3D</div>
                         </div>
                     </div>
                     <div class="snap-editor-sidebar">
@@ -514,6 +515,7 @@ class SnapPointEditorClass {
 
         this.engine.runRenderLoop(() => {
             if (this.scene) this.scene.render();
+            if (this.editorViewCube) this.editorViewCube.update();
         });
 
         window.addEventListener("resize", this._onResize = () => {
@@ -530,154 +532,33 @@ class SnapPointEditorClass {
                 this._addPointFromPick(this._lastPickResult);
             }
         });
-        // Create axes indicator
-        this._createAxesIndicator();
+
+        // Camera preset buttons
+        let container = this.container;
+        if (container) {
+            let presetBtns = container.querySelectorAll('.cameraPresetBtn');
+            presetBtns.forEach(btn => {
+                btn.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) {
+                        let preset = btn.dataset.preset;
+                        if (preset && typeof cameraUtils !== 'undefined') cameraUtils.setCameraPreset(preset, this.camera, this.scene);
+                    } else if (e.button === 2) {
+                        let presetRight = btn.dataset.presetRight;
+                        if (presetRight && typeof cameraUtils !== 'undefined') cameraUtils.setCameraPreset(presetRight, this.camera, this.scene);
+                    }
+                });
+                btn.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+            });
+        }
+
+        // Create ViewCube axes indicator
+        this.editorViewCube = new ViewCubeClass();
+        this.editorViewCube.init(this.canvas.parentElement, this.camera, this.scene);
     }
 
-    /**
-     * Create a 3D axes indicator in the bottom-left corner of the editor viewport.
-     * Shows X(red), Y(green), Z(blue) arrows synced with the main camera rotation.
-     * Uses Descartes convention: X=right, Y=forward, Z=up.
-     */
-    _createAxesIndicator() {
-        // Create a second viewport in bottom-left corner
-        let axesSize = 120; // px size
 
-        // Create a container div for the axes viewport
-        let axesContainer = document.createElement('div');
-        axesContainer.className = 'snap-editor-axes';
-        axesContainer.style.cssText = `
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            width: ${axesSize}px;
-            height: ${axesSize}px;
-            pointer-events: none;
-            z-index: 10;
-        `;
-
-        let axesCanvas = document.createElement('canvas');
-        axesCanvas.width = axesSize * (window.devicePixelRatio || 1);
-        axesCanvas.height = axesSize * (window.devicePixelRatio || 1);
-        axesCanvas.style.cssText = `width: ${axesSize}px; height: ${axesSize}px;`;
-        axesContainer.appendChild(axesCanvas);
-
-        let viewportEl = this.canvas.parentElement;
-        viewportEl.appendChild(axesContainer);
-
-        // Create axes engine and scene
-        let axesEngine = new BABYLON.Engine(axesCanvas, true, { preserveDrawingBuffer: true, stencil: false });
-        let axesScene = new BABYLON.Scene(axesEngine);
-        axesScene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // Transparent
-
-        let axesCam = new BABYLON.ArcRotateCamera("axesCam",
-            this.camera.alpha, this.camera.beta, 5,
-            BABYLON.Vector3.Zero(), axesScene);
-        axesCam.minZ = 0.01;
-
-        // Simple lighting
-        let axesLight = new BABYLON.HemisphericLight("axesLight", new BABYLON.Vector3(0, 1, 0), axesScene);
-        axesLight.intensity = 1.0;
-
-        // Create axis lines and arrows (Descartes: X=BJS_X, Y=BJS_Z, Z=BJS_Y)
-        let axisLen = 1.5;
-        let arrowSize = 0.15;
-
-        // Helper: create one axis arrow
-        const createAxis = (name, dir, color) => {
-            let mat = new BABYLON.StandardMaterial("axisMat_" + name, axesScene);
-            mat.emissiveColor = color;
-            mat.disableLighting = true;
-
-            // Shaft (thin cylinder)
-            let shaft = BABYLON.MeshBuilder.CreateCylinder("axisShaft_" + name, {
-                height: axisLen,
-                diameterTop: 0.04,
-                diameterBottom: 0.04
-            }, axesScene);
-            shaft.material = mat;
-
-            // Cone tip
-            let cone = BABYLON.MeshBuilder.CreateCylinder("axisCone_" + name, {
-                height: arrowSize * 2,
-                diameterTop: 0,
-                diameterBottom: arrowSize
-            }, axesScene);
-            cone.material = mat;
-
-            // Position along direction
-            let halfLen = axisLen / 2;
-            let axisY = new BABYLON.Vector3(0, 1, 0);
-            let dot = BABYLON.Vector3.Dot(axisY, dir);
-
-            if (Math.abs(dot) < 0.9999) {
-                let cross = BABYLON.Vector3.Cross(axisY, dir).normalize();
-                let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-                shaft.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross, angle);
-                cone.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross, angle);
-            } else if (dot < 0) {
-                shaft.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
-                cone.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
-            }
-
-            shaft.position = dir.scale(halfLen);
-            cone.position = dir.scale(axisLen);
-
-            // Label using DynamicTexture
-            let labelPlane = BABYLON.MeshBuilder.CreatePlane("axisLabel_" + name, { size: 0.5 }, axesScene);
-            let labelTex = new BABYLON.DynamicTexture("axisLabelTex_" + name, { width: 64, height: 64 }, axesScene);
-            let labelMat = new BABYLON.StandardMaterial("axisLabelMat_" + name, axesScene);
-            labelMat.diffuseTexture = labelTex;
-            labelMat.emissiveTexture = labelTex;
-            labelMat.disableLighting = true;
-            labelMat.backFaceCulling = false;
-            labelMat.useAlphaFromDiffuseTexture = true;
-            labelTex.hasAlpha = true;
-            labelPlane.material = labelMat;
-            labelPlane.position = dir.scale(axisLen + 0.35);
-            labelPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
-
-            // Draw label text
-            let ctx = labelTex.getContext();
-            ctx.clearRect(0, 0, 64, 64);
-            ctx.font = "bold 48px Arial";
-            ctx.fillStyle = color.toHexString();
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(name, 32, 32);
-            labelTex.update();
-
-            return { shaft, cone, labelPlane };
-        };
-
-        // Descartes axes in BabylonJS space:
-        // Descartes X = BJS X (red)
-        // Descartes Y = BJS Z (green) 
-        // Descartes Z = BJS Y (blue)
-        createAxis("X", new BABYLON.Vector3(1, 0, 0), new BABYLON.Color3(1, 0.2, 0.2));
-        createAxis("Y", new BABYLON.Vector3(0, 0, 1), new BABYLON.Color3(0.2, 0.8, 0.2));
-        createAxis("Z", new BABYLON.Vector3(0, 1, 0), new BABYLON.Color3(0.3, 0.5, 1));
-
-        // Small center sphere
-        let centerSphere = BABYLON.MeshBuilder.CreateSphere("axesCenter", { diameter: 0.15 }, axesScene);
-        let centerMat = new BABYLON.StandardMaterial("axesCenterMat", axesScene);
-        centerMat.emissiveColor = new BABYLON.Color3(0.8, 0.8, 0.8);
-        centerMat.disableLighting = true;
-        centerSphere.material = centerMat;
-
-        // Sync axes camera with main camera
-        axesEngine.runRenderLoop(() => {
-            if (this.camera && axesScene) {
-                axesCam.alpha = this.camera.alpha;
-                axesCam.beta = this.camera.beta;
-                axesScene.render();
-            }
-        });
-
-        // Store for cleanup
-        this._axesEngine = axesEngine;
-        this._axesContainer = axesContainer;
-    }
 
     /**
      * BUG FIX 1: Thay thế SceneSerializer bằng load từ modelURL (hoặc clone primitive)

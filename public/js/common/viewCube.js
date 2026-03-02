@@ -3,17 +3,24 @@
  * Click faces to switch camera preset views
  * Includes Descartes XYZ axes at the left-front-bottom vertex
  */
-var viewCube = new function () {
+function ViewCubeClass() {
     var self = this;
     this.cubeEl = null;
     this.containerEl = null;
     this.axesEl = null;
 
+    this.customCamera = null;
+    this.customScene = null;
+
     /**
      * Initialize view cube inside a parent element
      * @param {HTMLElement|string} parent - container element or CSS selector
+     * @param {object} [customCamera] - Optional custom camera
+     * @param {object} [customScene] - Optional custom scene
      */
-    this.init = function (parent) {
+    this.init = function (parent, customCamera, customScene) {
+        self.customCamera = customCamera;
+        self.customScene = customScene;
         var parentEl = typeof parent === 'string' ? document.querySelector(parent) : parent;
         if (!parentEl) return;
 
@@ -40,7 +47,7 @@ var viewCube = new function () {
             face.dataset.preset = f.preset;
             face.addEventListener('click', function () {
                 if (typeof cameraUtils !== 'undefined') {
-                    cameraUtils.setCameraPreset(f.preset);
+                    cameraUtils.setCameraPreset(f.preset, self.customCamera, self.customScene);
                 }
             });
             self.cubeEl.appendChild(face);
@@ -84,9 +91,11 @@ var viewCube = new function () {
      * Update cube rotation to match camera (call in render loop)
      */
     this.update = function () {
-        if (!self.cubeEl || !babylon || !babylon.cameraArc) return;
-        var alpha = babylon.cameraArc.alpha;
-        var beta = babylon.cameraArc.beta;
+        var camera = self.customCamera || (typeof babylon !== 'undefined' ? babylon.cameraArc : null);
+        if (!self.cubeEl || !camera) return;
+
+        var alpha = camera.alpha;
+        var beta = camera.beta;
 
         var rotX = (beta * 180 / Math.PI) - 90;
         var rotY = -(alpha * 180 / Math.PI + 90);
@@ -95,3 +104,5 @@ var viewCube = new function () {
             'rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg)';
     };
 };
+
+window.viewCube = new ViewCubeClass();

@@ -301,3 +301,15 @@
     vertical-align: middle;
     margin: 0 2px;
 }
+
+/* Overrides for ViewCube and CameraPresets inside Snap Editor */
+.snap-editor-viewport .cameraPresets {
+    right: 14px;
+    bottom: 14px;
+    left: auto;
+}
+
+.snap-editor-viewport .viewCube-container {
+    left: 14px;
+    bottom: 44px;
+}

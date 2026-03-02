@@ -14,9 +14,9 @@ var cameraUtils = new function () {
      * @param {object} opts - { alpha, beta, radius, target }
      * @param {function} [callback] - Called when animation completes
      */
-    this.animateCameraTo = function (opts, callback) {
-        var camera = babylon.cameraArc;
-        var scene = babylon.scene;
+    this.animateCameraTo = function (opts, callback, customCamera, customScene) {
+        var camera = customCamera || babylon.cameraArc;
+        var scene = customScene || babylon.scene;
         var totalFrames = Math.round(self.ANIMATION_DURATION / 1000 * self.FRAMES_PER_SECOND);
 
         // Stop any running camera animations
@@ -121,26 +121,28 @@ var cameraUtils = new function () {
      * Set camera to a named preset with animation
      * @param {string} presetName - one of: front, back, top, bottom, left, right, default3d
      */
-    this.setCameraPreset = function (presetName) {
+    this.setCameraPreset = function (presetName, customCamera, customScene) {
         var preset = self.presets[presetName];
         if (!preset) {
             console.warn('[cameraUtils] Unknown preset:', presetName);
             return;
         }
 
-        // If camera is in orthoTop mode, switch to Arc first
-        if (babylon.cameraMode === 'orthoTop') {
-            babylon.setCameraMode('arc');
+        if (!customCamera) {
+            // If camera is in orthoTop mode, switch to Arc first
+            if (babylon.cameraMode === 'orthoTop') {
+                babylon.setCameraMode('arc');
+            }
+
+            // Unlock target if locked
+            if (babylon.cameraArc.lockedTarget) {
+                var target = babylon.cameraArc.getTarget().clone();
+                babylon.cameraArc.lockedTarget = null;
+                babylon.cameraArc.setTarget(target);
+            }
         }
 
-        // Unlock target if locked
-        if (babylon.cameraArc.lockedTarget) {
-            var target = babylon.cameraArc.getTarget().clone();
-            babylon.cameraArc.lockedTarget = null;
-            babylon.cameraArc.setTarget(target);
-        }
-
-        self.animateCameraTo(preset);
+        self.animateCameraTo(preset, null, customCamera, customScene);
     };
 
     /**
