@@ -27,21 +27,20 @@ function CustomGizmo(scene) {
 
     // Config — Move
     var SHAFT_LENGTH = 0.8;
-    var SHAFT_RADIUS = 0.024;
+    var SHAFT_RADIUS = 0.04;    // Thickened for easier picking
     var CONE_HEIGHT = 0.2;
-    var CONE_RADIUS = 0.07;
+    var CONE_RADIUS = 0.1;      // Thickened
     var SCALE_FACTOR = 0.24;
-    // (plane handles and center sphere removed — now handled by toolbar modes)
 
     // Config — Rotate
     var TORUS_DIAMETER = 1.6;
-    var TORUS_THICKNESS = 0.03;
+    var TORUS_THICKNESS = 0.06; // Thickened
     var TORUS_TESSELLATION = 32;
 
     // Config — Scale
     var SCALE_LINE_LENGTH = 0.8;
-    var SCALE_LINE_RADIUS = 0.018;
-    var SCALE_CUBE_SIZE = 0.1;
+    var SCALE_LINE_RADIUS = 0.03;
+    var SCALE_CUBE_SIZE = 0.18;
 
     var COLORS = {
         x: new BABYLON.Color3(0.9, 0.2, 0.2),
@@ -174,6 +173,7 @@ function CustomGizmo(scene) {
         };
 
         dragBehavior.onDragStartObservable.add(function () {
+            if (scene.activeCamera) scene.activeCamera.detachControl();
             shaft.material = hoverMat;
             cone.material = hoverMat;
             _snapState.isSnapped = false;
@@ -282,6 +282,7 @@ function CustomGizmo(scene) {
         });
 
         dragBehavior.onDragEndObservable.add(function () {
+            if (scene.activeCamera) scene.activeCamera.attachControl();
             shaft.material = mat;
             cone.material = mat;
             _snapState.isSnapped = false;
@@ -434,6 +435,7 @@ function CustomGizmo(scene) {
         var accumulatedRotation = 0;
 
         dragBehavior.onDragStartObservable.add(function (event) {
+            if (scene.activeCamera) scene.activeCamera.detachControl();
             torus.material = hoverMat;
             accumulatedRotation = 0;
 
@@ -476,6 +478,7 @@ function CustomGizmo(scene) {
         });
 
         dragBehavior.onDragEndObservable.add(function () {
+            if (scene.activeCamera) scene.activeCamera.attachControl();
             torus.material = mat;
             // Report the target mesh's current rotation
             var rot = self.targetMesh.rotationQuaternion
@@ -565,6 +568,7 @@ function CustomGizmo(scene) {
         var dragStartPos = null;
 
         dragBehavior.onDragStartObservable.add(function (event) {
+            if (scene.activeCamera) scene.activeCamera.detachControl();
             cube.material = hoverMat;
             // Capture initial mesh scaling
             initialScale = self.targetMesh.scaling.clone();
@@ -593,6 +597,7 @@ function CustomGizmo(scene) {
         });
 
         dragBehavior.onDragEndObservable.add(function () {
+            if (scene.activeCamera) scene.activeCamera.attachControl();
             cube.material = mat;
             // Report the target mesh's current scaling
             var scl = self.targetMesh.scaling.clone();
@@ -667,16 +672,51 @@ function CustomGizmo(scene) {
 
     // ===================== Update & Lifecycle =====================
 
+    /** Calculate scale based on object size + distance */
+    this._getDynamicScale = function () {
+        if (!self.targetMesh) return 1;
+        var min = new BABYLON.Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
+        var max = new BABYLON.Vector3(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
+
+        var meshes = self.targetMesh.getChildMeshes ? self.targetMesh.getChildMeshes(false) : [];
+        if (meshes.length === 0) meshes = [self.targetMesh];
+
+        meshes.forEach(function (m) {
+            if (!m.getBoundingInfo || m.name.indexOf('snap') > -1 || m.name.indexOf('gizmo') > -1) return;
+            m.computeWorldMatrix(true);
+            var b = m.getBoundingInfo().boundingBox;
+            if (b.minimumWorld.x > 10000 || b.maximumWorld.x < -10000) return;
+            min = BABYLON.Vector3.Minimize(min, b.minimumWorld);
+            max = BABYLON.Vector3.Maximize(max, b.maximumWorld);
+        });
+
+        var diag = 1.0;
+        if (min.x <= max.x) {
+            diag = BABYLON.Vector3.Distance(min, max);
+        }
+
+        // Base Gizmo Shaft Length is ~1.0 unit (0.8 shaft + 0.2 cone).
+        // To protrude 20% past the mesh bound radius (diag/2), we use:
+        var requiredScale = (diag * 0.5 * 1.5);
+        if (requiredScale < 1.0) requiredScale = 1.0;
+
+        // Apply screen distance compensation (zoom preservation)
+        var cam = scene.activeCamera;
+        var dist = cam ? BABYLON.Vector3.Distance(cam.position, self.rootNode.position) : 5;
+        var sf = self.scaleFactor || SCALE_FACTOR; // typically 0.24
+        var distScale = Math.min(Math.max(dist * sf, 0.5), 15);
+
+        // Max guarantees it's both visible from far away AND protruding past the mesh bounds!
+        return Math.max(requiredScale, distScale);
+    };
+
     /** Update gizmo position and scale (call in render loop) */
     this.update = function () {
         if (!self.rootNode || !self.targetMesh) return;
         self.targetMesh.computeWorldMatrix(true);
         self.rootNode.position.copyFrom(self.targetMesh.absolutePosition);
 
-        var cam = scene.activeCamera;
-        var dist = BABYLON.Vector3.Distance(cam.position, self.rootNode.position);
-        var sf = self.scaleFactor || SCALE_FACTOR;
-        var scale = Math.min(Math.max(dist * sf, 0.5), 15);
+        var scale = self._getDynamicScale();
         self.rootNode.scaling.set(scale, scale, scale);
     };
 
