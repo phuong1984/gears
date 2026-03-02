@@ -1047,9 +1047,17 @@ var builder = new function () {
     self.undoMgr.setupKeyboardShortcuts();
 
     // Camera preset buttons
-    $('.cameraPresetBtn').click(function () {
-      var preset = $(this).data('preset');
-      cameraUtils.setCameraPreset(preset);
+    $('.cameraPresetBtn').on('mousedown', function (e) {
+      if (e.button === 0) {
+        var preset = $(this).data('preset');
+        if (preset) cameraUtils.setCameraPreset(preset);
+      } else if (e.button === 2) {
+        var presetRight = $(this).data('preset-right');
+        if (presetRight) cameraUtils.setCameraPreset(presetRight);
+      }
+    });
+    $('.cameraPresetBtn').on('contextmenu', function (e) {
+      e.preventDefault();
     });
 
     babylon.scene.physicsEnabled = false;
