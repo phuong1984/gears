@@ -677,7 +677,7 @@ function CustomGizmo(scene) {
         var dist = BABYLON.Vector3.Distance(cam.position, self.rootNode.position);
         var sf = self.scaleFactor || SCALE_FACTOR;
         var scale = Math.min(Math.max(dist * sf, 0.5), 15);
-        self.rootNode.scaling.setAll(scale);
+        self.rootNode.scaling.set(scale, scale, scale);
     };
 
     /** Remove gizmo from scene */

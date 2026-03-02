@@ -35,23 +35,70 @@ var SnapManager = (function () {
     /** Whether snapping is currently enabled */
     self.enabled = true;
 
-    /**
-     * Compute a visual marker scale from a mesh's bounding box.
-     * Returns a multiplier so markers are ~7% of the object's average dimension.
-     * Clamped so markers are never invisibly small or absurdly large.
-     */
     self.getMarkerScale = function (mesh) {
-        if (!mesh || !mesh.getBoundingInfo) return 1.0;
-        try {
-            mesh.computeWorldMatrix(true);
-            var ext = mesh.getBoundingInfo().boundingBox.extendSizeWorld;
-            var avg = (ext.x + ext.y + ext.z) / 3;
-            // Base markers are designed for objects ~1 unit in radius (avg extend ~0.5)
-            // So scale = avg / 0.5 = avg * 2, but we want ~7% of diameter → target ratio
-            var s = Math.max(avg * 2, 0.5);  // at least 0.5 to avoid invisibly small
-            return Math.min(s, 20);           // cap at 20 to avoid absurdly large
-        } catch (e) {
-            return 1.0;
+        // Return 1.0; we no longer compute static scales based on bounding box.
+        // We now rely on dynamic screen-space scaling per-frame.
+        return 1.0;
+    };
+
+    self.getDynamicScale = function (parentMesh) {
+        // Standardized size for all snap points (like standardized Lego connect pegs)
+        // This ensures a color sensor and GPS sensor have the exact same point sizes.
+        var baseSize = 0.7;
+
+        if (!parentMesh) return baseSize;
+
+        parentMesh.computeWorldMatrix(true);
+        var scale = 1.0;
+        if (parentMesh.absoluteScaling) {
+            // If the object is intentionally scaled up/down via Gizmo, scale the point too
+            scale = (Math.abs(parentMesh.absoluteScaling.x) + Math.abs(parentMesh.absoluteScaling.y) + Math.abs(parentMesh.absoluteScaling.z)) / 3.0;
+        }
+
+        var s = baseSize * scale;
+
+        // Safety bounds
+        if (s < 0.01) s = 0.01;
+        if (s > 2.0) s = 2.0;
+
+        return s;
+    };
+
+    /** Active observable for scaling updates */
+    self._resizeObservable = null;
+
+    self._ensureObservable = function (scene) {
+        if (self._resizeObservable || !scene) return;
+        self._resizeObservable = scene.onBeforeRenderObservable.add(function () {
+            for (var i = 0; i < self._snapIndicators.length; i++) {
+                var w = self._snapIndicators[i];
+                if (w && !w._isLine) {
+                    var s = self.getDynamicScale(w._parentMesh);
+                    w.scaling.set(s, s, s);
+                }
+            }
+            for (var i = 0; i < self._debugMarkers.length; i++) {
+                var w = self._debugMarkers[i];
+                if (w && !w._isLine) {
+                    var s = self.getDynamicScale(w._parentMesh);
+                    w.scaling.set(s, s, s);
+                }
+            }
+            for (var i = 0; i < self._previewMarkers.length; i++) {
+                var w = self._previewMarkers[i];
+                if (w && !w._isLine) {
+                    var s = self.getDynamicScale(w._parentMesh);
+                    if (w._isBody) s = s * 0.8;
+                    w.scaling.set(s, s, s);
+                }
+            }
+        });
+    };
+
+    self._removeObservable = function (scene) {
+        if (self._resizeObservable && scene) {
+            scene.onBeforeRenderObservable.remove(self._resizeObservable);
+            self._resizeObservable = null;
         }
     };
 
@@ -519,79 +566,83 @@ var SnapManager = (function () {
 
         var src = snapResult.source;
         var tgt = snapResult.target;
-        var ms = (snapResult.sourceComponent && snapResult.sourceComponent.body)
-            ? self.getMarkerScale(snapResult.sourceComponent.body) : 1.0;
+        var axisY = new BABYLON.Vector3(0, 1, 0);
+
+        function createOrientedWrapper(name, pos, norm, isBodyParent, parentMesh) {
+            var wrapper = new BABYLON.TransformNode(name + '_wrapper', scene);
+            wrapper.position = pos.clone();
+            var dot = BABYLON.Vector3.Dot(axisY, norm);
+            if (Math.abs(dot) < 0.9999) {
+                var cross = BABYLON.Vector3.Cross(axisY, norm);
+                var angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+                wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
+            } else if (dot < 0) {
+                wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
+            } else {
+                wrapper.rotationQuaternion = BABYLON.Quaternion.Identity();
+            }
+            wrapper._isBody = isBodyParent;
+            wrapper._parentMesh = parentMesh;
+            return wrapper;
+        }
+
+        var srcMesh = snapResult.sourceComponent ? (snapResult.sourceComponent.body || snapResult.sourceComponent) : null;
+        var tgtMesh = snapResult.targetComponent ? (snapResult.targetComponent.body || snapResult.targetComponent) : null;
 
         // Source marker (cyan)
+        var srcWrapper = createOrientedWrapper('snapInd_src', src.worldPos, src.worldNormal, false, srcMesh);
         var srcSphere = BABYLON.MeshBuilder.CreateSphere(
-            'snapInd_src', { diameter: 0.5 * ms, segments: 8 }, scene
+            'snapInd_srcSph', { diameter: 1.0, segments: 12 }, scene
         );
-        srcSphere.position = src.worldPos.clone();
+        srcSphere.parent = srcWrapper;
         srcSphere.material = self._indicatorMats.src;
         srcSphere.renderingGroupId = 2;
         srcSphere.isPickable = false;
-        self._snapIndicators.push(srcSphere);
+
+        var srcArrow = BABYLON.MeshBuilder.CreateCylinder(
+            'snapInd_srcArr', { height: 1.5, diameterTop: 0, diameterBottom: 0.2 }, scene
+        );
+        srcArrow.parent = srcWrapper;
+        srcArrow.position.y = 0.75;
+        srcArrow.material = self._indicatorMats.src;
+        srcArrow.renderingGroupId = 2;
+        srcArrow.isPickable = false;
+
+        self._snapIndicators.push(srcWrapper);
 
         // Target marker (magenta)
+        var tgtWrapper = createOrientedWrapper('snapInd_tgt', tgt.worldPos, tgt.worldNormal, false, tgtMesh);
         var tgtSphere = BABYLON.MeshBuilder.CreateSphere(
-            'snapInd_tgt', { diameter: 0.5 * ms, segments: 8 }, scene
+            'snapInd_tgtSph', { diameter: 1.0, segments: 12 }, scene
         );
-        tgtSphere.position = tgt.worldPos.clone();
+        tgtSphere.parent = tgtWrapper;
         tgtSphere.material = self._indicatorMats.tgt;
         tgtSphere.renderingGroupId = 2;
         tgtSphere.isPickable = false;
-        self._snapIndicators.push(tgtSphere);
 
-        // Connecting guideline (dashed via multiple segments)
-        var lineColor = new BABYLON.Color3(1, 0.95, 0.3); // Yellow
-        var p1 = src.worldPos;
-        var p2 = tgt.worldPos;
-        var dist = BABYLON.Vector3.Distance(p1, p2);
-
-        if (dist > 0.01) {
-            // Create dashed line (solid segments with gaps)
-            var dashCount = Math.max(2, Math.round(dist / 0.3));
-            var points = [];
-            for (var i = 0; i <= dashCount; i++) {
-                var t = i / dashCount;
-                points.push(BABYLON.Vector3.Lerp(p1, p2, t));
-            }
-
-            var line = BABYLON.MeshBuilder.CreateDashedLines(
-                'snapInd_line',
-                { points: points, dashSize: 2, gapSize: 1, dashNb: dashCount * 2 },
-                scene
-            );
-            line.color = lineColor;
-            line.renderingGroupId = 2;
-            line.isPickable = false;
-            self._snapIndicators.push(line);
-        }
-
-        // Normal arrows at each snap point (shows alignment direction)
-        var arrowLen = 0.8 * ms;
-
-        var srcArrowEnd = src.worldPos.add(src.worldNormal.scale(arrowLen));
-        var srcArrow = BABYLON.MeshBuilder.CreateLines(
-            'snapInd_srcArrow',
-            { points: [src.worldPos, srcArrowEnd] },
-            scene
+        var tgtArrow = BABYLON.MeshBuilder.CreateCylinder(
+            'snapInd_tgtArr', { height: 1.5, diameterTop: 0, diameterBottom: 0.2 }, scene
         );
-        srcArrow.color = new BABYLON.Color3(0, 0.9, 0.95);
-        srcArrow.renderingGroupId = 2;
-        srcArrow.isPickable = false;
-        self._snapIndicators.push(srcArrow);
-
-        var tgtArrowEnd = tgt.worldPos.add(tgt.worldNormal.scale(arrowLen));
-        var tgtArrow = BABYLON.MeshBuilder.CreateLines(
-            'snapInd_tgtArrow',
-            { points: [tgt.worldPos, tgtArrowEnd] },
-            scene
-        );
-        tgtArrow.color = new BABYLON.Color3(0.95, 0.2, 0.9);
+        tgtArrow.parent = tgtWrapper;
+        tgtArrow.position.y = 0.75;
+        tgtArrow.material = self._indicatorMats.tgt;
         tgtArrow.renderingGroupId = 2;
         tgtArrow.isPickable = false;
-        self._snapIndicators.push(tgtArrow);
+
+        self._snapIndicators.push(tgtWrapper);
+
+        // Connecting guideline (dashed via multiple segments)
+        var points = [src.worldPos, tgt.worldPos];
+        var connectLine = BABYLON.MeshBuilder.CreateLines(
+            'snapInd_connect',
+            { points: points },
+            scene
+        );
+        connectLine.color = new BABYLON.Color3(1, 1, 1);
+        self._snapIndicators.push(connectLine);
+        connectLine._isLine = true;
+
+        self._ensureObservable(scene);
     };
 
     /**
@@ -606,6 +657,10 @@ var SnapManager = (function () {
             }
         }
         self._snapIndicators = [];
+
+        if (self._debugMarkers.length === 0 && self._previewMarkers.length === 0 && self._indicatorMats) {
+            self._removeObservable(self._indicatorMats.src.getScene());
+        }
     };
 
     // ===========================================================================
@@ -634,36 +689,60 @@ var SnapManager = (function () {
             'axle': new BABYLON.Color3(0.8, 0.2, 0.8)   // Purple
         };
 
+        var axisY = new BABYLON.Vector3(0, 1, 0);
+        var parentMesh = component.body || component;
+
         worldPoints.forEach(function (sp, i) {
+            var wrapper = new BABYLON.TransformNode('snapWrapper_' + i, scene);
+            wrapper.position = sp.worldPos.clone();
+            wrapper._parentMesh = parentMesh;
+
+            var dot = BABYLON.Vector3.Dot(axisY, sp.worldNormal);
+            if (Math.abs(dot) < 0.9999) {
+                var cross = BABYLON.Vector3.Cross(axisY, sp.worldNormal);
+                var angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+                wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
+            } else if (dot < 0) {
+                wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
+            } else {
+                wrapper.rotationQuaternion = BABYLON.Quaternion.Identity();
+            }
+
             // Snap point sphere
             var marker = BABYLON.MeshBuilder.CreateSphere(
-                'snapMarker_' + i, { diameter: 0.4 }, scene
+                'snapMarker_' + i, { diameter: 1.0, segments: 12 }, scene
             );
-            marker.position = sp.worldPos;
+            marker.parent = wrapper;
             marker.isPickable = false;
             marker.renderingGroupId = 2;
 
             var mat = new BABYLON.StandardMaterial('snapMarkerMat_' + i, scene);
             var color = roleColors[sp.role] || new BABYLON.Color3(1, 1, 1);
-            mat.diffuseColor = color;
-            mat.emissiveColor = color.scale(0.5);
+            mat.emissiveColor = color;
+            mat.disableLighting = true;
             mat.alpha = 0.8;
             marker.material = mat;
 
-            // Normal arrow (short line)
-            var arrowLength = 0.6;
-            var arrowEnd = sp.worldPos.add(sp.worldNormal.scale(arrowLength));
-            var arrow = BABYLON.MeshBuilder.CreateLines(
+            var arrowMat = new BABYLON.StandardMaterial('arrowMat', scene);
+            arrowMat.emissiveColor = color;
+            arrowMat.disableLighting = true;
+            arrowMat.alpha = 0.8;
+
+            var arrow = BABYLON.MeshBuilder.CreateCylinder(
                 'snapArrow_' + i,
-                { points: [sp.worldPos, arrowEnd] },
+                { height: 1.5, diameterTop: 0, diameterBottom: 0.2 },
                 scene
             );
-            arrow.color = color;
+            arrow.parent = wrapper;
+            arrow.position.y = 0.75;
+            arrow.material = arrowMat;
             arrow.renderingGroupId = 2;
             arrow.isPickable = false;
 
-            self._debugMarkers.push(marker, arrow);
+            self._debugMarkers.push(wrapper);
         });
+
+        self._ensureObservable(scene);
     };
 
     /**
@@ -674,6 +753,10 @@ var SnapManager = (function () {
             if (m && m.dispose) m.dispose();
         });
         self._debugMarkers = [];
+
+        if (self._snapIndicators.length === 0 && self._previewMarkers.length === 0 && self._indicatorMats) {
+            self._removeObservable(self._indicatorMats.src.getScene());
+        }
     };
 
     /**
@@ -744,81 +827,104 @@ var SnapManager = (function () {
         if (ownPoints.length === 0) return;
 
         var selectedMesh = selectedComponent.body || selectedComponent;
-        var ms = self.getMarkerScale(selectedMesh);
-        // Body is much larger than components — reduce marker size
-        if (selectedComponent.type === '__body__') ms *= 0.3;
-        var previewRadius = self.PREVIEW_RADIUS * ms;
+        var parentIsBody = (selectedComponent.type === '__body__');
+        var axisY = new BABYLON.Vector3(0, 1, 0);
 
-        // Show own snap points (Cyan, small)
+        function createOrientedWrapper(name, pos, norm, isBodyParent, parentMesh) {
+            var wrapper = new BABYLON.TransformNode(name + '_wrapper', scene);
+            wrapper.position = pos.clone();
+            var dot = BABYLON.Vector3.Dot(axisY, norm);
+            if (Math.abs(dot) < 0.9999) {
+                var cross = BABYLON.Vector3.Cross(axisY, norm);
+                var angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+                wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
+            } else if (dot < 0) {
+                wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
+            } else {
+                wrapper.rotationQuaternion = BABYLON.Quaternion.Identity();
+            }
+            wrapper._isBody = isBodyParent;
+            wrapper._parentMesh = parentMesh;
+            return wrapper;
+        }
+
+        // Show own snap points (Cyan)
         ownPoints.forEach(function (sp, i) {
+            var wrapper = createOrientedWrapper('snapPrev_ownWrapper_' + i, sp.worldPos, sp.worldNormal, parentIsBody, selectedMesh);
+
             var marker = BABYLON.MeshBuilder.CreateSphere(
-                'snapPrev_own_' + i, { diameter: 0.35 * ms, segments: 6 }, scene
+                'snapPrev_own_' + i, { diameter: 1.0, segments: 12 }, scene
             );
-            marker.position = sp.worldPos.clone();
+            marker.parent = wrapper;
             marker.material = self._previewMats.own;
             marker.renderingGroupId = 2;
             marker.isPickable = false;
 
-            var arrowEnd = sp.worldPos.add(sp.worldNormal.scale(0.5 * ms));
-            var arrow = BABYLON.MeshBuilder.CreateLines(
+            var arrow = BABYLON.MeshBuilder.CreateCylinder(
                 'snapPrev_ownArrow_' + i,
-                { points: [sp.worldPos, arrowEnd] }, scene
+                { height: 1.5, diameterTop: 0, diameterBottom: 0.2 }, scene
             );
-            arrow.color = new BABYLON.Color3(0, 0.85, 0.9);
+            arrow.parent = wrapper;
+            arrow.position.y = 0.75;
+            arrow.material = self._previewMats.own;
             arrow.renderingGroupId = 2;
             arrow.isPickable = false;
 
-            self._previewMarkers.push(marker, arrow);
+            self._previewMarkers.push(wrapper);
         });
 
-        // Find and show nearby compatible snap points on other components
+        // Show potentially compatible nearby points
         var nearbyIdx = 0;
-        for (var c = 0; c < allComponents.length; c++) {
-            var other = allComponents[c];
-            if (other === selectedComponent) continue;
-            if (other.body === selectedComponent.body) continue;
+        for (var i = 0; i < ownPoints.length; i++) {
+            var src = ownPoints[i];
+            for (var j = 0; j < allComponents.length; j++) {
+                var other = allComponents[j];
+                if (other === selectedComponent) continue;
+                if (other.body === selectedComponent.body) continue;
 
-            var otherPoints = self.getWorldSnapPoints(other);
+                var tgtPoints = self.getWorldSnapPoints(other);
+                if (!tgtPoints || tgtPoints.length === 0) continue;
 
-            for (var t = 0; t < otherPoints.length; t++) {
-                var tgt = otherPoints[t];
+                for (var k = 0; k < tgtPoints.length; k++) {
+                    var tgt = tgtPoints[k];
+                    var dist = BABYLON.Vector3.Distance(src.worldPos, tgt.worldPos);
+                    if (dist > self.SNAP_THRESHOLD) continue;
 
-                // Check if any own point is within scaled preview radius
-                var isNearby = false;
-                for (var s = 0; s < ownPoints.length; s++) {
-                    var dist = BABYLON.Vector3.Distance(ownPoints[s].worldPos, tgt.worldPos);
-                    if (dist <= previewRadius && SNAP_POINTS_DB.isCompatible(ownPoints[s].role, tgt.role)) {
-                        isNearby = true;
-                        break;
+                    var dotProd = BABYLON.Vector3.Dot(src.worldNormal, tgt.worldNormal);
+                    if (dotProd > self.NORMAL_THRESHOLD) continue;
+
+                    var isNearby = SNAP_POINTS_DB.isCompatible(src.role, tgt.role);
+
+                    if (isNearby) {
+                        var otherMesh = other.body || other;
+                        var otherIsBody = (other.type === '__body__');
+                        var wrapper = createOrientedWrapper('snapPrev_nearWrapper_' + nearbyIdx, tgt.worldPos, tgt.worldNormal, otherIsBody, otherMesh);
+
+                        var marker = BABYLON.MeshBuilder.CreateSphere(
+                            'snapPrev_near_' + nearbyIdx, { diameter: 1.0, segments: 12 }, scene
+                        );
+                        marker.parent = wrapper;
+                        marker.material = self._previewMats.nearby;
+                        marker.renderingGroupId = 2;
+                        marker.isPickable = false;
+
+                        var arrow = BABYLON.MeshBuilder.CreateCylinder(
+                            'snapPrev_nearArrow_' + nearbyIdx,
+                            { height: 1.5, diameterTop: 0, diameterBottom: 0.2 }, scene
+                        );
+                        arrow.parent = wrapper;
+                        arrow.position.y = 0.75;
+                        arrow.material = self._previewMats.nearby;
+                        arrow.renderingGroupId = 2;
+                        arrow.isPickable = false;
+
+                        self._previewMarkers.push(wrapper);
+                        nearbyIdx++;
                     }
-                }
-
-                if (isNearby) {
-                    var otherMesh = other.body || other;
-                    var msOther = self.getMarkerScale(otherMesh);
-                    if (other.type === '__body__') msOther *= 0.3;
-                    var marker = BABYLON.MeshBuilder.CreateSphere(
-                        'snapPrev_near_' + nearbyIdx, { diameter: 0.3 * msOther, segments: 6 }, scene
-                    );
-                    marker.position = tgt.worldPos.clone();
-                    marker.material = self._previewMats.nearby;
-                    marker.renderingGroupId = 2;
-                    marker.isPickable = false;
-
-                    var arrowEnd = tgt.worldPos.add(tgt.worldNormal.scale(0.5 * msOther));
-                    var arrow = BABYLON.MeshBuilder.CreateLines(
-                        'snapPrev_nearArrow_' + nearbyIdx,
-                        { points: [tgt.worldPos, arrowEnd] }, scene
-                    );
-                    arrow.color = new BABYLON.Color3(1.0, 0.65, 0.1);
-                    arrow.renderingGroupId = 2;
-                    arrow.isPickable = false;
-
-                    self._previewMarkers.push(marker, arrow);
-                    nearbyIdx++;
                 }
             }
         }
+        self._ensureObservable(scene);
     };
 
     /**

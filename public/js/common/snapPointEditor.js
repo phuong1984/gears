@@ -109,12 +109,13 @@ class SnapPointEditorClass {
     }
 
     close() {
-        if (this.editorViewCube) {
-            this.editorViewCube = null;
+        if (this._resizeObservable && this.scene) {
+            this.scene.onBeforeRenderObservable.remove(this._resizeObservable);
+            this._resizeObservable = null;
         }
-        // Cleanup preview marker
         if (this._previewMarker) { this._previewMarker.dispose(); this._previewMarker = null; }
         if (this._previewNormal) { this._previewNormal.dispose(); this._previewNormal = null; }
+        if (this._previewNode) { this._previewNode.dispose(); this._previewNode = null; }
         this._lastPickResult = null;
         if (this.engine) {
             this.engine.dispose();
@@ -556,6 +557,32 @@ class SnapPointEditorClass {
         // Create ViewCube axes indicator
         this.editorViewCube = new ViewCubeClass();
         this.editorViewCube.init(this.canvas.parentElement, this.camera, this.scene);
+
+        this._setupScaleObservable();
+    }
+
+    _setupScaleObservable() {
+        if (this._resizeObservable || !this.scene) return;
+        this._resizeObservable = this.scene.onBeforeRenderObservable.add(() => {
+            let pScaleX = 1.0;
+            if (this.editorMesh && this.editorMesh.absoluteScaling) {
+                pScaleX = this.editorMesh.absoluteScaling.x || 1.0;
+            }
+
+            let ms = (this._modelSize * pScaleX) * 0.1;
+            if (ms < 0.03) ms = 0.03;
+            if (ms > 1.2) ms = 1.2;
+
+            this.pointMarkers.forEach(group => {
+                if (group.wrapper) {
+                    group.wrapper.scaling.set(ms, ms, ms);
+                }
+            });
+
+            if (this._previewNode) {
+                this._previewNode.scaling.set(ms, ms, ms);
+            }
+        });
     }
 
 
@@ -893,33 +920,26 @@ class SnapPointEditorClass {
         let worldPoint = pickResult.pickedPoint;
         let worldNormal = pickResult.getNormal(true, true) || new BABYLON.Vector3(0, 1, 0);
 
-        // Lazy-create preview meshes
-        if (!this._previewMarker) {
-            let markerSize = this._modelSize * 0.05;
-            if (markerSize < 0.003) markerSize = 0.003;
-            if (markerSize > 0.3) markerSize = 0.3;
+        if (!this._previewNode) {
+            this._previewNode = new BABYLON.TransformNode("previewNode", this.scene);
 
-            // Sphere marker
-            this._previewMarker = BABYLON.MeshBuilder.CreateSphere("previewMarker", {
-                diameter: markerSize * 2
-            }, this.scene);
+            this._previewMarker = BABYLON.MeshBuilder.CreateSphere("previewMarker", { diameter: 1.0, segments: 12 }, this.scene);
+            this._previewMarker.parent = this._previewNode;
             let mat = new BABYLON.StandardMaterial("previewMarkerMat", this.scene);
-            mat.emissiveColor = new BABYLON.Color3(0.2, 1, 0.4);
-            mat.alpha = 0.6;
+            mat.emissiveColor = new BABYLON.Color3(0, 1, 1);
+            mat.alpha = 0.5;
             mat.disableLighting = true;
             this._previewMarker.material = mat;
             this._previewMarker.isPickable = false;
             this._previewMarker.renderingGroupId = 1;
 
-            // Normal arrow
-            let normalLen = markerSize * 4;
             this._previewNormal = BABYLON.MeshBuilder.CreateCylinder("previewNormal", {
-                height: normalLen,
-                diameterTop: 0,
-                diameterBottom: markerSize * 0.5
+                height: 1.5, diameterTop: 0, diameterBottom: 0.2
             }, this.scene);
+            this._previewNormal.parent = this._previewNode;
+            this._previewNormal.position.y = 0.75;
             let nMat = new BABYLON.StandardMaterial("previewNormalMat", this.scene);
-            nMat.emissiveColor = new BABYLON.Color3(0.2, 1, 0.4);
+            nMat.emissiveColor = new BABYLON.Color3(0, 1, 1);
             nMat.alpha = 0.5;
             nMat.disableLighting = true;
             this._previewNormal.material = nMat;
@@ -929,28 +949,20 @@ class SnapPointEditorClass {
 
         // Update sphere position
         this._previewMarker.isVisible = true;
-        this._previewMarker.position = worldPoint.clone();
+        this._previewNormal.isVisible = true;
 
-        // Update normal arrow position and orientation
-        if (this._previewNormal) {
-            let normalLen = this._modelSize * 0.2;
-            if (normalLen < 0.01) normalLen = 0.01;
-            if (normalLen > 1) normalLen = 1;
-            this._previewNormal.isVisible = true;
-            this._previewNormal.position = worldPoint.add(worldNormal.scale(normalLen / 2));
+        this._previewNode.position = worldPoint.clone();
 
-            // Orient arrow from default Y-up toward worldNormal
-            let axisY = new BABYLON.Vector3(0, 1, 0);
-            let dot = BABYLON.Vector3.Dot(axisY, worldNormal);
-            if (Math.abs(dot) < 0.9999) {
-                let cross = BABYLON.Vector3.Cross(axisY, worldNormal);
-                let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-                this._previewNormal.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
-            } else if (dot < 0) {
-                this._previewNormal.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
-            } else {
-                this._previewNormal.rotationQuaternion = BABYLON.Quaternion.Identity();
-            }
+        let axisY = new BABYLON.Vector3(0, 1, 0);
+        let dot = BABYLON.Vector3.Dot(axisY, worldNormal);
+        if (Math.abs(dot) < 0.9999) {
+            let cross = BABYLON.Vector3.Cross(axisY, worldNormal);
+            let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+            this._previewNode.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
+        } else if (dot < 0) {
+            this._previewNode.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
+        } else {
+            this._previewNode.rotationQuaternion = BABYLON.Quaternion.Identity();
         }
     }
 
@@ -1107,7 +1119,7 @@ class SnapPointEditorClass {
     _refreshPointList() {
         this.ui.list.innerHTML = '';
         if (this.snapPoints.length === 0) {
-            this.ui.list.innerHTML = '<div class="snap-editor-empty-state">Chưa có snap point nào.<br>Double-click lên surface hoặc dùng Auto BBox.</div>';
+            this.ui.list.innerHTML = '<div class="snap-editor-empty-state">Chưa có snap point nào.<br>Double-click lên surface hoặc dùng Auto Bbox.</div>';
             this.ui.propsPanel.style.display = 'none';
             return;
         }
@@ -1183,18 +1195,11 @@ class SnapPointEditorClass {
     _refreshMarkers() {
         // Dispose old markers
         this.pointMarkers.forEach(group => {
-            if (group.sphere) group.sphere.dispose();
-            if (group.cyl) group.cyl.dispose();
+            if (group.wrapper) group.wrapper.dispose();
         });
         this.pointMarkers = [];
 
         if (!this.editorMesh || !this.scene) return;
-
-        let markerSize = this._modelSize * 0.06;
-        if (markerSize < 0.005) markerSize = 0.005;
-        if (markerSize > 0.5) markerSize = 0.5;
-
-        let normalLen = markerSize * 3;
 
         // Materials (reuse per session)
         let yellowMat = this.scene.getMaterialByName("snapYellow") || (() => {
@@ -1219,54 +1224,29 @@ class SnapPointEditorClass {
         })();
 
         this.snapPoints.forEach((pt, idx) => {
-            let pos = pt.position || [0, 0, 0];
-            let norm = pt.normal || [0, 1, 0];
-
-            let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
-            let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
-
-            // P_world = P_ui_bjs + bboxOffBJS
-            let worldPos = localPos.add(this._bboxOffBJS || BABYLON.Vector3.Zero());
-            // Editor Mesh rotation is zero, so worldNorm equals localNorm
-            let worldNorm = localNorm;
+            let wrapper = new BABYLON.TransformNode("snapWrapper_" + idx, this.scene);
 
             // Sphere marker
             let sphere = BABYLON.MeshBuilder.CreateSphere("snapSphere_" + idx, {
-                diameter: markerSize * 2
+                diameter: 1.0, segments: 12
             }, this.scene);
-            sphere.position = worldPos.clone();
+            sphere.parent = wrapper;
             sphere.material = (idx === this.selectedPointIndex) ? redMat : yellowMat;
             sphere.isMarker = true;
             sphere.pointIndex = idx;
             sphere.isPickable = true;
 
-            // Normal arrow (cylinder) - KHÔNG làm con của sphere để tránh scale lỗi
             let cyl = BABYLON.MeshBuilder.CreateCylinder("snapNorm_" + idx, {
-                height: normalLen,
-                diameterTop: 0,
-                diameterBottom: markerSize * 0.6
+                height: 1.5, diameterTop: 0, diameterBottom: 0.2
             }, this.scene);
+            cyl.parent = wrapper;
+            cyl.position.y = 0.75;
             cyl.material = normalMat;
             cyl.isPickable = false;
             cyl.isMarker = false;
 
-            // Đặt cylinder tại worldPos + normalLen/2 theo hướng normal
-            cyl.position = worldPos.add(worldNorm.scale(normalLen / 2));
-
-            // Hướng cylinder: mặc định Y+, cần xoay về worldNorm
-            let axisY = new BABYLON.Vector3(0, 1, 0);
-            let dot = BABYLON.Vector3.Dot(axisY, worldNorm);
-            if (Math.abs(dot) < 0.9999) {
-                let cross = BABYLON.Vector3.Cross(axisY, worldNorm);
-                let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-                cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
-            } else if (dot < 0) {
-                cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
-            } else {
-                cyl.rotationQuaternion = BABYLON.Quaternion.Identity();
-            }
-
-            this.pointMarkers.push({ sphere, cyl, idx });
+            this.pointMarkers.push({ wrapper, sphere, cyl, idx });
+            this._updateMarkerTransform(idx); // Initial position and rotation
         });
     }
 
@@ -1283,17 +1263,17 @@ class SnapPointEditorClass {
         });
     }
 
+
     _updateMarkerTransform(idx) {
         if (idx < 0 || idx >= this.pointMarkers.length) return;
         if (!this.editorMesh) return;
 
         let pt = this.snapPoints[idx];
         let group = this.pointMarkers[idx];
-        if (!group || !group.sphere) return;
+        if (!group || !group.wrapper) return;
 
         let pos = pt.position || [0, 0, 0];
         let norm = pt.normal || [0, 1, 0];
-
         let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
         let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
 
@@ -1302,75 +1282,18 @@ class SnapPointEditorClass {
         // Editor Mesh rotation is always Zero, so worldNorm equals localNorm
         let worldNorm = localNorm;
 
-        let normalLen = this._modelSize * 0.18;
+        group.wrapper.position = worldPos.clone();
 
-        group.sphere.position = worldPos.clone();
-
-        if (group.cyl) {
-            group.cyl.position = worldPos.add(worldNorm.scale(normalLen / 2));
-            let axisY = new BABYLON.Vector3(0, 1, 0);
-            let dot = BABYLON.Vector3.Dot(axisY, worldNorm);
-            if (Math.abs(dot) < 0.9999) {
-                let cross = BABYLON.Vector3.Cross(axisY, worldNorm);
-                let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-                group.cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
-            } else if (dot < 0) {
-                group.cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
-            } else {
-                group.cyl.rotationQuaternion = BABYLON.Quaternion.Identity();
-            }
-        }
-    }
-
-    _highlightMarker(idx) {
-        if (!this.scene) return;
-
-        let yellowMat = this.scene.getMaterialByName("snapYellow");
-        let redMat = this.scene.getMaterialByName("snapRed");
-
-        this.pointMarkers.forEach((group, i) => {
-            if (group.sphere) {
-                group.sphere.material = (group.idx === idx) ? redMat : yellowMat;
-            }
-        });
-    }
-
-    _updateMarkerTransform(idx) {
-        if (idx < 0 || idx >= this.pointMarkers.length) return;
-        if (!this.editorMesh) return;
-
-        let pt = this.snapPoints[idx];
-        let group = this.pointMarkers[idx];
-        if (!group || !group.sphere) return;
-
-        let pos = pt.position || [0, 0, 0];
-        let norm = pt.normal || [0, 1, 0];
-
-        let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
-        let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
-
-        // P_world = P_ui_bjs + bboxOffBJS
-        let worldPos = localPos.add(this._bboxOffBJS || BABYLON.Vector3.Zero());
-        // Editor Mesh rotation is always Zero, so worldNorm equals localNorm
-        let worldNorm = localNorm;
-
-        let normalLen = this._modelSize * 0.18;
-
-        group.sphere.position = worldPos.clone();
-
-        if (group.cyl) {
-            group.cyl.position = worldPos.add(worldNorm.scale(normalLen / 2));
-            let axisY = new BABYLON.Vector3(0, 1, 0);
-            let dot = BABYLON.Vector3.Dot(axisY, worldNorm);
-            if (Math.abs(dot) < 0.9999) {
-                let cross = BABYLON.Vector3.Cross(axisY, worldNorm);
-                let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-                group.cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
-            } else if (dot < 0) {
-                group.cyl.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
-            } else {
-                group.cyl.rotationQuaternion = BABYLON.Quaternion.Identity();
-            }
+        let axisY = new BABYLON.Vector3(0, 1, 0);
+        let dot = BABYLON.Vector3.Dot(axisY, worldNorm);
+        if (Math.abs(dot) < 0.9999) {
+            let cross = BABYLON.Vector3.Cross(axisY, worldNorm);
+            let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+            group.wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
+        } else if (dot < 0) {
+            group.wrapper.rotationQuaternion = BABYLON.Quaternion.RotationAxis(new BABYLON.Vector3(1, 0, 0), Math.PI);
+        } else {
+            group.wrapper.rotationQuaternion = BABYLON.Quaternion.Identity();
         }
     }
 
