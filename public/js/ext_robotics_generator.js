@@ -1,23 +1,31 @@
 var ext_robotics_generator = new function () {
   var self = this;
 
-  // Load Python generators - Override definition.js generators that use 'await' or hardware imports
+  // Load Python generators
+  // First load ALL ev3dev2 generators as a base layer (Motion, Motor, Sensors, Sound, Pen, Experimental),
+  // then override with ext_robotics-specific generators that fix 'await' or hardware imports.
   this.load = function () {
     Blockly.Python.INDENT = '    ';
 
-    // Override all generators from definition.js that need simulator-specific behavior.
-    // The definition.js file registers Blockly.Python[...] generators inline when it loads.
-    // Some of those use 'await' (not supported in Skulpt) or set hardware-specific imports.
-    // We override only the ones that are problematic; other definition.js generators
-    // (like robotics_motor_run, robotics_motor_brake, robotics_motor_get, etc.)
-    // produce clean code like 'motor1.run(speed)' that works fine with our sim classes.
+    // 1. Load ev3dev2 generators as base — this provides generators for standard blocks
+    //    like move_tank, color_sensor, say, penDown, object_tracker, radio_*, plotter_*, etc.
+    if (typeof ev3dev2_generator !== 'undefined' && ev3dev2_generator.generators) {
+      for (let generator in ev3dev2_generator.generators) {
+        Blockly.Python.forBlock[generator] = ev3dev2_generator.generators[generator];
+      }
+    }
 
+    // 2. Override with ext_robotics-specific generators
+    //    These fix 'await' usage, hardware imports, and provide simulator-compatible code
+    //    for robotics_* blocks (DriveBase, Motor init/run/brake, etc.)
     for (let generator in self.generators) {
       Blockly.Python.forBlock[generator] = self.generators[generator];
     }
   };
 
   // Generate python code with simulator imports
+  // Includes both ext_robotics and ev3dev2-compatible variable declarations
+  // so that blocks from ALL categories (Motion, Motor, Sensors, Sound, Pen, Experimental) can work.
   this.genCode = function () {
     let workspaceCode = Blockly.Python.workspaceToCode(blockly.workspace);
 
@@ -32,6 +40,14 @@ var ext_robotics_generator = new function () {
       'from ext_robotics.sim_motor import DCMotor\n' +
       'from ext_robotics.sim_drivebase import DriveBase\n' +
       '\n' +
+      '# ev3dev2 compatibility imports (for standard blocks)\n' +
+      'from ev3dev2.motor import *\n' +
+      'from ev3dev2.sound import Sound\n' +
+      'from ev3dev2.button import Button\n' +
+      'from ev3dev2.sensor import *\n' +
+      'from ev3dev2.sensor.lego import *\n' +
+      'from ev3dev2.sensor.virtual import *\n' +
+      '\n' +
       '# Create motor driver\n' +
       'md_v2 = SimMotorDriver()\n' +
       '\n' +
@@ -41,7 +57,71 @@ var ext_robotics_generator = new function () {
       '\n' +
       '# Create robot drive base (2WD mode)\n' +
       'robot = DriveBase(MODE_2WD, m1=motor1, m2=motor2)\n' +
-      '\n' +
+      '\n';
+
+    // ev3dev2-compatible motor/sensor variables (for standard blocks like move_tank, color_sensor, etc.)
+    let wheelCode = robot.processedOptions && robot.processedOptions.wheels ?
+      ('motorA = LargeMotor(OUTPUT_A)\n' +
+        'motorB = LargeMotor(OUTPUT_B)\n' +
+        'left_motor = motorA\n' +
+        'right_motor = motorB\n' +
+        'tank_drive = MoveTank(OUTPUT_A, OUTPUT_B)\n' +
+        'steering_drive = MoveSteering(OUTPUT_A, OUTPUT_B)\n') :
+      '';
+
+    code += wheelCode;
+    code +=
+      'spkr = Sound()\n' +
+      'btn = Button()\n' +
+      'radio = Radio()\n' +
+      'obtr = ObjectTracker()\n' +
+      '\n';
+
+    // Auto-detect sensors and create variables
+    var sensorsCode = '';
+    var i = 1;
+    if (typeof robot !== 'undefined' && typeof robot.getComponentByPort === 'function') {
+      var sensor = robot.getComponentByPort('in' + i);
+      while (sensor) {
+        if (sensor.type == 'ColorSensor') {
+          sensorsCode += 'color_sensor_in' + i + ' = ColorSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'UltrasonicSensor') {
+          sensorsCode += 'ultrasonic_sensor_in' + i + ' = UltrasonicSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'LaserRangeSensor') {
+          sensorsCode += 'laser_sensor_in' + i + ' = LaserRangeSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'GyroSensor') {
+          sensorsCode += 'gyro_sensor_in' + i + ' = GyroSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'GPSSensor') {
+          sensorsCode += 'gps_sensor_in' + i + ' = GPSSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'TouchSensor') {
+          sensorsCode += 'touch_sensor_in' + i + ' = TouchSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'Pen') {
+          sensorsCode += 'pen_in' + i + ' = Pen(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'CameraSensor') {
+          sensorsCode += 'camera_sensor_in' + i + ' = CameraSensor(INPUT_' + i + ')\n';
+        } else if (sensor.type == 'LidarSensor') {
+          sensorsCode += 'lidar_sensor_in' + i + ' = LidarSensor(INPUT_' + i + ')\n';
+        }
+        i++;
+        sensor = robot.getComponentByPort('in' + i);
+      }
+    }
+    code += sensorsCode + '\n';
+
+    // Auto-detect additional motors (actuators on output ports)
+    let PORT_LETTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var motorsCode = '';
+    if (typeof robot !== 'undefined' && typeof robot.getComponentByPort === 'function') {
+      i = robot.processedOptions && robot.processedOptions.wheels ? 3 : 1;
+      var motor = null;
+      while (motor = robot.getComponentByPort('out' + PORT_LETTERS[i])) {
+        motorsCode += 'motor' + PORT_LETTERS[i] + ' = LargeMotor(OUTPUT_' + PORT_LETTERS[i] + ') # ' + motor.type + '\n';
+        i++;
+      }
+    }
+    code += motorsCode + '\n';
+
+    code +=
       '# Reset motors and wait for physics to settle\n' +
       'import simPython\n' +
       'simPython.reset_drive()\n' +
