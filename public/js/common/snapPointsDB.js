@@ -230,29 +230,47 @@ var SNAP_POINTS_DB = {
     //   BJS housingSize = [w, h, d] → Desc [X, Z, Y]
     'MotorActuator': {
         dynamic: true,
-        getSnapPoints: function (options) {
+        getSnapPoints: function (options, component) {
             var hs = options.housingSize || [3, 3, 3];
-            var so = options.shaftOffset || [0, 2.5, 0];
-            var sa = options.shaftAxis || [0, 1, 0];
+            var so = options.shaftOffset || [0, 0, 2.5];
+            var sa = options.shaftAxis || [0, 0, 1];
             var sl = options.shaftLength || 2;
-            // shaftOffset is in BJS coords [x, y, z] → Descartes [x, z, y]
-            // shaftAxis is in BJS coords → Descartes
-            var shaftTipDesc = [
-                so[0] + sa[0] * sl,  // Desc X = BJS X
-                so[2] + sa[2] * sl,  // Desc Y = BJS Z
-                so[1] + sa[1] * sl   // Desc Z = BJS Y
-            ];
-            var shaftNormalDesc = [sa[0], sa[2], sa[1]]; // BJS → Descartes
+
             // Housing faces (BJS [w,h,d] → Desc [X,Z,Y])
             var hw = hs[0] / 2; // Desc X half
             var hh = hs[1] / 2; // Desc Z half
             var hd = hs[2] / 2; // Desc Y half
+
+            var cx = 0, cy = 0, cz = 0;
+
+            // If the MotorActuator has a loaded 3D model, its boundaries will replace the default housing box
+            if (component && component.modelBoundingSize) {
+                hw = component.modelBoundingSize.x / 2;
+                hh = component.modelBoundingSize.y / 2; // BJS Y = Desc Z
+                hd = component.modelBoundingSize.z / 2; // BJS Z = Desc Y
+
+                if (component.modelBoundingOffset) {
+                    cx = component.modelBoundingOffset.x;
+                    cy = component.modelBoundingOffset.z; // BJS Z = Desc Y
+                    cz = component.modelBoundingOffset.y; // BJS Y = Desc Z
+                }
+            }
+
+            // shaftOffset and shaftAxis are in GLOBAL Descartes [X,Y,Z] directly
+            // No BJS→Descartes remapping needed
+            var shaftTipDesc = [
+                so[0] + sa[0] * sl,  // Desc X
+                so[1] + sa[1] * sl,  // Desc Y
+                so[2] + sa[2] * sl   // Desc Z
+            ];
+            var shaftNormalDesc = [sa[0], sa[1], sa[2]];
+
             return [
                 { name: 'shaft', localPos: shaftTipDesc, normal: shaftNormalDesc, role: 'axle' },
-                { name: 'bottom', localPos: [0, 0, -hh], normal: [0, 0, -1], role: 'attach' },
-                { name: 'top', localPos: [0, 0, hh], normal: [0, 0, 1], role: 'surface' },
-                { name: 'front', localPos: [0, hd, 0], normal: [0, 1, 0], role: 'surface' },
-                { name: 'back', localPos: [0, -hd, 0], normal: [0, -1, 0], role: 'surface' }
+                { name: 'bottom', localPos: [cx, cy, cz - hh], normal: [0, 0, -1], role: 'attach' },
+                { name: 'top', localPos: [cx, cy, cz + hh], normal: [0, 0, 1], role: 'surface' },
+                { name: 'front', localPos: [cx, cy + hd, cz], normal: [0, 1, 0], role: 'surface' },
+                { name: 'back', localPos: [cx, cy - hd, cz], normal: [0, -1, 0], role: 'surface' }
             ];
         }
     },

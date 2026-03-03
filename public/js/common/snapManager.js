@@ -187,39 +187,8 @@ var SnapManager = (function () {
             } catch (e) { console.error('[BodySnap] step1c error:', e); }
         }
 
-        // ── 2. Check semantic snap points in DB ──
-        var dbEntry = null;
-
-        // For primitives, use __primitive__/Type key
-        if (type === 'Box' || type === 'Cylinder' || type === 'Sphere') {
-            dbEntry = SNAP_POINTS_DB['__primitive__/' + type];
-        } else {
-            dbEntry = SNAP_POINTS_DB[type];
-        }
-
-        if (dbEntry) {
-            // Dynamic snap points (scale with dimensions)
-            if (dbEntry.dynamic && typeof dbEntry.getSnapPoints === 'function') {
-                return dbEntry.getSnapPoints(options);
-            }
-            // Static snap points
-            if (dbEntry.snapPoints && dbEntry.snapPoints.length > 0) {
-                return dbEntry.snapPoints;
-            }
-            // Explicitly null = use auto
-            if (dbEntry.snapPoints === null) {
-                let autoPts = self.getAutoSnapPoints(component);
-                autoPts.push({ name: '_isFromBounds', value: true });
-                return autoPts;
-            }
-            // Empty array = no snap points
-            if (Array.isArray(dbEntry.snapPoints) && dbEntry.snapPoints.length === 0) {
-                return [];
-            }
-        }
-
-        // ── 3. Check for model-specific snap points (by URL) ──
-        let modelURL = options.modelURL || component.modelURL;
+        // ── 2. Check for model-specific snap points (by URL) ──
+        let modelURL = options.modelURL || component.modelURL || (options._modelFileName ? 'blob:' : null);
         if (modelURL) {
             // Check LocalStorage first (user's saved custom points)
             try {
@@ -241,6 +210,37 @@ var SnapManager = (function () {
                 if (modelEntry.snapPoints && modelEntry.snapPoints.length > 0) {
                     return modelEntry.snapPoints;
                 }
+            }
+        }
+
+        // ── 3. Check semantic snap points in DB ──
+        var dbEntry = null;
+
+        // For primitives, use __primitive__/Type key
+        if (type === 'Box' || type === 'Cylinder' || type === 'Sphere') {
+            dbEntry = SNAP_POINTS_DB['__primitive__/' + type];
+        } else {
+            dbEntry = SNAP_POINTS_DB[type];
+        }
+
+        if (dbEntry) {
+            // Dynamic snap points (scale with dimensions)
+            if (dbEntry.dynamic && typeof dbEntry.getSnapPoints === 'function') {
+                return dbEntry.getSnapPoints(options, component);
+            }
+            // Static snap points
+            if (dbEntry.snapPoints && dbEntry.snapPoints.length > 0) {
+                return dbEntry.snapPoints;
+            }
+            // Explicitly null = use auto
+            if (dbEntry.snapPoints === null) {
+                let autoPts = self.getAutoSnapPoints(component);
+                autoPts.push({ name: '_isFromBounds', value: true });
+                return autoPts;
+            }
+            // Empty array = no snap points
+            if (Array.isArray(dbEntry.snapPoints) && dbEntry.snapPoints.length === 0) {
+                return [];
             }
         }
 

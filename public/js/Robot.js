@@ -529,166 +529,172 @@ function Robot() {
 
     for (const componentConfig of componentsConfig) {
       let component = null;
+
+      // Convert global Descartes position/rotation to parent-local
+      // so that slider values always represent global axes even when parent is rotated
+      var pos = globalToLocalPosition(componentConfig.position, parent);
+      var rot = globalToLocalRotation(componentConfig.rotation, parent);
+
       if (componentConfig.type == 'ColorSensor') {
         component = new ColorSensor(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'UltrasonicSensor') {
         component = new UltrasonicSensor(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'GyroSensor') {
         component = new GyroSensor(
           self.scene,
           parent,
-          componentConfig.position,
+          pos,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'GPSSensor') {
         component = new GPSSensor(
           self.scene,
           parent,
-          componentConfig.position,
+          pos,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'Box') {
         component = new BoxBlock(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           componentConfig.options);
       } else if (componentConfig.type == 'Cylinder') {
         component = new CylinderBlock(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           componentConfig.options);
       } else if (componentConfig.type == 'Sphere') {
         component = new SphereBlock(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           componentConfig.options);
       } else if (componentConfig.type == 'WheelPassive') {
         component = new WheelPassive(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           componentConfig.options);
       } else if (componentConfig.type == 'MagnetActuator') {
         component = new MagnetActuator(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'ArmActuator') {
         component = new ArmActuator(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'LaserRangeSensor') {
         component = new LaserRangeSensor(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'SwivelActuator') {
         component = new SwivelActuator(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'PaintballLauncherActuator') {
         component = new PaintballLauncherActuator(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'WheelActuator') {
         component = new Wheel(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'MotorActuator') {
         component = new MotorActuator(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'Pen') {
         component = new Pen(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'TouchSensor') {
         component = new TouchSensor(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'LinearActuator') {
         component = new LinearActuator(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'out' + PORT_LETTERS[(++self.motorCount)],
           componentConfig.options);
       } else if (componentConfig.type == 'CameraSensor') {
         component = new CameraSensor(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'LidarSensor') {
         component = new LidarSensor(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           'in' + (++self.sensorCount),
           componentConfig.options);
       } else if (componentConfig.type == 'Model') {
         component = new ModelBlock(
           self.scene,
           parent,
-          componentConfig.position,
-          componentConfig.rotation,
+          pos,
+          rot,
           componentConfig.options);
         await component.init();
       } else {

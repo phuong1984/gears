@@ -159,6 +159,60 @@ function globalRotationQuaternion(rx, ry, rz) {
   return qz.multiply(qy).multiply(qx);
 }
 
+// Helper: convert global Descartes position to parent-local Descartes position
+// When a parent mesh is rotated, child positions (set in BJS local space) need
+// to be adjusted so that slider values always represent global Descartes axes.
+// pos: [x, y, z] in global Descartes
+// parentMesh: the BabylonJS mesh that will be the parent
+// returns: [x, y, z] in parent-local Descartes (to pass to component constructor)
+function globalToLocalPosition(pos, parentMesh) {
+  if (!parentMesh) return pos;
+
+  parentMesh.computeWorldMatrix(true);
+  var parentAbsRotQ = parentMesh.absoluteRotationQuaternion;
+  if (!parentAbsRotQ) return pos;
+
+  // Check if parent has any meaningful rotation
+  var identity = BABYLON.Quaternion.Identity();
+  if (parentAbsRotQ.equalsWithEpsilon(identity, 0.001)) return pos;
+
+  // Convert Descartes [x,y,z] -> BJS Vector3(x, z, y)
+  var globalBJS = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+
+  // Inverse-rotate by parent's world rotation to get local BJS position
+  var invQ = BABYLON.Quaternion.Inverse(parentAbsRotQ);
+  var localBJS = BABYLON.Vector3.Zero();
+  globalBJS.rotateByQuaternionAroundPointToRef(invQ, BABYLON.Vector3.Zero(), localBJS);
+
+  // Convert BJS (x, y, z) -> Descartes [x, z, y]
+  return [localBJS.x, localBJS.z, localBJS.y];
+}
+
+// Helper: convert global Descartes rotation to parent-local Descartes rotation
+function globalToLocalRotation(rot, parentMesh) {
+  if (!parentMesh) return rot;
+
+  parentMesh.computeWorldMatrix(true);
+  var parentAbsRotQ = parentMesh.absoluteRotationQuaternion;
+  if (!parentAbsRotQ) return rot;
+
+  var identity = BABYLON.Quaternion.Identity();
+  if (parentAbsRotQ.equalsWithEpsilon(identity, 0.001)) return rot;
+
+  // User's global rotation as quaternion (Descartes -> BJS)
+  var globalRotQ = globalRotationQuaternion(rot[0], rot[2], rot[1]);
+
+  // Local rotation = inverse(parentWorldRot) * globalRot
+  var invParentQ = BABYLON.Quaternion.Inverse(parentAbsRotQ);
+  var localRotQ = invParentQ.multiply(globalRotQ);
+
+  // Convert quaternion back to Euler (BJS order)
+  var localEuler = localRotQ.toEulerAngles();
+
+  // Convert BJS Euler (x, y, z) -> Descartes [-x, -z, -y] (with RHR negation)
+  return [-localEuler.x, -localEuler.z, -localEuler.y];
+}
+
 // Color sensor. Uses a camera to capture image and extract average RGB values
 function ColorSensor(scene, parent, pos, rot, port, options) {
   var self = this;
@@ -1937,7 +1991,7 @@ function SwivelActuator(scene, parent, pos, rot, port, options) {
     let connectedPivot = BABYLON.Vector3.Zero();
     connectedPivot.y = -0.75;
     let axisVec = new BABYLON.Vector3(0, 1, 0);
-    let rotationQuaternion = BABYLON.Quaternion.FromEulerVector(self.rotation);
+    let rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
     axisVec.rotateByQuaternionAroundPointToRef(rotationQuaternion, BABYLON.Vector3.Zero(), axisVec);
 
     let targetBody = self.body;
@@ -2056,6 +2110,58 @@ function SwivelActuator(scene, parent, pos, rot, port, options) {
   this.init();
 }
 
+// Registry for MotorActuator presets
+window.MOTOR_PRESETS = {
+  'Custom': {
+  },
+  'N20_Micro': {
+    modelURL: 'models/robot-motors/motor-dc-GA12-N20.stl',
+    housingSize: [3, 3, 3],
+    shaftOffset: [0, 1.3, 0],
+    shaftAxis: [0, 1, 0],
+    shaftDiameter: 0.3,
+    shaftLength: 0.8,
+    modelScale: 0.1,
+    maxSpeedRpm: 300,
+    maxTorqueNcm: 2,
+    gearRatio: 1,
+    encoderTicksPerRev: 12,
+    snapPoints: [
+      { name: 'shaft', localPos: [5, 9.42, 6], normal: [0, 1, 0], role: 'axle' },
+      { name: 'bottom', localPos: [5, -8.015, -0.47], normal: [0, 0, -1], role: 'attach' },
+      { name: 'top', localPos: [5, -8.015, 12], normal: [0, 0, 1], role: 'surface' },
+      { name: 'right', localPos: [10, -8.4, 6], normal: [1, 0, 0], role: 'surface' },
+      { name: 'left', localPos: [0, -8.4, 6], normal: [-1, 0, 0], role: 'surface' }
+    ]
+  },
+  'Yellow_DC': {
+    modelURL: 'models/motors/yellow.glb',
+    housingSize: [1.5, 2, 1],
+    shaftOffset: [0.5, -0.5, 0],
+    shaftAxis: [1, 0, 0],
+    shaftDiameter: 0.3,
+    shaftLength: 1,
+    modelScale: 1,
+    maxSpeedRpm: 150,
+    maxTorqueNcm: 5,
+    gearRatio: 48,
+    encoderTicksPerRev: 12
+  },
+  'GA25': {
+    modelURL: 'models/motors/ga370.glb',
+    housingSize: [2.5, 4.5, 2.5],
+    shaftOffset: [0, -2, 0],
+    shaftAxis: [0, -1, 0],
+    shaftDiameter: 0.3,
+    shaftLength: 1,
+    modelScale: 1,
+    maxSpeedRpm: 500,
+    maxTorqueNcm: 8,
+    gearRatio: 1,
+    encoderTicksPerRev: 360
+  }
+};
+
 // Motor actuator with 3D model
 function MotorActuator(scene, parent, pos, rot, port, options) {
   var self = this;
@@ -2063,6 +2169,7 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
   this.type = 'MotorActuator';
   this.port = port;
   this.options = null;
+
   this.modelBoundingSize = null; // Auto-computed from loaded model, used by configurator wireframe
   this.modelBoundingOffset = null; // Offset from body center to model visual center (in world space)
   this._loadId = 0; // Guard against stale async model loads
@@ -2145,9 +2252,9 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
 
     // Create invisible body (housing) — this is the fixed part attached to robot
     var body = BABYLON.MeshBuilder.CreateBox('motorBody', {
-      height: self.options.housingSize[1],
-      width: self.options.housingSize[0],
-      depth: self.options.housingSize[2]
+      height: self.options.housingSize[2], // Descartes Z -> BJS Y
+      width: self.options.housingSize[0],  // Descartes X -> BJS X
+      depth: self.options.housingSize[1]   // Descartes Y -> BJS Z
     }, scene);
     self.body = body;
     body.component = self;
@@ -2179,25 +2286,20 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       shaft.visibility = 0;
     }
 
-    // Position the shaft relative to the body
-    shaft.parent = parent;
+    // Position the shaft relative to the housing body
+    // Shaft is a child of body — inherits body's rotation/position automatically
+    shaft.parent = body;
 
-    // First apply the component rotation (same as housing body)
-    shaft.rotate(BABYLON.Axis.Y, self.rotation.y, BABYLON.Space.LOCAL);
-    shaft.rotate(BABYLON.Axis.X, self.rotation.x, BABYLON.Space.LOCAL);
-    shaft.rotate(BABYLON.Axis.Z, self.rotation.z, BABYLON.Space.LOCAL);
-
-    // Then rotate shaft to align with shaftAxis direction IN THE HOUSING'S LOCAL SPACE.
-    // CreateCylinder defaults to Y axis, so we rotate from Y to the target axis.
-    // This is applied AFTER the component rotation so shaftAxis works independently
-    // of housing rotation — it always defines the shaft within the housing's own space.
-    var defaultShaftDir = new BABYLON.Vector3(0, 1, 0);
+    // Convert shaftAxis from Descartes to BJS
+    var defaultShaftDir = new BABYLON.Vector3(0, 1, 0); // BJS cylinder default = Y-up
     var targetShaftDir = new BABYLON.Vector3(
-      self.options.shaftAxis[0],
-      self.options.shaftAxis[1],
-      self.options.shaftAxis[2]
+      self.options.shaftAxis[0], // Descartes X -> BJS X
+      self.options.shaftAxis[2], // Descartes Z -> BJS Y
+      self.options.shaftAxis[1]  // Descartes Y -> BJS Z
     ).normalize();
 
+    // Compute rotation to align cylinder from default Y-up to targetShaftDir
+    var shaftRotQ = BABYLON.Quaternion.Identity();
     if (!targetShaftDir.equalsWithEpsilon(defaultShaftDir, 0.001)) {
       var crossVec = BABYLON.Vector3.Cross(defaultShaftDir, targetShaftDir);
       var dotVal = BABYLON.Vector3.Dot(defaultShaftDir, targetShaftDir);
@@ -2205,26 +2307,21 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       if (crossVec.length() > 0.001) {
         var angle = Math.acos(Math.max(-1, Math.min(1, dotVal)));
         var rotAxis = crossVec.normalize();
-        shaft.rotate(rotAxis, angle, BABYLON.Space.LOCAL);
+        shaftRotQ = BABYLON.Quaternion.RotationAxis(rotAxis, angle);
       } else if (dotVal < 0) {
-        // Anti-parallel (pointing opposite): rotate 180° around X
-        shaft.rotate(BABYLON.Axis.X, Math.PI, BABYLON.Space.LOCAL);
+        shaftRotQ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, Math.PI);
       }
     }
 
-    shaft.position = self.bodyPosition.clone();
+    // Shaft rotation is local to body (relative to housing orientation)
+    shaft.rotationQuaternion = shaftRotQ;
 
-    // Apply shaft offset in local space
-    var shaftOffset = new BABYLON.Vector3(
-      self.options.shaftOffset[0],
-      self.options.shaftOffset[1],
-      self.options.shaftOffset[2]
+    // Shaft offset as LOCAL offset from body center (Descartes -> BJS)
+    shaft.position = new BABYLON.Vector3(
+      self.options.shaftOffset[0], // Descartes X -> BJS X
+      self.options.shaftOffset[2], // Descartes Z -> BJS Y
+      self.options.shaftOffset[1]  // Descartes Y -> BJS Z
     );
-    shaft.translate(BABYLON.Axis.X, shaftOffset.x, BABYLON.Space.LOCAL);
-    shaft.translate(BABYLON.Axis.Y, shaftOffset.y, BABYLON.Space.LOCAL);
-    shaft.translate(BABYLON.Axis.Z, shaftOffset.z, BABYLON.Space.LOCAL);
-
-    parent.removeChild(shaft);
 
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
   };
@@ -2481,6 +2578,20 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
   };
 
   this.loadImpostor = function () {
+    // Skip physics in Configurator — only needed for simulation
+    if (typeof configurator !== 'undefined') return;
+
+    // Detach shaft from body for physics simulation
+    if (self.shaft && self.shaft.parent) {
+      self.shaft.computeWorldMatrix(true);
+      var wp = self.shaft.absolutePosition.clone();
+      var wq = new BABYLON.Quaternion();
+      self.shaft.getWorldMatrix().decompose(null, wq, null);
+      self.shaft.parent = null;
+      self.shaft.position = wp;
+      self.shaft.rotationQuaternion = wq;
+    }
+
     self.body.physicsImpostor = new BABYLON.PhysicsImpostor(
       self.body,
       BABYLON.PhysicsImpostor.BoxImpostor,
@@ -2502,26 +2613,35 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
   };
 
   this.loadJoints = function () {
+    // Skip joints in Configurator — no physics impostors exist
+    if (typeof configurator !== 'undefined') return;
+
     let mainPivot = BABYLON.Vector3.Zero();
     let connectedPivot = BABYLON.Vector3.Zero();
 
-    // Determine the rotation axis based on shaftAxis option
+    // shaftAxis in Descartes -> BJS
     let axisVec = new BABYLON.Vector3(
       self.options.shaftAxis[0],
-      self.options.shaftAxis[1],
-      self.options.shaftAxis[2]
+      self.options.shaftAxis[2],
+      self.options.shaftAxis[1]
     );
-    let rotationQuaternion = BABYLON.Quaternion.FromEulerVector(self.rotation);
-    axisVec.rotateByQuaternionAroundPointToRef(rotationQuaternion, BABYLON.Vector3.Zero(), axisVec);
 
-    // Calculate the shaft offset in local space for the pivot
+    // shaftOffset in Descartes -> BJS
     let shaftOffset = new BABYLON.Vector3(
       self.options.shaftOffset[0],
-      self.options.shaftOffset[1],
-      self.options.shaftOffset[2]
+      self.options.shaftOffset[2],
+      self.options.shaftOffset[1]
     );
-    shaftOffset.rotateByQuaternionAroundPointToRef(rotationQuaternion, BABYLON.Vector3.Zero(), shaftOffset);
 
+    // Rotate shaftOffset and axisVec by body's rotation
+    // so the joint pivot accounts for the housing orientation
+    if (self.body.rotationQuaternion) {
+      let zero = BABYLON.Vector3.Zero();
+      shaftOffset.rotateByQuaternionAroundPointToRef(self.body.rotationQuaternion, zero, shaftOffset);
+      axisVec.rotateByQuaternionAroundPointToRef(self.body.rotationQuaternion, zero, axisVec);
+    }
+
+    // Walk up parent chain to get position in root body's local space
     let targetBody = self.body;
     while (targetBody.parent) {
       mainPivot.addInPlace(targetBody.position);
@@ -2533,11 +2653,7 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       mainPivot: mainPivot,
       connectedPivot: connectedPivot,
       mainAxis: axisVec,
-      connectedAxis: new BABYLON.Vector3(
-        self.options.shaftAxis[0],
-        self.options.shaftAxis[1],
-        self.options.shaftAxis[2]
-      ),
+      connectedAxis: new BABYLON.Vector3(0, 1, 0),
     });
 
     targetBody.physicsImpostor.addJoint(self.shaft.physicsImpostor, self.joint);
@@ -2548,19 +2664,25 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       mass: 100,
       housingColor: '555555',
       shaftColor: 'CCCCCC',
+      preset: 'Custom',
       housingSize: [3, 3, 3],
       shaftDiameter: 1,
       shaftLength: 2,
-      shaftOffset: [0, 2.5, 0],
-      shaftAxis: [0, 1, 0],
+      shaftOffset: [0, 0, 2.5],
+      shaftAxis: [0, 0, 1],
       showShaft: true,
       modelURL: '',
       modelScale: 10,
       modelColor: '',
       _modelFileName: '',
+      maxSpeedRpm: 300,
+      maxTorqueNcm: 2,
+      gearRatio: 1,
+      encoderTicksPerRev: 12,
       restitution: 0.4,
       friction: 0.1,
-      components: []
+      components: [],
+      snapPoints: null
     };
 
     for (let name in options) {
@@ -2570,6 +2692,33 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
         self.options[name] = options[name];
       }
     }
+
+    // Auto-apply preset if selected
+    if (self.options.preset && self.options.preset !== 'Custom' && window.MOTOR_PRESETS[self.options.preset]) {
+      let preset = window.MOTOR_PRESETS[self.options.preset];
+      for (let k in preset) {
+        self.options[k] = preset[k];
+      }
+    }
+
+    // Auto-load saved local motor config (keyed by modelURL, like snap editor)
+    if (self.options.modelURL && self.options.modelURL !== '') {
+      try {
+        var localKey = 'motor_config_' + self.options.modelURL;
+        var localData = localStorage.getItem(localKey);
+        if (localData) {
+          var savedConfig = JSON.parse(localData);
+          for (var k in savedConfig) {
+            self.options[k] = savedConfig[k];
+          }
+        }
+      } catch (e) {
+        console.warn('[MotorActuator] Failed to load local config:', e);
+      }
+    }
+
+    // Recalculate physical max parameters based on new options
+    self.maxForce = self.options.maxTorqueNcm * self.options.gearRatio; // Simple estimation
   };
 
   this.render = function (delta) {
@@ -2604,14 +2753,17 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
   };
 
   this.setMotorSpeed = function () {
+    if (!self.joint) return;
     let speed = self.speed_sp / 180 * Math.PI;
     if (self.positionDirectionReversed) {
       speed = -speed;
     }
-    self.joint.setMotor(speed);
+    let mForce = (self.maxForce !== undefined) ? self.maxForce : 100;
+    self.joint.setMotor(speed, mForce);
   };
 
   this.holdPosition = function (delta) {
+    if (!self.joint) return;
     const P_GAIN = 0.1;
     const MAX_POSITION_CORRECTION_SPEED = 0.5;
     let error = self.position_target - self.position;
@@ -2622,16 +2774,17 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
     } else if (speed < -MAX_POSITION_CORRECTION_SPEED) {
       speed = -MAX_POSITION_CORRECTION_SPEED;
     }
-    self.joint.setMotor(speed);
+    let mForce = (self.maxForce !== undefined) ? self.maxForce : 100;
+    self.joint.setMotor(speed, mForce);
   };
 
   this.getPosition = function () {
     let baseVector = new BABYLON.Vector3(0, 0, 1);
     let armVector = new BABYLON.Vector3(0, 0, 1);
     let normalVector = new BABYLON.Vector3(
-      self.options.shaftAxis[0],
-      self.options.shaftAxis[1],
-      self.options.shaftAxis[2]
+      self.options.shaftAxis[0], // Descartes X -> BJS X
+      self.options.shaftAxis[2], // Descartes Z -> BJS Y
+      self.options.shaftAxis[1]  // Descartes Y -> BJS Z
     );
     let zero = BABYLON.Vector3.Zero();
 
@@ -2650,7 +2803,10 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
     }
     self.prevRotation = rotation;
 
-    return self.rotationRounds * 360 + rotation - self.positionAdjustment;
+    let rawDegrees = self.rotationRounds * 360 + rotation - self.positionAdjustment;
+
+    // Scale degrees into ticks based on encoder and gear ratio
+    return rawDegrees / 360.0 * self.options.encoderTicksPerRev * self.options.gearRatio;
   };
 
   this.init();
@@ -3662,10 +3818,13 @@ function WheelPassive(scene, parent, pos, rot, options) {
 
     self.mesh.parent = parent;
     self.mesh.position = self.position;
-    self.mesh.rotation.z = -Math.PI / 2;
-    self.mesh.rotate(BABYLON.Axis.Y, rot[1], BABYLON.Space.LOCAL);
-    self.mesh.rotate(BABYLON.Axis.X, rot[0], BABYLON.Space.LOCAL);
-    self.mesh.rotate(BABYLON.Axis.Z, rot[2], BABYLON.Space.LOCAL);
+
+    // Compose rotation: user global Descartes rotation + wheel orientation (-90° Z to lay cylinder on side)
+    // User rotation uses global axes (same as all other components), so sliders X/Y/Z match Descartes
+    var userRotQ = globalRotationQuaternion(rot[0], rot[2], rot[1]);
+    var wheelOrientQ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, -Math.PI / 2);
+    self.mesh.rotationQuaternion = userRotQ.multiply(wheelOrientQ);
+
     parent.removeChild(self.mesh);
 
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(self.mesh);

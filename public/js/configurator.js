@@ -933,23 +933,40 @@ var configurator = new function () {
         rotation: [0, 0, 0],
         components: [],
         options: {
+          preset: 'Custom',
           mass: 100,
           housingColor: '555555',
-          shaftColor: 'CCCCCC',
+          // Default MotorActuator in Descartes: Z is Up
           housingSize: [3, 3, 3],
-          shaftDiameter: 1,
+          shaftColor: '808080',
           shaftLength: 2,
-          shaftOffset: [0, 2.5, 0],
-          shaftAxis: [0, 1, 0],
+          shaftOffset: [0, 0, 2.5], // Z=2.5 offset
+          shaftAxis: [0, 0, 1],     // Z-axis rotation
           showShaft: true,
           modelURL: '',
           modelScale: 10,
           modelColor: '',
+          maxSpeedRpm: 300,
+          maxTorqueNcm: 2,
+          gearRatio: 1,
+          encoderTicksPerRev: 12,
           restitution: 0.4,
           friction: 0.1
         }
       },
       optionsConfigurations: [
+        {
+          option: 'preset',
+          type: 'select',
+          options: [
+            ['Custom', 'Custom'],
+            ['N20 Micro', 'N20_Micro'],
+            ['Yellow DC Gear', 'Yellow_DC'],
+            ['GA25', 'GA25']
+          ],
+          reset: true,
+          help: 'Select a predefined motor model (auto-loads geometry & physics)'
+        },
         {
           option: 'position',
           type: 'vectors',
@@ -1001,7 +1018,7 @@ var configurator = new function () {
           max: '20',
           step: '0.5',
           reset: true,
-          help: 'Width, Height, Depth of the invisible housing physics box'
+          help: 'Housing box X/Y/Z dimensions (X=width, Y=depth, Z=height)'
         },
         {
           option: 'shaftOffset',
@@ -1010,7 +1027,7 @@ var configurator = new function () {
           max: '10',
           step: '0.1',
           reset: true,
-          help: 'Offset from housing center to shaft center (X, Y, Z in cm)'
+          help: 'Shaft offset from motor center (Global Space: X=right, Y=forward, Z=up)'
         },
         {
           option: 'shaftAxis',
@@ -1019,7 +1036,7 @@ var configurator = new function () {
           max: '1',
           step: '0.1',
           reset: true,
-          help: 'Rotation axis direction vector. Y=[0,1,0] for vertical rotation.'
+          help: 'Shaft direction vector (Global Space: e.g. 0,0,1 = shaft points Up)'
         },
         {
           option: 'shaftDiameter',
@@ -1051,6 +1068,26 @@ var configurator = new function () {
           help: 'Show the shaft cylinder (useful for positioning)'
         },
         {
+          option: 'maxSpeedRpm',
+          type: 'floatText',
+          help: 'Maximum Free Speed in RPM (for physics simulation)'
+        },
+        {
+          option: 'maxTorqueNcm',
+          type: 'floatText',
+          help: 'Maximum Stall Torque in N.cm (for physics simulation)'
+        },
+        {
+          option: 'gearRatio',
+          type: 'floatText',
+          help: 'GearBox Ratio (e.g. 48 for 1:48 gear)'
+        },
+        {
+          option: 'encoderTicksPerRev',
+          type: 'floatText',
+          help: 'Encoder ticks per one revolution of the raw motor (pre-gearbox)'
+        },
+        {
           option: 'mass',
           type: 'floatText',
           help: 'If chaining actuators, it\'s recommended to reduce mass of child actuators'
@@ -1063,6 +1100,14 @@ var configurator = new function () {
           step: '0.05',
           help: 'This will also apply to all child objects'
         },
+        {
+          option: 'Motor Preset',
+          type: 'buttons',
+          buttons: [
+            { label: '💾 Save Config (Local)', callback: 'saveMotorConfigLocal' },
+            { label: '📥 Export JSON (Developer)', callback: 'exportMotorConfig' }
+          ]
+        }
       ]
     },
     {
@@ -2077,22 +2122,44 @@ var configurator = new function () {
               compData = robot.options.components[movedComponent.componentIndex];
             }
             if (compData) {
-              // Position: BJS (x, y, z) → Descartes (x, z, y)
-              var pos = mesh.position;
-              if (mesh.parent && typeof mesh.component !== 'undefined' && typeof mesh.component.parent !== 'undefined') {
-                pos = pos.subtract(mesh.component.parent.absolutePosition);
-              }
-              compData.position[0] = pos.x;
-              compData.position[1] = pos.z;
-              compData.position[2] = pos.y;
+              // Position: convert from parent-local BJS to global Descartes
+              var localPos = mesh.position.clone();
 
-              // Rotation: BJS Euler (radians) → Descartes with RHR negation
-              var rot = mesh.rotationQuaternion
-                ? mesh.rotationQuaternion.toEulerAngles()
-                : mesh.rotation;
-              compData.rotation[0] = -rot.x;
-              compData.rotation[1] = -rot.z;
-              compData.rotation[2] = -rot.y;
+              // If mesh has a rotated parent, rotate local position by parent's world rotation
+              // to get global position
+              if (mesh.parent && mesh.parent.absoluteRotationQuaternion) {
+                var parentRotQ = mesh.parent.absoluteRotationQuaternion;
+                var identity = BABYLON.Quaternion.Identity();
+                if (!parentRotQ.equalsWithEpsilon(identity, 0.001)) {
+                  var globalPos = BABYLON.Vector3.Zero();
+                  localPos.rotateByQuaternionAroundPointToRef(parentRotQ, BABYLON.Vector3.Zero(), globalPos);
+                  localPos = globalPos;
+                }
+              }
+
+              // BJS (x, y, z) → Descartes (x, z, y)
+              compData.position[0] = localPos.x;
+              compData.position[1] = localPos.z;
+              compData.position[2] = localPos.y;
+
+              // Rotation: convert from parent-local to global Descartes
+              var meshRotQ = mesh.rotationQuaternion
+                ? mesh.rotationQuaternion.clone()
+                : BABYLON.Quaternion.FromEulerAngles(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z);
+
+              // If mesh has a rotated parent, compose rotations to get global
+              if (mesh.parent && mesh.parent.absoluteRotationQuaternion) {
+                var parentRotQ = mesh.parent.absoluteRotationQuaternion;
+                var identity = BABYLON.Quaternion.Identity();
+                if (!parentRotQ.equalsWithEpsilon(identity, 0.001)) {
+                  meshRotQ = parentRotQ.multiply(meshRotQ); // global = parent * local
+                }
+              }
+
+              var globalEuler = meshRotQ.toEulerAngles();
+              compData.rotation[0] = -globalEuler.x;
+              compData.rotation[1] = -globalEuler.z;
+              compData.rotation[2] = -globalEuler.y;
             }
           }
           self.saveHistory();
@@ -2356,9 +2423,13 @@ var configurator = new function () {
       console.log('[SnapBtn Cfg] Opening editor.', 'type=', componentData?.type, 'modelURL=', componentData?.options?.modelURL, 'mesh=', component.body?.name);
 
       if (window.SnapPointEditor) {
+        // Pass runtime modelURL (includes preset-applied values) as override
+        // componentData.options.modelURL may be empty if model was loaded via preset
+        let runtimeModelURL = component.options?.modelURL || componentData?.options?.modelURL || null;
         window.SnapPointEditor.open({
           mesh: component.body,
-          componentData: componentData
+          componentData: componentData,
+          modelURL: runtimeModelURL
         });
       }
     });
@@ -2480,6 +2551,68 @@ var configurator = new function () {
   // Set the robot name
   this.setRobotName = function () {
     robot.options.name = self.$robotName.val();
+  };
+
+  // Export Motor config to JSON
+  this.exportMotorConfig = function (opt, currentOptions) {
+    if (!currentOptions) return;
+    let exportData = {
+      modelURL: currentOptions.modelURL || '',
+      housingSize: currentOptions.housingSize || [3, 3, 3],
+      shaftOffset: currentOptions.shaftOffset || [0, 0, 2.5],
+      shaftAxis: currentOptions.shaftAxis || [0, 0, 1],
+      shaftDiameter: currentOptions.shaftDiameter || 1,
+      shaftLength: currentOptions.shaftLength || 2,
+      modelScale: currentOptions.modelScale || 10,
+      maxSpeedRpm: currentOptions.maxSpeedRpm || 300,
+      maxTorqueNcm: currentOptions.maxTorqueNcm || 2,
+      gearRatio: currentOptions.gearRatio || 1,
+      encoderTicksPerRev: currentOptions.encoderTicksPerRev || 12,
+    };
+
+    // Create and download file
+    let element = document.createElement('a');
+    element.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2)));
+    element.setAttribute('download', 'custom_motor_preset.json');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    toastMsg('Motor preset downloaded as JSON');
+  };
+
+  // Save Motor config to localStorage (for user, like snap editor)
+  this.saveMotorConfigLocal = function (opt, currentOptions) {
+    if (!currentOptions) return;
+
+    // Use modelURL as key (same pattern as snap editor)
+    var modelURL = currentOptions.modelURL || '';
+    if (!modelURL) {
+      toastMsg('No model URL set — cannot save config locally. Please select a model first.');
+      return;
+    }
+
+    let saveData = {
+      housingSize: currentOptions.housingSize || [3, 3, 3],
+      shaftOffset: currentOptions.shaftOffset || [0, 0, 2.5],
+      shaftAxis: currentOptions.shaftAxis || [0, 0, 1],
+      shaftLength: currentOptions.shaftLength || 2,
+      shaftDiameter: currentOptions.shaftDiameter || 1,
+      modelScale: currentOptions.modelScale || 10,
+      maxSpeedRpm: currentOptions.maxSpeedRpm || 300,
+      maxTorqueNcm: currentOptions.maxTorqueNcm || 2,
+      gearRatio: currentOptions.gearRatio || 1,
+      encoderTicksPerRev: currentOptions.encoderTicksPerRev || 12,
+    };
+
+    try {
+      var localKey = 'motor_config_' + modelURL;
+      localStorage.setItem(localKey, JSON.stringify(saveData));
+      toastMsg('Motor config saved locally for: ' + (modelURL.split('/').pop() || modelURL));
+    } catch (e) {
+      console.error('[Configurator] Failed to save motor config:', e);
+      toastMsg('Failed to save motor config locally');
+    }
   };
 
   // Show options

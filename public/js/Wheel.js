@@ -131,10 +131,11 @@ function Wheel(scene, parent, pos, rot, port, options) {
 
     self.mesh.parent = parent;
     self.mesh.position = self.bodyPosition;
-    self.mesh.rotation.z = -Math.PI / 2;
-    self.mesh.rotate(BABYLON.Axis.Y, rot[1], BABYLON.Space.LOCAL);
-    self.mesh.rotate(BABYLON.Axis.X, rot[0], BABYLON.Space.LOCAL);
-    self.mesh.rotate(BABYLON.Axis.Z, rot[2], BABYLON.Space.LOCAL);
+    // Compose rotation: user global Descartes rotation + wheel orientation (-90° Z to lay cylinder on side)
+    // User rotation uses global axes (same as all other components), so sliders X/Y/Z match Descartes
+    var userRotQ = globalRotationQuaternion(rot[0], rot[2], rot[1]);
+    var wheelOrientQ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, -Math.PI / 2);
+    self.mesh.rotationQuaternion = userRotQ.multiply(wheelOrientQ);
     parent.removeChild(self.mesh);
 
     if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(self.mesh);
