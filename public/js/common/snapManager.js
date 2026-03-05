@@ -116,24 +116,42 @@ var SnapManager = (function () {
     self._getRawSnapPoints = function (component) {
         if (!component) return [];
 
-        var type = component.type;
         var options = component.options || {};
+        var type = component.type;
 
-        // ── 1. Check for per-component config snap points (user-defined) ──
-        if (options.snapPoints && Array.isArray(options.snapPoints) && options.snapPoints.length > 0) {
-            return options.snapPoints;
+        // ── 0. Check for saved overrides (from Snap Point Editor) ──
+        // These are saved directly into the component's state.
+        var savedPoints = options.snapPoints || component.snapPoints;
+        if (savedPoints && Array.isArray(savedPoints) && savedPoints.length > 0) {
+            // Internal flag: points from editor are already relative to center if modelBoundingCenter exists
+            savedPoints._isFromOverrides = true;
+            return savedPoints;
         }
+
+        // ── 0b. Special case: MotorActuator presets ──
+        // If a preset is active, it might have built-in snap points in the preset registry
+        var presetName = options.preset;
+        if (presetName && presetName !== 'Custom' && typeof window !== 'undefined' && window.MOTOR_PRESETS && window.MOTOR_PRESETS[presetName]) {
+            var preset = window.MOTOR_PRESETS[presetName];
+            if (preset.snapPoints && preset.snapPoints.length > 0) {
+                console.log(`[SnapManager] Using PRESET points for ${type} (${presetName}):`, preset.snapPoints.length);
+                return preset.snapPoints;
+            }
+        }
+
+        // ── 1. Special case: Robot Body (Already transformed) ──
         if (component.snapPoints && Array.isArray(component.snapPoints) && component.snapPoints.length > 0) {
-            return component.snapPoints;
+            var pts = component.snapPoints.slice();
+            pts._sourceIsBodyLocal = true; // Flag: already in body-local Descartes, skip model transform
+            return pts;
         }
 
-        // ── 1b. Body-specific: check bodySnapPoints ──
+        // ── 1b. Body-specific: check bodySnapPoints (Already transformed) ──
         if (type === '__body__') {
             if (options.bodySnapPoints && Array.isArray(options.bodySnapPoints) && options.bodySnapPoints.length > 0) {
-                return options.bodySnapPoints;
-            }
-            if (component.bodySnapPoints && Array.isArray(component.bodySnapPoints) && component.bodySnapPoints.length > 0) {
-                return component.bodySnapPoints;
+                var pts = options.bodySnapPoints.slice();
+                pts._sourceIsBodyLocal = true;
+                return pts;
             }
         }
 
@@ -259,6 +277,8 @@ var SnapManager = (function () {
 
         // Remove internal flags completely
         var isFromBounds = false;
+        var isBodyLocal = rawPts._sourceIsBodyLocal === true; // Already in body-local Descartes
+        var isFromOverrides = rawPts._isFromOverrides === true; // Already center-relative
         var cleanPts = [];
         for (var i = 0; i < rawPts.length; i++) {
             if (rawPts[i].name === '_isFromBounds') {
@@ -284,17 +304,74 @@ var SnapManager = (function () {
 
         // If it's a model and not generated from bounding box, we apply scale
         // (Because bounding box points are already scaled via mesh extents).
-        if (isModel && !isFromBounds && scale !== 1.0 && scale !== 0) {
+        // SKIP transform if points are already in body-local Descartes (flagged by _sourceIsBodyLocal).
+        if (isModel && !isFromBounds && !isBodyLocal) {
+            // Model centering offset + Z-flip transform.
+            // Snap points are in native Descartes space [X, Y, Z] (Z-up).
+            // We transform them to body-local Descartes space by applying the
+            // model root's transform: modelScaling * nativeBJS + modelPosition.
+            //
+            // KEY: STL and GLB have different native BJS conventions:
+            //   STL: BabylonJS loads raw vertex coords (Z-up) → nativeBJS = (desc.x, desc.y, desc.z)
+            //   GLB: BabylonJS applies Y-up convention → nativeBJS = (desc.x, desc.z, desc.y)
+            //
+            // Model root transform: scaling=(s, s, -s), position=modelBoundingOffset
+            // Result: bodyLocalBJS = scaling * nativeBJS + offset
+
+            var modelOff = component.modelBoundingOffset;
+            var offBJS_x = modelOff ? modelOff.x : 0;
+            var offBJS_y = modelOff ? modelOff.y : 0;
+            var offBJS_z = modelOff ? modelOff.z : 0;
+
+            // Centering logic: If the component has a specific modelBoundingCenter,
+            // we know it was loaded using the unified centering system.
+            //
+            // If the points come from the editor (Overrides), they are already
+            // relative to this center. So offBJS should be ZERO for them.
+            // If the points come from the DB, they are relative to (0,0,0) native,
+            // so we MUST apply the offBJS centering shift.
+            if (isFromOverrides) {
+                offBJS_x = 0;
+                offBJS_y = 0;
+                offBJS_z = 0;
+            }
+
+            var effectiveScale = (scale !== 1.0 && scale !== 0) ? scale : 1.0;
+
             return cleanPts.map(function (p) {
+                // p.localPos is Descartes [X, Y, Z] (Y=forward, Z=up)
+                var dx = p.localPos[0]; // Descartes X (right)
+                var dy = p.localPos[1]; // Descartes Y (forward)
+                var dz = p.localPos[2]; // Descartes Z (up)
+
+                // Uniform visual mapping applies: BJS Y=Up(dz), BJS Z=Forward(dy)
+                var nbx = dx;
+                var nby = dz;
+                var nbz = dy;
+
+                // Apply model root transform: bodyLocalBJS = scaling * nativeBJS + offset
+                // scaling = (s, s, -s)
+                var blx = nbx * effectiveScale + offBJS_x;
+                var bly = nby * effectiveScale + offBJS_y;
+                var blz = nbz * (-effectiveScale) + offBJS_z;
+
+                // Normal is NOT inverted linearly like translation, but it follows 
+                // the rotation and reflection of the model.
+                // Since model has scaling (s, s, -s), we must flip the BJS-Z component of the normal.
+                var nx = p.normal[0];
+                var ny = p.normal[1];
+                var nz = p.normal[2];
+
+                var bnx = nx;
+                var bny = nz; // BJS Y (Up) = Descartes Z
+                var bnz = -ny; // BJS Z (Forward) = Flipped Descartes Y
+
+                // Return correctly formatted Descartes body-local: [X, Y(Forward), Z(Up)]
                 return {
                     name: p.name,
                     role: p.role,
-                    normal: p.normal,
-                    localPos: [
-                        p.localPos[0] * scale,
-                        p.localPos[1] * scale,
-                        p.localPos[2] * scale
-                    ]
+                    normal: [bnx, bnz, bny],
+                    localPos: [blx, blz, bly]
                 };
             });
         }
@@ -1154,8 +1231,21 @@ var SnapManager = (function () {
         );
 
         // Step 3: Translate to align positions
-        var offset = tgtSP.worldPos.subtract(newSrcWorld.worldPos);
-        mesh.position.addInPlace(offset);
+        var worldOffset = tgtSP.worldPos.subtract(newSrcWorld.worldPos);
+
+        // If mesh has a parent, convert world offset to parent-local space
+        if (mesh.parent) {
+            mesh.parent.computeWorldMatrix(true);
+            var parentWorldMatrix = mesh.parent.getWorldMatrix();
+            var parentRotMatrix = new BABYLON.Matrix();
+            parentWorldMatrix.getRotationMatrixToRef(parentRotMatrix);
+            var invParentRot = new BABYLON.Matrix();
+            parentRotMatrix.invertToRef(invParentRot);
+            var localOffset = BABYLON.Vector3.TransformCoordinates(worldOffset, invParentRot);
+            mesh.position.addInPlace(localOffset);
+        } else {
+            mesh.position.addInPlace(worldOffset);
+        }
         mesh.computeWorldMatrix(true);
 
         // Done — save callback before exit clears state

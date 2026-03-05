@@ -194,11 +194,8 @@ function Robot() {
 
           let modelScale = options.bodyModelScale || 1;
 
+          // --- STL specific material handling ---
           if (isSTL) {
-            // --- STL handling ---
-            // STL meshes have no root node, need a TransformNode container
-
-            // Apply default material if STL mesh has none
             for (let i = 0; i < modelMeshes.length; i++) {
               if (!modelMeshes[i].material) {
                 let defaultMat = scene.getMaterialByID('bodySTLDefault_' + i);
@@ -210,11 +207,17 @@ function Robot() {
                 modelMeshes[i].material = defaultMat;
               }
             }
+          }
 
-            // Calculate overall bounding box
-            let min = null;
-            let max = null;
-            for (let i = 0; i < modelMeshes.length; i++) {
+          // --- Unified Bounding Box Calculation ---
+          let min = null;
+          let max = null;
+          try {
+            let bounds = modelMeshes[0].getHierarchyBoundingVectors(true);
+            min = bounds.min;
+            max = bounds.max;
+          } catch (e) {
+            for (let i = (isSTL ? 0 : 1); i < modelMeshes.length; i++) {
               modelMeshes[i].computeWorldMatrix(true);
               let meshBounds = modelMeshes[i].getBoundingInfo().boundingBox;
               if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
@@ -227,95 +230,78 @@ function Robot() {
                 }
               }
             }
-            if (min === null) {
-              min = new BABYLON.Vector3(-1, -1, -1);
-              max = new BABYLON.Vector3(1, 1, 1);
-            }
+          }
+          if (min === null) {
+            min = new BABYLON.Vector3(-1, -1, -1);
+            max = new BABYLON.Vector3(1, 1, 1);
+          }
 
-            let bounding = new BABYLON.BoundingInfo(min, max);
-            let center = bounding.boundingBox.center;
+          let bounding = new BABYLON.BoundingInfo(min, max);
+          let center = bounding.boundingBox.center;
+          self.modelBoundingCenter = center.clone();
+          if (!options.modelBoundingCenter) {
+            options.modelBoundingCenter = [center.x, center.z, center.y];
+          }
 
-            // Create root transform for STL meshes
+          let offBJS = new BABYLON.Vector3(
+            -center.x * modelScale,
+            -center.y * modelScale,
+            center.z * modelScale
+          );
+          self.modelBoundingOffset = offBJS;
+
+          if (isSTL) {
+            // --- STL placement ---
             let stlRoot = new BABYLON.TransformNode('bodyModelRoot', scene);
             stlRoot.scaling.x = modelScale;
             stlRoot.scaling.y = modelScale;
             stlRoot.scaling.z = -modelScale;
+            stlRoot.position = offBJS.clone();
 
-            // Center the model
-            stlRoot.position.x = -center.x * modelScale;
-            stlRoot.position.y = -center.y * modelScale;
-            stlRoot.position.z = center.z * modelScale;
-
-            // Apply model rotation
             if (options.bodyModelRotation) {
               stlRoot.rotation.x = options.bodyModelRotation[0];
               stlRoot.rotation.y = options.bodyModelRotation[2];
               stlRoot.rotation.z = options.bodyModelRotation[1];
             }
-            // Apply model position offset
             if (options.bodyModelPosition) {
               stlRoot.position.x += options.bodyModelPosition[0];
               stlRoot.position.y += options.bodyModelPosition[2];
               stlRoot.position.z += options.bodyModelPosition[1];
             }
-
             stlRoot.parent = body;
-
             for (let i = 0; i < modelMeshes.length; i++) {
               modelMeshes[i].parent = stlRoot;
               modelMeshes[i].isPickable = false;
-              // Apply body color
               modelMeshes[i].material = bodyMat;
             }
-
-            // Add shadow for model
             if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(stlRoot);
-
             self.bodyModel = modelMeshes;
-
           } else {
-            // --- GLTF/GLB handling ---
-
-            // Scale the model
+            // --- GLTF/GLB placement ---
+            modelMeshes[0].rotationQuaternion = null;
             modelMeshes[0].scaling.x = modelScale;
             modelMeshes[0].scaling.y = modelScale;
             modelMeshes[0].scaling.z = -modelScale;
+            modelMeshes[0].position = offBJS.clone();
 
-            // Apply model rotation
-            // glTF models set rotationQuaternion by default, which overrides .rotation
-            // Must clear it to use Euler angles from sliders
-            modelMeshes[0].rotationQuaternion = null;
             if (options.bodyModelRotation) {
               modelMeshes[0].rotation.x = options.bodyModelRotation[0];
               modelMeshes[0].rotation.y = options.bodyModelRotation[2];
               modelMeshes[0].rotation.z = options.bodyModelRotation[1];
             }
-            // Apply model position offset
             if (options.bodyModelPosition) {
-              modelMeshes[0].position.x = options.bodyModelPosition[0];
-              modelMeshes[0].position.y = options.bodyModelPosition[2];
-              modelMeshes[0].position.z = options.bodyModelPosition[1];
+              modelMeshes[0].position.x += options.bodyModelPosition[0];
+              modelMeshes[0].position.y += options.bodyModelPosition[2];
+              modelMeshes[0].position.z += options.bodyModelPosition[1];
             }
-
-            // Parent model to body so it moves with physics
             modelMeshes[0].parent = body;
-
-            // Make imported meshes unpickable and apply body color
             for (let i = 0; i < modelMeshes.length; i++) {
               modelMeshes[i].isPickable = false;
-              // Apply body color to submeshes that have a material
               if (modelMeshes[i].material) {
-                // Break cache link for scene rebuilds
-                modelMeshes[i].material = modelMeshes[i].material.clone('cloned_body_mat_' + i);
-                // Assign properties of bodyMat to cloned material if needed, or simply replace it:
-                // Actually Robot body is meant to reflect the bodyMat color entirely.
                 modelMeshes[i].material = bodyMat;
               }
             }
-
-            // Add shadow for model
             if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(modelMeshes[0]);
-
             self.bodyModel = modelMeshes;
           }
         } catch (err) {
@@ -702,6 +688,7 @@ function Robot() {
       }
       if (component != null) {
         component.componentIndex = self.componentIndex++;
+        component._config = componentConfig;
       }
       if (component) {
         // Sync snapPoints from raw config to runtime component

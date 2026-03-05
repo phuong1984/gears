@@ -965,7 +965,8 @@ var configurator = new function () {
             ['GA25', 'GA25']
           ],
           reset: true,
-          help: 'Select a predefined motor model (auto-loads geometry & physics)'
+          help: 'Select a predefined motor model (auto-loads geometry & physics)',
+          onChangePreset: true
         },
         {
           option: 'position',
@@ -988,7 +989,8 @@ var configurator = new function () {
           option: 'modelURL',
           type: 'selectModelFile',
           reset: true,
-          help: 'Select a 3D model file (.stl, .glb, or .gltf) for the motor housing'
+          help: 'Select a 3D model file (.stl, .glb, or .gltf) for the motor housing',
+          presetLock: true
         },
         {
           option: 'modelScale',
@@ -1000,15 +1002,9 @@ var configurator = new function () {
           help: 'Scale of the 3D model'
         },
         {
-          option: 'modelColor',
-          type: 'color',
-          help: 'Color of the 3D model (leave blank to use model default)',
-          reset: true
-        },
-        {
           option: 'housingColor',
           type: 'color',
-          help: 'Color of the fallback housing box (used when no model is loaded)',
+          help: 'Color of the motor housing / fallback box',
           reset: true
         },
         {
@@ -1018,7 +1014,8 @@ var configurator = new function () {
           max: '20',
           step: '0.5',
           reset: true,
-          help: 'Housing box X/Y/Z dimensions (X=width, Y=depth, Z=height)'
+          help: 'Housing box X/Y/Z dimensions (X=width, Y=depth, Z=height)',
+          presetLock: true
         },
         {
           option: 'shaftOffset',
@@ -1027,7 +1024,8 @@ var configurator = new function () {
           max: '10',
           step: '0.1',
           reset: true,
-          help: 'Shaft offset from motor center (Global Space: X=right, Y=forward, Z=up)'
+          help: 'Shaft offset from motor center (Global Space: X=right, Y=forward, Z=up)',
+          presetLock: true
         },
         {
           option: 'shaftAxis',
@@ -1036,7 +1034,8 @@ var configurator = new function () {
           max: '1',
           step: '0.1',
           reset: true,
-          help: 'Shaft direction vector (Global Space: e.g. 0,0,1 = shaft points Up)'
+          help: 'Shaft direction vector (Global Space: e.g. 0,0,1 = shaft points Up)',
+          presetLock: true
         },
         {
           option: 'shaftDiameter',
@@ -1045,7 +1044,8 @@ var configurator = new function () {
           max: '5',
           step: '0.1',
           reset: true,
-          help: 'Diameter of the shaft cylinder'
+          help: 'Diameter of the shaft cylinder',
+          presetLock: true
         },
         {
           option: 'shaftLength',
@@ -1054,7 +1054,8 @@ var configurator = new function () {
           max: '10',
           step: '0.1',
           reset: true,
-          help: 'Length of the shaft cylinder'
+          help: 'Length of the shaft cylinder',
+          presetLock: true
         },
         {
           option: 'shaftColor',
@@ -2117,9 +2118,25 @@ var configurator = new function () {
           if (movedComponent && movedComponent.body) {
             var mesh = movedComponent.body;
             // Find the component data in robot.options.components via componentIndex
+            // Must search recursively since child components are nested
             var compData = null;
             if (typeof movedComponent.componentIndex !== 'undefined' && robot.options && robot.options.components) {
-              compData = robot.options.components[movedComponent.componentIndex];
+              var _findByIndex = function (comps, idx) {
+                var counter = { value: 0 };
+                return _searchByIndex(comps, idx, counter);
+              };
+              var _searchByIndex = function (comps, idx, counter) {
+                for (var ci = 0; ci < comps.length; ci++) {
+                  if (counter.value === idx) return comps[ci];
+                  counter.value++;
+                  if (comps[ci].components && comps[ci].components.length > 0) {
+                    var found = _searchByIndex(comps[ci].components, idx, counter);
+                    if (found) return found;
+                  }
+                }
+                return null;
+              };
+              compData = _findByIndex(robot.options.components, movedComponent.componentIndex);
             }
             if (compData) {
               // Position: convert from parent-local BJS to global Descartes
@@ -2313,7 +2330,18 @@ var configurator = new function () {
 
   // Helper: get all components + a pseudo-component for body (for snap point proximity)
   this._getComponentsWithBody = function () {
-    var comps = (robot.components || []).slice();
+    // Flatten the entire component tree (including nested children)
+    function flattenComponents(comps, result) {
+      if (!comps) return;
+      for (var i = 0; i < comps.length; i++) {
+        result.push(comps[i]);
+        if (comps[i].components && comps[i].components.length > 0) {
+          flattenComponents(comps[i].components, result);
+        }
+      }
+    }
+    var comps = [];
+    flattenComponents(robot.components || [], comps);
     if (robot.body) {
       comps.push({
         type: '__body__',
@@ -2451,11 +2479,43 @@ var configurator = new function () {
       if (typeof index !== 'undefined') {
         let component = robot.getComponentByIndex(index);
         if (component) {
-          // Sync snapPoints from raw config to runtime component
-          // (setOptions may have dropped snapPoints as unrecognized)
+          // Sync snapPoints and modelScale from raw config to runtime component
           let rawOpts = selected[0].component && selected[0].component.options;
-          if (rawOpts && rawOpts.snapPoints && component.options) {
-            component.options.snapPoints = rawOpts.snapPoints;
+          if (rawOpts && component.options) {
+            let scaleChanged = false;
+
+            // Handle body scale vs regular component scale
+            if (component.type === '__body__') {
+              if (rawOpts.bodyModelScale !== undefined && component.options.bodyModelScale !== rawOpts.bodyModelScale) {
+                component.options.bodyModelScale = rawOpts.bodyModelScale;
+                scaleChanged = true;
+              }
+            } else {
+              if (rawOpts.modelScale !== undefined && component.options.modelScale !== rawOpts.modelScale) {
+                component.options.modelScale = rawOpts.modelScale;
+                scaleChanged = true;
+              }
+            }
+
+            if (rawOpts.snapPoints) {
+              component.options.snapPoints = JSON.parse(JSON.stringify(rawOpts.snapPoints));
+              console.log('[Configurator] Synced snapPoints from raw config to runtime');
+            }
+
+            if (scaleChanged) {
+              console.log('[Configurator] Scale changed, reloading robot');
+              robot.load(); // Full reload to update physics and visuals
+              return; // Exit as robot is being re-created
+            }
+          }
+          // Also check if preset snap points were updated (for MotorActuator with active preset)
+          if (component.options && component.options.preset && component.options.preset !== 'Custom'
+            && window.MOTOR_PRESETS && window.MOTOR_PRESETS[component.options.preset]) {
+            let presetPts = window.MOTOR_PRESETS[component.options.preset].snapPoints;
+            if (presetPts && Array.isArray(presetPts) && presetPts.length > 0) {
+              component.options.snapPoints = JSON.parse(JSON.stringify(presetPts));
+              console.log('[Configurator] Synced snapPoints from preset "' + component.options.preset + '", count=' + presetPts.length);
+            }
           }
           // DEBUG: Log snap points and body info
           console.log('[Configurator] snapPointsUpdated: comp.type=' + component.type
@@ -2475,10 +2535,6 @@ var configurator = new function () {
           }
           SnapManager.showProximityPreview(component, self._getComponentsWithBody(), babylon.scene);
         }
-      } else {
-        // Body selected — show body snap points
-        let bodyPseudo = self._getBodyPseudo();
-        SnapManager.showProximityPreview(bodyPseudo, robot.components || [], babylon.scene);
       }
     });
   };
@@ -2637,13 +2693,75 @@ var configurator = new function () {
         console.log('No template found for component type: ' + component.type);
         return;
       }
+      // Determine if preset lock is active (MotorActuator with non-Custom preset)
+      let isPresetActive = (component.type === 'MotorActuator'
+        && component.options
+        && component.options.preset
+        && component.options.preset !== 'Custom'
+        && window.MOTOR_PRESETS
+        && window.MOTOR_PRESETS[component.options.preset]);
+
+      let configData = component._config || component;
+
       componentTemplate.optionsConfigurations.forEach(function (optionConfiguration) {
-        let options = component.options;
+        let options = configData.options || configData;
         if (optionConfiguration.option == 'position' || optionConfiguration.option == 'rotation') {
-          options = component;
+          options = configData;
         }
         if (typeof genConfig.gen[optionConfiguration.type] != 'undefined') {
-          self.$settingsArea.append(genConfig.gen[optionConfiguration.type](optionConfiguration, options));
+          let $element;
+
+          // For preset select with onChangePreset, use custom handler that resets on Custom
+          if (optionConfiguration.onChangePreset && optionConfiguration.type === 'select') {
+            $element = genConfig.gen.select(optionConfiguration, options);
+            // Override the select change handler to handle preset reset
+            let $select = $element.find('select');
+            $select.off('change').on('change', function () {
+              let newPreset = $select.val();
+              self.saveHistory();
+
+              let targetOptions = configData.options || configData;
+              if (newPreset === 'Custom') {
+                // Reset all options to defaults from the template
+                let defaultOptions = componentTemplate.defaultConfig.options;
+                for (let key in defaultOptions) {
+                  targetOptions[key] = JSON.parse(JSON.stringify(defaultOptions[key]));
+                }
+                targetOptions.preset = 'Custom';
+              } else {
+                targetOptions.preset = newPreset;
+                // Apply preset values to component options so UI sliders match
+                let preset = window.MOTOR_PRESETS[newPreset];
+                if (preset) {
+                  for (let k in preset) {
+                    if (k !== 'snapPoints') {
+                      targetOptions[k] = JSON.parse(JSON.stringify(preset[k]));
+                    } else {
+                      // For snapPoints, we store them as is in the options
+                      // but MotorActuator will prioritize them correctly
+                      targetOptions.snapPoints = JSON.parse(JSON.stringify(preset[k]));
+                    }
+                  }
+                }
+              }
+
+              self.resetScene(false);
+            });
+          } else {
+            $element = genConfig.gen[optionConfiguration.type](optionConfiguration, options);
+          }
+
+          // Apply preset lock: disable the UI element if preset is active
+          if (isPresetActive && optionConfiguration.presetLock) {
+            $element.addClass('preset-locked');
+            $element.find('input, select, button').prop('disabled', true);
+            $element.css({ opacity: 0.5, pointerEvents: 'none' });
+            // Add a small lock indicator
+            let $lockLabel = $('<span class="preset-lock-indicator" style="font-size:0.8em; color:#999; margin-left:4px;" title="Locked by preset">🔒</span>');
+            $element.find('.configurationTitle').first().append($lockLabel);
+          }
+
+          self.$settingsArea.append($element);
         } else {
           console.log('Unrecognized configuration type');
         }
@@ -2911,7 +3029,15 @@ var configurator = new function () {
         self.showComponentOptions(robot.options);
       }
       let $target = self.$componentList.find('li.selected');
-      self.showComponentOptions($target[0].component);
+      if ($target.length > 0) {
+        let index = $target[0].componentIndex;
+        // Search by index for real components, or default to Body (options)
+        let newComp = (typeof index !== 'undefined') ? robot.getComponentByIndex(index) : robot.options;
+        if (newComp) {
+          $target[0].component = newComp;
+          self.showComponentOptions(newComp);
+        }
+      }
       self.highlightSelected();
       self.applyDragToSelected();
     }, 50);

@@ -1219,7 +1219,13 @@ var builder = new function () {
       if (typeof SnapManager === 'undefined' || !self.magneticSnap) return;
       let selected = self.$objectsList.find('li.selected');
       if (selected.length < 1 || typeof selected[0].objectIndex === 'undefined') return;
+
       SnapManager.hideProximityPreview();
+
+      // Save to history and refresh the scene to apply scaling/snap point changes
+      self.saveHistory();
+      self.resetScene(false);
+
       let id = 'worldBaseObject_' + selected[0].name + selected[0].objectIndex;
       let mesh = babylon.scene.getMeshByID(id);
       if (mesh) {

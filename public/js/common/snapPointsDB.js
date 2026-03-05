@@ -231,6 +231,20 @@ var SNAP_POINTS_DB = {
     'MotorActuator': {
         dynamic: true,
         getSnapPoints: function (options, component) {
+            // Priority 1: Use preset-defined snap points if available
+            if (options.snapPoints && Array.isArray(options.snapPoints) && options.snapPoints.length > 0) {
+                return options.snapPoints;
+            }
+
+            // Priority 1b: Look up snap points from the MOTOR_PRESETS registry
+            if (options.preset && options.preset !== 'Custom' && typeof window !== 'undefined' && window.MOTOR_PRESETS && window.MOTOR_PRESETS[options.preset]) {
+                var presetDef = window.MOTOR_PRESETS[options.preset];
+                if (presetDef.snapPoints && Array.isArray(presetDef.snapPoints) && presetDef.snapPoints.length > 0) {
+                    return presetDef.snapPoints;
+                }
+            }
+
+            // Priority 2: Compute dynamically from housing/shaft geometry
             var hs = options.housingSize || [3, 3, 3];
             var so = options.shaftOffset || [0, 0, 2.5];
             var sa = options.shaftAxis || [0, 0, 1];

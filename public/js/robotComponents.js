@@ -2116,7 +2116,7 @@ window.MOTOR_PRESETS = {
   },
   'N20_Micro': {
     modelURL: 'models/robot-motors/motor-dc-GA12-N20.stl',
-    housingSize: [3, 3, 3],
+    housingSize: [1.2, 2.6, 1.2], // Standard N20 dimensions (~12x26x10mm)
     shaftOffset: [0, 1.3, 0],
     shaftAxis: [0, 1, 0],
     shaftDiameter: 0.3,
@@ -2127,11 +2127,12 @@ window.MOTOR_PRESETS = {
     gearRatio: 1,
     encoderTicksPerRev: 12,
     snapPoints: [
-      { name: 'shaft', localPos: [5, 9.42, 6], normal: [0, 1, 0], role: 'axle' },
-      { name: 'bottom', localPos: [5, -8.015, -0.47], normal: [0, 0, -1], role: 'attach' },
-      { name: 'top', localPos: [5, -8.015, 12], normal: [0, 0, 1], role: 'surface' },
-      { name: 'right', localPos: [10, -8.4, 6], normal: [1, 0, 0], role: 'surface' },
-      { name: 'left', localPos: [0, -8.4, 6], normal: [-1, 0, 0], role: 'surface' }
+      { name: 'top', localPos: [5, 8.015, 12], normal: [0, 0, 1], role: 'surface' },
+      { name: 'bottom', localPos: [5, 8.015, 0], normal: [0, 0, -1], role: 'surface' },
+      { name: 'shaft', localPos: [5, -9.27, 6], normal: [0, -1, 0], role: 'axle' },
+      { name: 'back', localPos: [5, 25.3, 6], normal: [0, 1, 0], role: 'surface' },
+      { name: 'left', localPos: [0, 8.015, 6], normal: [-1, 0, 0], role: 'surface' },
+      { name: 'right', localPos: [10, 8.015, 6], normal: [1, 0, 0], role: 'surface' }
     ]
   },
   'Yellow_DC': {
@@ -2327,48 +2328,47 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
   };
 
   this.loadModel = async function () {
-    // Increment load ID to invalidate any previous in-flight loads
     var currentLoadId = ++self._loadId;
 
     if (!self.options.modelURL || self.options.modelURL === '') {
-      // No model — show housing box as fallback
       self.body.visibility = 1;
       var bodyMat = babylon.getMaterial(scene, self.options.housingColor);
       self.body.material = bodyMat;
       return;
     }
 
-    // Load model (same pattern as ModelBlock.init)
-    var results;
-    var tempBlobURL = null;
-    try {
-      // Determine plugin extension for blob/data URLs
-      var pluginExtension = null;
-      var loadURL = self.options.modelURL;
-      if (loadURL.startsWith('blob:') || loadURL.startsWith('data:')) {
-        var fileName = self.options._modelFileName || '';
-        if (fileName.toLowerCase().endsWith('.stl')) {
-          pluginExtension = '.stl';
-        } else if (fileName.toLowerCase().endsWith('.gltf')) {
-          pluginExtension = '.gltf';
-        } else {
-          pluginExtension = '.glb';
-        }
+    // Ensure ModelLoader is available
+    async function ensureModelLoader() {
+      if (window.ModelLoader) return;
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'js/common/modelLoader.js';
+        s.onload = function () { resolve(); };
+        s.onerror = function (e) { reject(e); };
+        document.head.appendChild(s);
+      });
+    }
 
-        // BabylonJS STL loader doesn't support data: URLs,
-        // convert to blob URL (same fix as ModelBlock)
-        if (pluginExtension === '.stl' && loadURL.startsWith('data:')) {
-          var response = await fetch(loadURL);
-          var blob = await response.blob();
-          tempBlobURL = URL.createObjectURL(blob);
-          loadURL = tempBlobURL;
-        }
-      }
-      results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', loadURL, scene, null, pluginExtension);
+    try {
+      await ensureModelLoader();
     } catch (err) {
-      console.log('MotorActuator: Failed to load model: ' + (self.options._modelFileName || self.options.modelURL || '(empty)') + '. Error:', err);
-      if (tempBlobURL) { URL.revokeObjectURL(tempBlobURL); }
-      // Only apply fallback if this is still the current load
+      console.warn('ModelLoader failed to load, falling back:', err);
+      self.body.visibility = 1;
+      var bodyMat = babylon.getMaterial(scene, self.options.housingColor);
+      self.body.material = bodyMat;
+      return;
+    }
+
+    var result;
+    try {
+      result = await window.ModelLoader.loadModel({
+        scene: scene,
+        url: self.options.modelURL,
+        fileName: self.options._modelFileName || '',
+        modelScale: self.options.modelScale || 1
+      });
+    } catch (err) {
+      console.error('MotorActuator: ModelLoader threw:', err);
       if (currentLoadId === self._loadId && self.body && !self.body.isDisposed()) {
         self.body.visibility = 1;
         var bodyMat = babylon.getMaterial(scene, self.options.housingColor);
@@ -2376,205 +2376,185 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       }
       return;
     }
-    // Clean up temporary blob URL
-    if (tempBlobURL) { URL.revokeObjectURL(tempBlobURL); }
 
-    // Guard: if scene was reset or a newer loadModel was started, discard these results
+    // If a newer load started or body disposed, clean up loaded meshes
     if (currentLoadId !== self._loadId || !self.body || self.body.isDisposed()) {
-      // Dispose the orphaned meshes to prevent leaks
-      for (var i = 0; i < results.meshes.length; i++) {
-        results.meshes[i].dispose(false, true);
+      if (result && result.meshes) {
+        result.meshes.forEach(function (m) { try { m.dispose(false, true); } catch (e) { } });
       }
       return;
     }
 
-    var meshes = results.meshes;
+    if (!result || result.error || !result.meshes || result.meshes.length === 0) {
+      console.warn('MotorActuator: Failed to load model or no meshes');
+      self.body.visibility = 1;
+      var bodyMat = babylon.getMaterial(scene, self.options.housingColor);
+      self.body.material = bodyMat;
+      return;
+    }
+
+    var meshes = result.meshes;
     self.modelMeshes = meshes;
 
-    // Make all imported meshes unpickable
-    for (var i = 0; i < meshes.length; i++) {
-      meshes[i].isPickable = false;
+    // Make imported meshes unpickable
+    meshes.forEach(function (m) { try { m.isPickable = false; } catch (e) { } });
+
+    var isSTL = !!result.isSTL;
+
+    // Store bounding center and offset
+    var centerBJS = (result.boundingInfo && result.boundingInfo.center) ? result.boundingInfo.center.clone() : BABYLON.Vector3.Zero();
+    self.modelBoundingCenter = centerBJS.clone();
+    if (result.boundingInfo && result.boundingInfo.size) {
+      self.modelBoundingSize = result.boundingInfo.size;
     }
+    var s = self.options.modelScale || 1.0;
+    // Use same offset formula as ModelLoader.positionModel (line 162)
+    // This ensures consistent positioning whether model is positioned by ModelLoader or separately
+    var offBJS = new BABYLON.Vector3(
+      -centerBJS.x * s,
+      -centerBJS.y * s,
+      centerBJS.z * s
+    );
+    self.modelBoundingOffset = offBJS;
 
-    // Detect if this is an STL file (same detection as ModelBlock)
-    var fileName = self.options._modelFileName || '';
-    var modelURL = self.options.modelURL || '';
-    var isSTL = false;
-    if (fileName.toLowerCase().endsWith('.stl')) {
-      isSTL = true;
-    } else if (modelURL && !modelURL.startsWith('blob:') && !modelURL.startsWith('data:')) {
-      var cleanUrl = modelURL.split('?')[0].split('#')[0];
-      isSTL = cleanUrl.toLowerCase().endsWith('.stl');
-    }
+    // NOTE: Do NOT scale the body mesh itself, as the model is already positioned and scaled
+    // by ModelLoader.positionModel(). Scaling the body would distort the model and affect
+    // snap point calculations. The body remains as the invisible physics container.
 
-    if (isSTL) {
-      // --- STL handling (same as ModelBlock) ---
+    // Apply color
+    try {
+      window.ModelLoader.applyModelColor(meshes, self.options.modelColor || self.options.housingColor || '', isSTL, scene);
+    } catch (e) { }
 
-      // Apply default material if STL mesh has none
-      for (var i = 0; i < meshes.length; i++) {
-        if (!meshes[i].material) {
-          var defaultMat = new BABYLON.StandardMaterial('motorSTLDefault_' + i, scene);
-          defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
-          defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-          meshes[i].material = defaultMat;
+    // Position model under body
+    try {
+      window.ModelLoader.positionModel(meshes, centerBJS, s, isSTL, self.body);
+    } catch (e) { }
+
+    // Add shadow casters
+    try {
+      if (scene.shadowGenerator) {
+        if (isSTL) {
+          meshes.forEach(function (m) { try { scene.shadowGenerator.addShadowCaster(m); } catch (e) { } });
+        } else {
+          try { scene.shadowGenerator.addShadowCaster(meshes[0]); } catch (e) { }
         }
       }
+    } catch (e) { }
 
-      // Calculate overall bounding box
-      var min = null;
-      var max = null;
-      for (var i = 0; i < meshes.length; i++) {
-        meshes[i].computeWorldMatrix(true);
-        var meshBounds = meshes[i].getBoundingInfo().boundingBox;
-        if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
-          if (min === null) {
-            min = meshBounds.minimumWorld.clone();
-            max = meshBounds.maximumWorld.clone();
-          } else {
-            min = BABYLON.Vector3.Minimize(min, meshBounds.minimumWorld);
-            max = BABYLON.Vector3.Maximize(max, meshBounds.maximumWorld);
-          }
-        }
-      }
-      if (min === null) {
-        min = new BABYLON.Vector3(-1, -1, -1);
-        max = new BABYLON.Vector3(1, 1, 1);
-      }
+    console.log('[MotorActuator] loadModel complete -> modelBoundingCenter:', self.modelBoundingCenter.toString());
+    console.log('[MotorActuator] loadModel complete -> modelScale:', s);
+    console.log('[MotorActuator] loadModel complete -> modelBoundingOffset:', self.modelBoundingOffset.toString());
 
-      var bounding = new BABYLON.BoundingInfo(min, max);
-      var center = bounding.boundingBox.center;
+    self._computeAndCacheSnapPoints();
 
-      // Store auto-computed bounding size for configurator wireframe
-      self.modelBoundingSize = new BABYLON.Vector3(
-        Math.max(bounding.boundingBox.extendSize.x * self.options.modelScale * 2, 0.1),
-        Math.max(bounding.boundingBox.extendSize.y * self.options.modelScale * 2, 0.1),
-        Math.max(bounding.boundingBox.extendSize.z * self.options.modelScale * 2, 0.1)
-      );
-
-      // Store the local offset from body center to model visual center
-      // This is the position we set on the model root, which is the offset in body-local space
-      var localOffset = new BABYLON.Vector3(
-        -center.x * self.options.modelScale,
-        -center.y * self.options.modelScale,
-        center.z * self.options.modelScale
-      );
-      self.modelBoundingOffset = localOffset;
-
-      // Create root transform for STL meshes
-      var stlRoot = new BABYLON.TransformNode('motorModelRoot', scene);
-      stlRoot.scaling.x = self.options.modelScale;
-      stlRoot.scaling.y = self.options.modelScale;
-      stlRoot.scaling.z = -self.options.modelScale;
-
-      // Center the model (Z inverted because scaling.z is negative)
-      stlRoot.position.x = localOffset.x;
-      stlRoot.position.y = localOffset.y;
-      stlRoot.position.z = localOffset.z;
-      stlRoot.parent = self.body;
-
-      for (var i = 0; i < meshes.length; i++) {
-        meshes[i].parent = stlRoot;
-      }
-
-      // Apply model color if specified
-      if (self.options.modelColor && self.options.modelColor !== '') {
-        var colorHex = self.options.modelColor;
-        if (colorHex[0] !== '#') colorHex = '#' + colorHex;
-        colorHex = colorHex.substring(0, 7);
-        var color3 = BABYLON.Color3.FromHexString(colorHex);
-        for (var i = 0; i < meshes.length; i++) {
-          var newMat = new BABYLON.StandardMaterial('motorModelColor_stl_' + i, scene);
-          newMat.diffuseColor = color3;
-          meshes[i].material = newMat;
-        }
-      }
-
-      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(stlRoot);
-
-    } else {
-      // --- GLTF/GLB handling (same as ModelBlock) ---
-
-      // Calculate bounding box using WORLD bounds to correctly account for
-      // sub-mesh transforms within the GLB hierarchy (position, rotation, scale).
-      // Local bounds (.minimum/.maximum) only cover geometry in the mesh's own space,
-      // so models like stairs.glb where sub-meshes are offset from the root would be
-      // incorrectly centered. This matches the STL path which also uses world bounds.
-      var min = null;
-      var max = null;
-      for (var i = 1; i < meshes.length; i++) {
-        meshes[i].computeWorldMatrix(true);
-        var meshBounds = meshes[i].getBoundingInfo().boundingBox;
-        if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
-          if (min === null) {
-            min = meshBounds.minimumWorld.clone();
-            max = meshBounds.maximumWorld.clone();
-          } else {
-            min = BABYLON.Vector3.Minimize(min, meshBounds.minimumWorld);
-            max = BABYLON.Vector3.Maximize(max, meshBounds.maximumWorld);
-          }
-        }
-      }
-      if (min === null) {
-        min = new BABYLON.Vector3(-1, -1, -1);
-        max = new BABYLON.Vector3(1, 1, 1);
-      }
-
-      var bounding = new BABYLON.BoundingInfo(min, max);
-
-      // Store auto-computed bounding size for configurator wireframe
-      self.modelBoundingSize = new BABYLON.Vector3(
-        Math.max(bounding.boundingBox.extendSize.x * self.options.modelScale * 2, 0.1),
-        Math.max(bounding.boundingBox.extendSize.y * self.options.modelScale * 2, 0.1),
-        Math.max(bounding.boundingBox.extendSize.z * self.options.modelScale * 2, 0.1)
-      );
-
-      // Store the local offset from body center to model visual center
-      var center = bounding.boundingBox.center;
-      var localOffset = new BABYLON.Vector3(
-        -center.x * self.options.modelScale,
-        -center.y * self.options.modelScale,
-        center.z * self.options.modelScale
-      );
-      self.modelBoundingOffset = localOffset;
-
-      // Scale and attach model root
-      meshes[0].rotationQuaternion = null;
-      meshes[0].scaling.x = self.options.modelScale;
-      meshes[0].scaling.y = self.options.modelScale;
-      meshes[0].scaling.z = -self.options.modelScale;
-
-      // Center the model: X and Y use negative offset, Z uses positive offset
-      // because scaling.z is negative (Z-axis flip), matching the STL centering pattern.
-      meshes[0].position.x = localOffset.x;
-      meshes[0].position.y = localOffset.y;
-      meshes[0].position.z = localOffset.z;
-
-      // Parent to the housing body
-      meshes[0].parent = self.body;
-      meshes[0].visibility = 0; // GLB root node is just a container, submeshes remain visible
-
-      // Apply model color to submeshes
-      if (self.options.modelColor && self.options.modelColor !== '') {
-        var colorHex = self.options.modelColor;
-        if (colorHex[0] !== '#') colorHex = '#' + colorHex;
-        colorHex = colorHex.substring(0, 7);
-        var color3 = BABYLON.Color3.FromHexString(colorHex);
-        for (var i = 1; i < meshes.length; i++) {
-          if (meshes[i].material) {
-            var newMat = new BABYLON.StandardMaterial('motorModelColor_' + i, scene);
-            newMat.diffuseColor = color3;
-            meshes[i].material = newMat;
-          }
-        }
-      }
-
-      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(meshes[0]);
-    }
-
-    // Refresh configurator wireframe if active, so bounding box matches the loaded model
     if (typeof configurator !== 'undefined' && typeof configurator.highlightSelected === 'function') {
       configurator.highlightSelected();
     }
+  };
+
+  /**
+   * Compute snap points RELATIVE to the bounding box center.
+   * Handles three snap point sources:
+   *   1. Preset snap points (in model native space, need scaling + coord transform)
+   *   2. Editor-saved snap points (already in body-local space after model load)
+   *   3. Auto-generated from housing geometry
+   */
+  this._computeAndCacheSnapPoints = function () {
+    var rawPts = self.options.snapPoints;
+    var isFromPreset = false;
+
+    // 1. Try manual override first
+    // 2. Try preset-specific points if available
+    if (!rawPts || rawPts.length === 0) {
+      if (self.options._presetSnapPoints) {
+        rawPts = self.options._presetSnapPoints;
+        isFromPreset = true;
+      }
+    }
+
+    // 3. Try DB lookup by model URL
+    if (!rawPts || rawPts.length === 0) {
+      var modelURL = self.options.modelURL || '';
+      if (modelURL && typeof SNAP_POINTS_DB !== 'undefined' && SNAP_POINTS_DB[modelURL]) {
+        rawPts = SNAP_POINTS_DB[modelURL].snapPoints;
+        isFromPreset = true;
+      }
+    }
+
+    if (!rawPts || rawPts.length === 0) return;
+
+    var s = self.options.modelScale || 1.0;
+    var centerBJS = self.modelBoundingCenter || BABYLON.Vector3.Zero();
+    var offBJS = self.modelBoundingOffset || BABYLON.Vector3.Zero();
+
+    console.log('%c[MotorActuator] _computeAndCacheSnapPoints start', 'color: purple; font-weight: bold');
+    console.log('[MotorActuator] RAW POINTS COUNT:', rawPts.length);
+    console.log('[MotorActuator] CURRENT SCALE:', s);
+    console.log('[MotorActuator] MODEL BOUNDING CENTER:', centerBJS.toString());
+    console.log('[MotorActuator] MODEL BOUNDING OFFSET:', offBJS.toString());
+
+    var bodyLocalPts = rawPts.map(function (p, idx) {
+      // Input p.localPos is Descartes [X, Y, Z] (Y forward, Z up)
+      var nx_desc = p.localPos[0];
+      var ny_desc = p.localPos[1];
+      var nz_desc = p.localPos[2];
+
+      // Convert to Native BJS (X=X, Y=Z(up), Z=Y(forward))
+      var nbx = nx_desc;
+      var nby = nz_desc;
+      var nbz = ny_desc;
+
+      let finalPosDesc, finalNormDesc;
+
+      if (isFromPreset || !p._sourceIsBodyLocal) {
+        // Points are in model NATIVE space. Apply unified model transform:
+        // scaling=(s, s, -s), position=offBJS
+        // blx = nbx * s + offBJS.x
+        // bly = nby * s + offBJS.y
+        // blz = nbz * -s + offBJS.z (Note Z flip)
+
+        var blx = nbx * s + offBJS.x;
+        var bly = nby * s + offBJS.y;
+        var blz = nbz * (-s) + offBJS.z;
+
+        // Convert body-local BJS back to Descartes: X=X, Y=Z, Z=Y
+        finalPosDesc = [blx, blz, bly];
+
+        // Transform Normal: Flip BJS-Z to account for viewer reflection
+        var normX = p.normal[0];
+        var normY = p.normal[1];
+        var normZ = p.normal[2];
+
+        // Native BJS normal: [X, Z_as_Y, Y_as_Z]
+        var nbnz = normY; // Descartes Y -> BJS Z
+        var finalBNZ = -nbnz; // Z-flip
+
+        // Final Descartes normal: [X, finalBNZ, Z]
+        finalNormDesc = [normX, finalBNZ, normZ];
+
+        console.log(`[MotorActuator] Point[${idx}] "${p.name}" (NATIVE -> LOCAL):`,
+          `RAW_DESC:[${nx_desc}, ${ny_desc}, ${nz_desc}]`,
+          `-> FINAL_DESC:[${finalPosDesc[0].toFixed(3)}, ${finalPosDesc[1].toFixed(3)}, ${finalPosDesc[2].toFixed(3)}]`);
+      } else {
+        finalPosDesc = [nx_desc, ny_desc, nz_desc];
+        finalNormDesc = p.normal;
+        console.log(`[MotorActuator] Point[${idx}] "${p.name}" (ALREADY LOCAL):`,
+          `LOCAL_DESC:[${nx_desc}, ${ny_desc}, ${nz_desc}]`);
+      }
+
+      return {
+        name: p.name,
+        role: p.role,
+        normal: finalNormDesc,
+        localPos: finalPosDesc
+      };
+    });
+
+    bodyLocalPts._sourceIsBodyLocal = true;
+    self.snapPoints = bodyLocalPts;
+    console.log('[MotorActuator] FINAL COMPUTED POINTS:', JSON.stringify(self.snapPoints));
+    console.log('%c[MotorActuator] _computeAndCacheSnapPoints end', 'color: purple; font-weight: bold');
   };
 
   this.loadImpostor = function () {
@@ -2660,7 +2640,7 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
   };
 
   this.setOptions = function (options) {
-    self.options = {
+    let defaultOptions = {
       mass: 100,
       housingColor: '555555',
       shaftColor: 'CCCCCC',
@@ -2672,7 +2652,7 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       shaftAxis: [0, 0, 1],
       showShaft: true,
       modelURL: '',
-      modelScale: 10,
+      modelScale: 1,
       modelColor: '',
       _modelFileName: '',
       maxSpeedRpm: 300,
@@ -2685,19 +2665,26 @@ function MotorActuator(scene, parent, pos, rot, port, options) {
       snapPoints: null
     };
 
-    for (let name in options) {
-      if (typeof self.options[name] == 'undefined') {
-        console.log('Unrecognized option: ' + name);
-      } else {
-        self.options[name] = options[name];
+    // 1. Start with defaults
+    self.options = JSON.parse(JSON.stringify(defaultOptions));
+
+    // 2. Apply preset if selected (Preset provides baseline for many fields)
+    let presetName = options.preset || self.options.preset;
+    if (presetName && presetName !== 'Custom' && window.MOTOR_PRESETS[presetName]) {
+      let preset = window.MOTOR_PRESETS[presetName];
+      for (let k in preset) {
+        if (k === 'snapPoints') {
+          self.options._presetSnapPoints = preset[k];
+          continue;
+        }
+        self.options[k] = JSON.parse(JSON.stringify(preset[k]));
       }
     }
 
-    // Auto-apply preset if selected
-    if (self.options.preset && self.options.preset !== 'Custom' && window.MOTOR_PRESETS[self.options.preset]) {
-      let preset = window.MOTOR_PRESETS[self.options.preset];
-      for (let k in preset) {
-        self.options[k] = preset[k];
+    // 3. Apply manual overrides (These win over defaults/presets)
+    for (let name in options) {
+      if (typeof self.options[name] != 'undefined') {
+        self.options[name] = options[name];
       }
     }
 
@@ -3607,7 +3594,7 @@ function LinearActuator(scene, parent, pos, rot, port, options) {
 
     var body = BABYLON.MeshBuilder.CreateBox('sliderBody', { height: self.options.width, width: self.options.baseLength, depth: self.options.baseThickness }, scene);
     self.body = body;
-    body.component = self;
+    self.body.component = self;
     self.body.material = mainBodyMat;
     body.parent = parent;
     body.position = self.bodyPosition;
@@ -4364,39 +4351,22 @@ function ModelBlock(scene, parent, pos, rot, options) {
       return;
     }
 
-    // Load 3D model
-    let results;
-    let tempBlobURL = null;
-    try {
-      // Determine plugin extension for blob/data URLs (they have no file extension)
-      let pluginExtension = null;
-      let loadURL = self.options.modelURL;
-      if (self.options.modelURL.startsWith('blob:') || self.options.modelURL.startsWith('data:')) {
-        // Use stored filename to determine extension, default to .glb
-        let fileName = self.options._modelFileName || '';
-        if (fileName.toLowerCase().endsWith('.stl')) {
-          pluginExtension = '.stl';
-        } else if (fileName.toLowerCase().endsWith('.gltf')) {
-          pluginExtension = '.gltf';
-        } else {
-          pluginExtension = '.glb';
-        }
+    // Ensure ModelLoader is available
+    async function ensureModelLoader() {
+      if (window.ModelLoader) return;
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'js/common/modelLoader.js';
+        s.onload = function () { resolve(); };
+        s.onerror = function (e) { reject(e); };
+        document.head.appendChild(s);
+      });
+    }
 
-        // Babylon.js 4.2.1 STL loader lacks canDirectLoad support,
-        // so data URLs must be converted to blob URLs for STL files
-        if (pluginExtension === '.stl' && self.options.modelURL.startsWith('data:')) {
-          let response = await fetch(self.options.modelURL);
-          let blob = await response.blob();
-          tempBlobURL = URL.createObjectURL(blob);
-          loadURL = tempBlobURL;
-        }
-      }
-      results = await BABYLON.SceneLoader.ImportMeshAsync(null, '', loadURL, scene, null, pluginExtension);
+    try {
+      await ensureModelLoader();
     } catch (err) {
-      console.log('Failed to load model: ' + self.options.modelURL + '. Using placeholder.');
-      // Clean up blob URL on error
-      if (tempBlobURL) { URL.revokeObjectURL(tempBlobURL); tempBlobURL = null; }
-      // Fallback to placeholder box
+      console.log('Failed to load ModelLoader, using placeholder.');
       var bodyMat = babylon.getMaterial(scene, 'FF0000');
       var body = BABYLON.MeshBuilder.CreateBox('modelBody', { height: 2, width: 2, depth: 2 }, scene);
       self.body = body;
@@ -4419,255 +4389,121 @@ function ModelBlock(scene, parent, pos, rot, options) {
       body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
       return;
     }
-    // Clean up temporary blob URL
-    if (tempBlobURL) { URL.revokeObjectURL(tempBlobURL); }
 
-    var meshes = results.meshes;
+    // Use shared ModelLoader to import and position the model
+    let loadResult = await window.ModelLoader.loadModel({
+      scene: scene,
+      url: self.options.modelURL,
+      fileName: self.options._modelFileName,
+      modelScale: self.options.modelScale
+    });
+
+    if (loadResult.error || !loadResult.meshes || loadResult.meshes.length === 0) {
+      console.log('Failed to load model: ' + self.options.modelURL + '. Using placeholder.');
+      var bodyMat = babylon.getMaterial(scene, 'FF0000');
+      var body = BABYLON.MeshBuilder.CreateBox('modelBody', { height: 2, width: 2, depth: 2 }, scene);
+      self.body = body;
+      body.component = self;
+      body.material = bodyMat;
+      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(body);
+
+      body.physicsImpostor = new BABYLON.PhysicsImpostor(
+        body,
+        BABYLON.PhysicsImpostor.BoxImpostor,
+        {
+          mass: self.options.mass,
+          restitution: self.options.restitution,
+          friction: self.options.friction
+        },
+        scene
+      );
+      body.parent = parent;
+      body.position = self.position;
+      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
+      return;
+    }
+
+    var meshes = loadResult.meshes;
     self.meshes = meshes;
 
-    // Make all imported meshes unpickable
-    for (let i = 0; i < meshes.length; i++) {
-      meshes[i].isPickable = false;
+    // Make imported meshes unpickable
+    meshes.forEach(function (m) { try { m.isPickable = false; } catch (e) { } });
+
+    var isSTL = !!loadResult.isSTL;
+
+    // Create physics bounding box using loader's bounding info
+    var centerBJS = (loadResult.boundingInfo && loadResult.boundingInfo.center) ? loadResult.boundingInfo.center.clone() : BABYLON.Vector3.Zero();
+    self.modelBoundingCenter = centerBJS.clone();
+    if (loadResult.boundingInfo && loadResult.boundingInfo.size) {
+      self.modelBoundingSize = loadResult.boundingInfo.size;
+    }
+    if (!self.options.modelBoundingCenter) {
+      self.options.modelBoundingCenter = [centerBJS.x, centerBJS.z, centerBJS.y];
     }
 
-    // Detect if this is an STL file
-    let fileName = self.options._modelFileName || '';
-    let modelURL = self.options.modelURL || '';
-    let isSTL = false;
-    if (fileName.toLowerCase().endsWith('.stl')) {
-      isSTL = true;
-    } else if (modelURL && !modelURL.startsWith('blob:') && !modelURL.startsWith('data:')) {
-      let cleanUrl = modelURL.split('?')[0].split('#')[0];
-      isSTL = cleanUrl.toLowerCase().endsWith('.stl');
+    var bx = (loadResult.boundingInfo && loadResult.boundingInfo.size) ? loadResult.boundingInfo.size.x : 2;
+    var by = (loadResult.boundingInfo && loadResult.boundingInfo.size) ? loadResult.boundingInfo.size.y : 2;
+    var bz = (loadResult.boundingInfo && loadResult.boundingInfo.size) ? loadResult.boundingInfo.size.z : 2;
+
+    bx = Math.max(bx, 0.1);
+    by = Math.max(by, 0.1);
+    bz = Math.max(bz, 0.1);
+
+    var body = BABYLON.MeshBuilder.CreateBox('modelBody', { width: bx, depth: bz, height: by }, scene);
+    self.body = body;
+    body.component = self;
+    body.visibility = 0;
+
+    body.physicsImpostor = new BABYLON.PhysicsImpostor(
+      body,
+      BABYLON.PhysicsImpostor.BoxImpostor,
+      {
+        mass: self.options.mass,
+        restitution: self.options.restitution,
+        friction: self.options.friction
+      },
+      scene
+    );
+    body.parent = parent;
+    body.position = self.position;
+    body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
+
+    // Store bounding offset (matches previous coordinate mapping)
+    var s = self.options.modelScale || 1.0;
+    var offBJS = new BABYLON.Vector3(-centerBJS.x * s, -centerBJS.y * s, centerBJS.z * s);
+    self.modelBoundingOffset = offBJS;
+
+    // Apply color (if specified)
+    try { window.ModelLoader.applyModelColor(meshes, self.options.modelColor || '', isSTL, scene); } catch (e) { }
+
+    // Position model under the bounding body
+    try { window.ModelLoader.positionModel(meshes, centerBJS, s, isSTL, body); } catch (e) { }
+
+    // Add shadow casters
+    try {
+      if (scene.shadowGenerator) {
+        if (isSTL) {
+          try { scene.shadowGenerator.addShadowCaster(meshes[0].parent || meshes[0]); } catch (e) { }
+        } else {
+          try { scene.shadowGenerator.addShadowCaster(meshes[0]); } catch (e) { }
+        }
+      }
+    } catch (e) { }
+
+    // Handle model animation selection
+    if (loadResult.animationGroups && self.options.modelAnimation && self.options.modelAnimation !== 'None') {
+      loadResult.animationGroups.forEach(function (animGroup) {
+        try {
+          if (animGroup.name === self.options.modelAnimation) animGroup.start(true);
+        } catch (e) { }
+      });
     }
 
-    if (isSTL) {
-      // --- STL handling ---
-      // STL meshes are flat (no root node), iterate from index 0
+    // Compute and cache snap points now that bounding center/offset exist
+    try { self._computeAndCacheSnapPoints(); } catch (e) { }
 
-      // Apply default material if STL mesh has none
-      for (let i = 0; i < meshes.length; i++) {
-        if (!meshes[i].material) {
-          let defaultMat = scene.getMaterialByID('stlDefaultMat_model_' + i);
-          if (!defaultMat) {
-            defaultMat = new BABYLON.StandardMaterial('stlDefaultMat_model_' + i, scene);
-            defaultMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
-            defaultMat.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-          }
-          meshes[i].material = defaultMat;
-        }
-      }
-
-      // Calculate overall bounding box from all meshes
-      let min = null;
-      let max = null;
-      for (let i = 0; i < meshes.length; i++) {
-        meshes[i].computeWorldMatrix(true);
-        let meshBounds = meshes[i].getBoundingInfo().boundingBox;
-        if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
-          if (min === null) {
-            min = meshBounds.minimumWorld.clone();
-            max = meshBounds.maximumWorld.clone();
-          } else {
-            min = BABYLON.Vector3.Minimize(min, meshBounds.minimumWorld);
-            max = BABYLON.Vector3.Maximize(max, meshBounds.maximumWorld);
-          }
-        }
-      }
-
-      if (min === null) {
-        min = new BABYLON.Vector3(-1, -1, -1);
-        max = new BABYLON.Vector3(1, 1, 1);
-      }
-
-      let bounding = new BABYLON.BoundingInfo(min, max);
-      let center = bounding.boundingBox.center;
-      var bx = bounding.boundingBox.extendSize.x * self.options.modelScale * 2;
-      var by = bounding.boundingBox.extendSize.y * self.options.modelScale * 2;
-      var bz = bounding.boundingBox.extendSize.z * self.options.modelScale * 2;
-
-      bx = Math.max(bx, 0.1);
-      by = Math.max(by, 0.1);
-      bz = Math.max(bz, 0.1);
-
-      // Create invisible bounding box for physics
-      var body = BABYLON.MeshBuilder.CreateBox('modelBody', { width: bx, depth: bz, height: by }, scene);
-      self.body = body;
-      body.component = self;
-      body.visibility = 0;
-
-      body.physicsImpostor = new BABYLON.PhysicsImpostor(
-        body,
-        BABYLON.PhysicsImpostor.BoxImpostor,
-        {
-          mass: self.options.mass,
-          restitution: self.options.restitution,
-          friction: self.options.friction
-        },
-        scene
-      );
-      body.parent = parent;
-      body.position = self.position;
-      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
-
-      // Create a root transform node for all STL meshes
-      let stlRoot = new BABYLON.TransformNode('stlRoot_model', scene);
-      stlRoot.scaling.x = self.options.modelScale;
-      stlRoot.scaling.y = self.options.modelScale;
-      stlRoot.scaling.z = -self.options.modelScale;
-
-      // Center the model: Z is inverted because scaling.z is negative
-      stlRoot.position.x = -center.x * self.options.modelScale;
-      stlRoot.position.y = -center.y * self.options.modelScale;
-      stlRoot.position.z = center.z * self.options.modelScale;
-      stlRoot.parent = body;
-
-      for (let i = 0; i < meshes.length; i++) {
-        meshes[i].parent = stlRoot;
-      }
-
-      // Apply model color if specified
-      if (self.options.modelColor && self.options.modelColor !== '') {
-        let colorHex = self.options.modelColor;
-        if (colorHex[0] !== '#') colorHex = '#' + colorHex;
-        colorHex = colorHex.substring(0, 7);
-        let color3 = BABYLON.Color3.FromHexString(colorHex);
-        for (let i = 0; i < meshes.length; i++) {
-          let newMat = new BABYLON.StandardMaterial('modelColor_stl_' + i, scene);
-          newMat.diffuseColor = color3;
-          meshes[i].material = newMat;
-        }
-      }
-
-      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(stlRoot);
-
-    } else {
-      // --- GLTF/GLB handling ---
-
-      // Calculate overall bounding box across all submeshes (use local bounds)
-      let min = null;
-      let max = null;
-      for (let i = 1; i < meshes.length; i++) {
-        meshes[i].computeWorldMatrix(true);
-        let meshBounds = meshes[i].getBoundingInfo().boundingBox;
-
-        if (meshBounds.extendSize.x != 0 || meshBounds.extendSize.y != 0 || meshBounds.extendSize.z != 0) {
-          if (min === null) {
-            min = meshBounds.minimumWorld.clone();
-            max = meshBounds.maximumWorld.clone();
-          } else {
-            min = BABYLON.Vector3.Minimize(min, meshBounds.minimumWorld);
-            max = BABYLON.Vector3.Maximize(max, meshBounds.maximumWorld);
-          }
-        }
-      }
-
-      if (min === null) {
-        min = new BABYLON.Vector3(-1, -1, -1);
-        max = new BABYLON.Vector3(1, 1, 1);
-      }
-
-      let bounding = new BABYLON.BoundingInfo(min, max);
-      var bx = bounding.boundingBox.extendSize.x * self.options.modelScale * 2;
-      var by = bounding.boundingBox.extendSize.y * self.options.modelScale * 2;
-      var bz = bounding.boundingBox.extendSize.z * self.options.modelScale * 2;
-
-      // Ensure minimum bounding size
-      bx = Math.max(bx, 0.1);
-      by = Math.max(by, 0.1);
-      bz = Math.max(bz, 0.1);
-
-      // Create invisible bounding box for physics
-      var body = BABYLON.MeshBuilder.CreateBox('modelBody', { width: bx, depth: bz, height: by }, scene);
-      self.body = body;
-      body.component = self;
-      body.visibility = 0;
-
-      // Assign physics impostor to the bounding box
-      body.physicsImpostor = new BABYLON.PhysicsImpostor(
-        body,
-        BABYLON.PhysicsImpostor.BoxImpostor,
-        {
-          mass: self.options.mass,
-          restitution: self.options.restitution,
-          friction: self.options.friction
-        },
-        scene
-      );
-      body.parent = parent;
-      body.position = self.position;
-      body.rotationQuaternion = globalRotationQuaternion(self.rotation.x, self.rotation.y, self.rotation.z);
-
-      // Scale and attach model visual to the bounding box
-      // glTF models set rotationQuaternion by default, must clear for Euler rotation
-      meshes[0].rotationQuaternion = null;
-      meshes[0].scaling.x = self.options.modelScale;
-      meshes[0].scaling.y = self.options.modelScale;
-      meshes[0].scaling.z = -self.options.modelScale;
-
-      // Center the model within the bounding box: X and Y use negative offset,
-      // Z uses positive offset because scaling.z is negative (Z-axis flip).
-      meshes[0].position.x = -bounding.boundingBox.center.x * self.options.modelScale;
-      meshes[0].position.y = -bounding.boundingBox.center.y * self.options.modelScale;
-      meshes[0].position.z = bounding.boundingBox.center.z * self.options.modelScale;
-
-      // Parent the model root to the bounding box so it moves together
-      meshes[0].parent = body;
-      meshes[0].visibility = 0; // Root node invisible, submeshes remain visible
-
-      // DEBUG: Log centering info for snap point comparison
-      console.log('%c[ModelBlock] GLB centering debug', 'color: cyan; font-weight: bold');
-      console.log('[ModelBlock] bboxCenter(world,pre-clear)=', bounding.boundingBox.center.toString());
-      console.log('[ModelBlock] body size: bx=' + bx + ' by=' + by + ' bz=' + bz);
-      console.log('[ModelBlock] meshes[0].position=', meshes[0].position.toString(),
-        'meshes[0].scaling=', meshes[0].scaling.toString());
-      console.log('[ModelBlock] body.position=', body.position.toString(),
-        'modelScale=', self.options.modelScale);
-
-      // Apply model color to submeshes and break loader material cache link
-      let customColor3 = null;
-      if (self.options.modelColor && self.options.modelColor !== '') {
-        // gen.color stores as #RRGGBBaa, truncate to #RRGGBB for Color3
-        let colorHex = self.options.modelColor;
-        if (colorHex[0] !== '#') colorHex = '#' + colorHex;
-        colorHex = colorHex.substring(0, 7);
-        customColor3 = BABYLON.Color3.FromHexString(colorHex);
-      }
-
-      for (let i = 1; i < meshes.length; i++) {
-        if (meshes[i].material) {
-          let newMat;
-          if (customColor3) {
-            let matID = 'modelColor_' + i;
-            newMat = scene.getMaterialByID(matID);
-            if (!newMat) {
-              newMat = new BABYLON.StandardMaterial(matID, scene);
-            }
-            newMat.diffuseColor = customColor3;
-          } else {
-            // Clone the existing material to break the GLTF loader cache link
-            // Avoid infinite clones on scene rebuilds by checking ID first
-            let cloneID = 'cloned_model_mat_' + i;
-            newMat = scene.getMaterialByID(cloneID);
-            if (!newMat) {
-              newMat = meshes[i].material.clone(cloneID);
-            }
-          }
-          meshes[i].material = newMat;
-        }
-      }
-
-      // Add shadow
-      if (scene.shadowGenerator) scene.shadowGenerator.addShadowCaster(meshes[0]);
-
-      // Handle model animation
-      if (results.animationGroups && self.options.modelAnimation && self.options.modelAnimation !== 'None') {
-        results.animationGroups.forEach(function (animGroup) {
-          if (animGroup.name === self.options.modelAnimation) {
-            animGroup.start(true);
-          }
-        });
-      }
+    if (typeof configurator !== 'undefined' && typeof configurator.highlightSelected === 'function') {
+      configurator.highlightSelected();
     }
   };
 
@@ -4692,6 +4528,66 @@ function ModelBlock(scene, parent, pos, rot, options) {
         self.options[name] = options[name];
       }
     }
+  };
+
+  /**
+   * Compute snap points RELATIVE to the bounding box center.
+   * For ModelBlock with loaded 3D models.
+   */
+  this._computeAndCacheSnapPoints = function () {
+    var rawPts = self.options.snapPoints;
+    if (!rawPts || rawPts.length === 0) {
+      return; // No snap points for user-imported models via ModelBlock
+    }
+
+    var s = self.options.modelScale || 1.0;
+    var centerBJS = self.modelBoundingCenter || BABYLON.Vector3.Zero();
+
+    var bodyLocalPts = rawPts.map(function (p) {
+      var nx_desc = p.localPos[0];
+      var ny_desc = p.localPos[1];
+      var nz_desc = p.localPos[2];
+
+      var nbx = nx_desc;
+      var nby = nz_desc;
+      var nbz = ny_desc;
+
+      var relX = nbx;
+      var relY = nby;
+      var relZ = nbz;
+
+      if (!p._sourceIsBodyLocal) {
+        // ModelBlock snap points (from DB or Editor) are in model NATIVE space
+        // Apply offset from native center and scale
+        relX = (nbx - centerBJS.x) * s;
+        relY = (nby - centerBJS.y) * s;
+        relZ = (nbz - centerBJS.z) * (-s);  // Z-flip in scaling
+      }
+
+      var blx = relX;
+      var bly = relZ;  // BJS Y = Descartes Z
+      var blz = relY;  // BJS Z = Descartes Y
+
+      var normalDesc = p.normal || [0, 0, 1];
+      var nnx = normalDesc[0];
+      var nny = normalDesc[1];
+      var nnz = normalDesc[2];
+
+      // Apply same coordinate transformation as position
+      var bnx = nnx;
+      var bny = nnz;
+      var bnz = nny * (-1);  // Z flip like position
+
+      return {
+        name: p.name,
+        role: p.role,
+        normal: [bnx, bnz, bny],
+        localPos: [blx, blz, bly]
+      };
+    });
+
+    bodyLocalPts._sourceIsBodyLocal = true;
+    self.snapPoints = bodyLocalPts;
   };
 
   // NOTE: Do NOT call this.init() here.

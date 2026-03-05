@@ -1178,6 +1178,11 @@ var World_Base = function () {
 
       let bounding = new BABYLON.BoundingInfo(min, max);
       let center = bounding.boundingBox.center;
+
+      if (!options.modelBoundingCenter) {
+        options.modelBoundingCenter = [center.x, center.z, center.y];
+      }
+
       var bx = bounding.boundingBox.extendSize.x * options.modelScale * 2;
       var by = bounding.boundingBox.extendSize.y * options.modelScale * 2;
       var bz = bounding.boundingBox.extendSize.z * options.modelScale * 2;
@@ -1194,19 +1199,23 @@ var World_Base = function () {
       mesh.position = options.position;
       mesh.rotation = options.rotation;
 
+      // Store center for SnapManager (must be after mesh creation)
+      mesh.modelBoundingCenter = center.clone();
+
       // Create a root transform node for all STL meshes
-      // Z-axis is negated to convert from right-handed (STL) to left-handed (Babylon.js) coords
       let stlRoot = new BABYLON.TransformNode('stlRoot_' + id, scene);
       stlRoot.scaling.x = options.modelScale;
       stlRoot.scaling.y = options.modelScale;
       stlRoot.scaling.z = -options.modelScale;
 
       // Center the model within the bounding box.
-      // For X,Y: offset = -center * modelScale (standard centering)
-      // For Z: offset = +center * modelScale (inverted because scaling.z is negative)
-      stlRoot.position.x = -center.x * options.modelScale;
-      stlRoot.position.y = -center.y * options.modelScale;
-      stlRoot.position.z = center.z * options.modelScale;
+      var offBJS = new BABYLON.Vector3(
+        -center.x * options.modelScale,
+        -center.y * options.modelScale,
+        center.z * options.modelScale
+      );
+      mesh.modelBoundingOffset = offBJS;
+      stlRoot.position = offBJS;
       stlRoot.parent = mesh;
 
       for (let i = 0; i < meshes.length; i++) {
@@ -1269,12 +1278,11 @@ var World_Base = function () {
       }
 
       let bounding = new BABYLON.BoundingInfo(min, max);
+      let center = bounding.boundingBox.center;
 
-      console.log(`[DEBUG GLB] Model ${id} loaded. Total submeshes: ${meshes.length}. Animations: ${results.animationGroups ? results.animationGroups.length : 0}`);
-      console.log(`[DEBUG GLB] BoundingBox MIN: ${bounding.boundingBox.minimumWorld.x.toFixed(4)}, ${bounding.boundingBox.minimumWorld.y.toFixed(4)}, ${bounding.boundingBox.minimumWorld.z.toFixed(4)}`);
-      console.log(`[DEBUG GLB] BoundingBox MAX: ${bounding.boundingBox.maximumWorld.x.toFixed(4)}, ${bounding.boundingBox.maximumWorld.y.toFixed(4)}, ${bounding.boundingBox.maximumWorld.z.toFixed(4)}`);
-      console.log(`[DEBUG GLB] BoundingBox ExtendSize: ${bounding.boundingBox.extendSize.x.toFixed(4)}, ${bounding.boundingBox.extendSize.y.toFixed(4)}, ${bounding.boundingBox.extendSize.z.toFixed(4)}`);
-      console.log(`[DEBUG GLB] Applied modelScale: ${options.modelScale}`);
+      if (!options.modelBoundingCenter) {
+        options.modelBoundingCenter = [center.x, center.z, center.y];
+      }
 
       let rawBx = bounding.boundingBox.extendSize.x * options.modelScale * 2;
       let rawBy = bounding.boundingBox.extendSize.y * options.modelScale * 2;
@@ -1283,10 +1291,6 @@ var World_Base = function () {
       var bx = Math.max(rawBx, 0.1);
       var by = Math.max(rawBy, 0.1);
       var bz = Math.max(rawBz, 0.1);
-
-      if (bx === 0.1 || by === 0.1 || bz === 0.1) {
-        console.warn(`[DEBUG GLB] Math.max(0.1) was triggered for Physics Box! Raw values: x=${rawBx.toFixed(4)}, y=${rawBy.toFixed(4)}, z=${rawBz.toFixed(4)}`);
-      }
 
       // Build bounding box mesh
       var meshOptions = {
@@ -1300,6 +1304,9 @@ var World_Base = function () {
       mesh.position = options.position;
       mesh.rotation = options.rotation;
 
+      // Store center for SnapManager (must be after mesh creation)
+      mesh.modelBoundingCenter = center.clone();
+
       // Handle GLTF model scaling and positioning (match Robot Configurator exact logic)
       // glTF models set rotationQuaternion by default, must clear for Euler rotation
       meshes[0].rotationQuaternion = null;
@@ -1307,12 +1314,14 @@ var World_Base = function () {
       meshes[0].scaling.y = options.modelScale;
       meshes[0].scaling.z = -options.modelScale; // Z-axis flip
 
-      // Center the model: X/Y use negative offset, Z uses POSITIVE offset because
-      // scaling.z on meshes[0] is negative.
-      let center = bounding.boundingBox.center;
-      meshes[0].position.x = -center.x * options.modelScale;
-      meshes[0].position.y = -center.y * options.modelScale;
-      meshes[0].position.z = center.z * options.modelScale;
+      // Center the model: Z is inverted because scaling.z on meshes[0] is negative.
+      var offBJS = new BABYLON.Vector3(
+        -center.x * options.modelScale,
+        -center.y * options.modelScale,
+        center.z * options.modelScale
+      );
+      mesh.modelBoundingOffset = offBJS;
+      meshes[0].position = offBJS;
 
       // Parent the model root to the bounding box mesh so it moves together
       meshes[0].parent = mesh;

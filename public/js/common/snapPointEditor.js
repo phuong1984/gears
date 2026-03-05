@@ -21,6 +21,8 @@ class SnapPointEditorClass {
         this._modelSize = 1; // Estimated size for marker scaling
         this._bboxCenterLocal = null; // BBox center in BJS local space
         this._bboxCenterDesc = null; // BBox center in Descartes [X, Y, Z]
+        this._rawBBoxCenter = null;
+        this._modelSizeNative = 1;
 
         // Hover preview state
         this._lastPickResult = null;
@@ -73,6 +75,7 @@ class SnapPointEditorClass {
             || this.componentData.options?.modelURL
             || this.componentData.modelURL
             || null;
+        // _isSTL is explicitly removed, we map Z-up and Y-up uniformly
         this.componentType = this.componentData.type || null;
 
         console.log('[SnapEditor] resolved:', {
@@ -157,8 +160,7 @@ class SnapPointEditorClass {
                 name: p.name,
                 role: p.role || 'surface',
                 position: unscaled,
-                normal: norm,
-                _needsBboxOff: true // Flag to tell _fitCameraToEditorMesh to add bboxCenter offset
+                normal: norm
             };
         };
 
@@ -278,10 +280,17 @@ class SnapPointEditorClass {
         // Hiện tên thân thiện từ modelURL hoặc mesh name
         let displayName = this.originalMesh.name || 'Unknown';
         if (this.modelURL) {
-            displayName = this.modelURL.split('/').pop() || displayName;
+            // Prefer _modelFileName for user-uploaded files (data URLs show base64 garbage)
+            let fileName = this.componentData?.options?._modelFileName
+                || this.componentData?._modelFileName || '';
+            if (fileName) {
+                displayName = fileName;
+            } else if (!this.modelURL.startsWith('data:') && !this.modelURL.startsWith('blob:')) {
+                displayName = this.modelURL.split('/').pop() || displayName;
+            }
         }
         if (this.componentData?.type) {
-            displayName = this.componentData.type + (this.modelURL ? ' (' + displayName + ')' : '');
+            displayName = this.componentData.type + (displayName !== 'Unknown' ? ' (' + displayName + ')' : '');
         }
 
         this.container.innerHTML = `
@@ -313,6 +322,13 @@ class SnapPointEditorClass {
                             <div class="snap-editor-toolbox">
                                 <button id="snap-btn-auto-bbox" title="Sinh 6 điểm ở 6 mặt của Bounding Box"><i class="fas fa-box"></i> Auto từ BBox</button>
                                 <button id="snap-btn-clear" title="Xóa toàn bộ điểm"><i class="fas fa-trash"></i> Clear All</button>
+                            </div>
+                            <div class="snap-editor-toolbox" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                                <label style="display: block; margin-bottom: 5px; font-size: 0.8rem; color: #aaa;">Model Scale</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="range" id="snap-scale-slider" min="0.1" max="10" step="0.1" value="1" style="flex: 1;">
+                                    <span id="snap-scale-text" style="min-width: 30px; font-weight: bold;">1.0</span>
+                                </div>
                             </div>
                         </div>
                         <div class="snap-editor-list" id="snap-point-list">
@@ -415,6 +431,59 @@ class SnapPointEditorClass {
                 el.addEventListener('input', (e) => this._handlePropInputChange(prop, e.target.value));
             }
         });
+
+        // Scale slider
+        const scaleSlider = document.getElementById('snap-scale-slider');
+        const scaleText = document.getElementById('snap-scale-text');
+        if (scaleSlider) {
+            scaleSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (scaleText) scaleText.innerText = val.toFixed(1);
+                this._updateModelScale(val);
+            });
+            // Set initial value
+            const currentScale = this._getModelScale();
+            scaleSlider.value = currentScale;
+            if (scaleText) scaleText.innerText = currentScale.toFixed(1);
+        }
+    }
+
+    _updateModelScale(val) {
+        if (!this.editorMesh) return;
+
+        // Update mesh scaling (keep Z flip convention)
+        const s = val;
+        this.editorMesh.scaling = new BABYLON.Vector3(s, s, -s);
+
+        // Re-center mesh based on stored raw bounding center
+        if (this._rawBBoxCenter) {
+            this.editorMesh.position.set(
+                -this._rawBBoxCenter.x * s,
+                -this._rawBBoxCenter.y * s,
+                this._rawBBoxCenter.z * s   // Z-flip → sign is opposite for shift
+            );
+            this.editorMesh.computeWorldMatrix(true);
+        }
+
+        // Cache the current max dimension for helper logic (e.g. camera radius, marker scale)
+        // If we have maxDim(native), scaled maxDim is native * s
+        let currentMaxDim = this._modelSizeNative * s;
+        this._modelSize = currentMaxDim;
+
+        // Refresh markers (they depend on scaling for size)
+        this._refreshMarkers();
+
+        // Update component data so it's saved/passed back
+        if (this.componentData) {
+            if (!this.componentData.options) this.componentData.options = {};
+            if (this.componentType === '__body__') {
+                this.componentData.options.bodyModelScale = s;
+                console.log('[SnapEditor] Scale update for Body: bodyModelScale=' + s);
+            } else {
+                this.componentData.options.modelScale = s;
+                console.log('[SnapEditor] Scale update for Component: modelScale=' + s);
+            }
+        }
     }
 
     _handlePropInputChange(prop, value) {
@@ -603,36 +672,49 @@ class SnapPointEditorClass {
                 return;
             }
 
-            // Reset transform
+            // 1. Reset transform to compute raw center/size
             this.editorMesh.position = BABYLON.Vector3.Zero();
             this.editorMesh.rotationQuaternion = null;
             this.editorMesh.rotation = BABYLON.Vector3.Zero();
+            this.editorMesh.scaling = BABYLON.Vector3.One();
+            this.editorMesh.computeWorldMatrix(true);
 
-            // GLB models: match World Builder / Robot Configurator orientation.
-            // When BabylonJS loads a GLB, the __root__ node gets a rotationQuaternion
-            // for glTF→BabylonJS coordinate conversion. World Builder clears it and
-            // negates scaling.z to get the correct visual orientation. We must do the
-            // same here so the editor model matches the scene model exactly.
-            if (this.modelURL) {
-                this.editorMesh.scaling = new BABYLON.Vector3(1, 1, -1);
-            } else {
-                this.editorMesh.scaling = new BABYLON.Vector3(1, 1, 1);
+            let bounds;
+            try {
+                // Compute bounds in NATIVE state (unscaled, unrotated)
+                bounds = this.editorMesh.getHierarchyBoundingVectors(true);
+            } catch (e) {
+                let bi = this.editorMesh.getBoundingInfo();
+                bounds = { min: bi.boundingBox.minimumWorld.clone(), max: bi.boundingBox.maximumWorld.clone() };
             }
+            this._rawBBoxCenter = bounds.max.add(bounds.min).scale(0.5);
+            let sizeVec = bounds.max.subtract(bounds.min);
+            this._modelSizeNative = Math.max(sizeVec.x, sizeVec.y, sizeVec.z);
+            if (this._modelSizeNative < 0.001) this._modelSizeNative = 1;
 
-            // Xóa rác markers/preview nếu có
+            // 2. Clear old markers before applying scaling
             this.editorMesh.getChildMeshes(false).forEach(m => {
                 if (m.name.includes("preview") || m.name.includes("marker") || m.name.includes("snappoint")) {
                     m.dispose();
                 }
             });
 
-            // Áp dụng material phẳng để hiển thị rõ
             this._applyEditorMaterial();
 
-            // Tính bounding box và fit camera
-            this._fitCameraToEditorMesh();
+            // 3. Apply Unified Scaling and Centering
+            // This sets mesh.scaling = (s, s, -s) and mesh.position = -center*s
+            const s = this._getModelScale();
+            this._updateModelScale(s);
 
-            // Ẩn loading
+            // 4. Camera target center (which is now world 0,0,0)
+            this.camera.setTarget(BABYLON.Vector3.Zero());
+            this.camera.radius = this._modelSize * 2.2;
+            this.camera.lowerRadiusLimit = this._modelSize * 0.1;
+            this.camera.upperRadiusLimit = this._modelSize * 10;
+
+            // Cache bounding vectors for _autoFromBBox (unflipped original bounds for easy mapping)
+            this._unflippedBoundsNative = bounds;
+
             if (loadingEl) loadingEl.style.display = 'none';
 
 
@@ -661,53 +743,68 @@ class SnapPointEditorClass {
      * Load model từ URL (GLB/GLTF/STL) vào scene editor độc lập.
      */
     _loadModelFromURL(url, onReady, loadingEl) {
-        // Tách root path và file name
-        let lastSlash = url.lastIndexOf('/');
-        let rootPath = lastSlash >= 0 ? url.substring(0, lastSlash + 1) : '';
-        let fileName = lastSlash >= 0 ? url.substring(lastSlash + 1) : url;
+        var self = this;
 
-        // Nếu là data URL hoặc blob URL, Babylon xử lý trực tiếp
-        let isDataUrl = url.startsWith('data:') || url.startsWith('blob:');
-        if (isDataUrl) {
-            rootPath = '';
-            fileName = url;
+        // Ensure shared ModelLoader is available (dynamically load if needed)
+        function ensureModelLoader() {
+            if (window.ModelLoader) return Promise.resolve();
+            return new Promise(function (resolve, reject) {
+                var s = document.createElement('script');
+                s.src = 'js/common/modelLoader.js';
+                s.onload = function () { resolve(); };
+                s.onerror = function (e) { reject(e); };
+                document.head.appendChild(s);
+            });
         }
 
-        BABYLON.SceneLoader.ImportMesh("", rootPath, fileName, this.scene, (newMeshes, particleSystems, skeletons, animationGroups) => {
+        var modelFileName = this.componentData?.options?._modelFileName || this.componentData?._modelFileName || '';
+        var modelScale = this.componentData?.options?.modelScale || 1;
+
+        ensureModelLoader().then(function () {
+            if (loadingEl) loadingEl.innerText = 'Loading...';
+            return window.ModelLoader.loadModel({ scene: self.scene, url: url, fileName: modelFileName, modelScale: modelScale });
+        }).then(function (result) {
+            if (!result) {
+                if (loadingEl) loadingEl.innerText = '⚠ Không thể tải model';
+                return;
+            }
+            if (result.error) {
+                console.error('[SnapEditor] Load failed:', result.error);
+                if (loadingEl) loadingEl.innerText = '⚠ Không thể tải model';
+                return;
+            }
+
+            var newMeshes = result.meshes || [];
             if (!newMeshes || newMeshes.length === 0) {
                 console.error('[SnapEditor] No meshes loaded from URL:', url);
                 if (loadingEl) loadingEl.innerText = '⚠ Không thể tải model';
                 return;
             }
 
-            // Dừng animation nếu có
-            if (animationGroups) {
-                animationGroups.forEach(ag => ag.stop());
+            // Stop any animations if present
+            if (result.animationGroups) {
+                result.animationGroups.forEach(function (ag) { try { ag.stop(); } catch (e) { } });
             }
 
-            // Tìm root: prefer __root__ (GLB standard), else mesh without parent
-            let __root__ = newMeshes.find(m => m.name === '__root__');
-            let root;
+            var __root__ = newMeshes.find(function (m) { return m.name === '__root__'; });
+            var root = __root__ || newMeshes.find(function (m) { return !m.parent; }) || newMeshes[0];
 
-            if (__root__) {
-                // GLB files: __root__ is the container. Use it directly.
-                root = __root__;
-            } else {
-                // Non-GLB: find meshes without parent
-                let rootMeshes = newMeshes.filter(m => !m.parent);
-                root = rootMeshes.length > 0 ? rootMeshes[0] : newMeshes[0];
-
-                if (rootMeshes.length > 1) {
-                    let container = new BABYLON.Mesh("editorRoot", this.scene);
-                    rootMeshes.forEach(m => { m.parent = container; });
-                    root = container;
+            // Calculate and store bounding center (matching configurator/builder behavior)
+            try {
+                var boundingCenter = result.boundingInfo && result.boundingInfo.center ? result.boundingInfo.center : BABYLON.Vector3.Zero();
+                self.componentData.options = self.componentData.options || {};
+                self.componentData.options.modelBoundingCenter = [boundingCenter.x, boundingCenter.z, boundingCenter.y];
+                if (!self.componentData.modelBoundingCenter) {
+                    self.componentData.modelBoundingCenter = boundingCenter.clone();
                 }
+            } catch (e) {
+                console.warn('[SnapEditor] Failed to store bounding center:', e);
             }
 
             onReady(root);
-        }, null, (scene, message, exception) => {
-            console.error('[SnapEditor] Load error:', message, exception);
-            if (loadingEl) loadingEl.innerText = '⚠ Lỗi tải: ' + message;
+        }).catch(function (err) {
+            console.error('[SnapEditor] Load error:', err);
+            if (loadingEl) loadingEl.innerText = '⚠ Lỗi tải';
         });
     }
 
@@ -825,75 +922,9 @@ class SnapPointEditorClass {
         this.editorMesh.getChildMeshes(false).forEach(applyFallback);
     }
 
-    /**
-     * Tính bounding box và fit camera vào model.
-     */
     _fitCameraToEditorMesh() {
-        if (!this.editorMesh) return;
-
-        this.editorMesh.computeWorldMatrix(true);
-
-        let bounds;
-        try {
-            bounds = this.editorMesh.getHierarchyBoundingVectors(true);
-        } catch (e) {
-            // Fallback: dùng bounding box của editorMesh
-            let bi = this.editorMesh.getBoundingInfo();
-            bounds = { min: bi.boundingBox.minimumWorld, max: bi.boundingBox.maximumWorld };
-        }
-
-        let sizeVec = bounds.max.subtract(bounds.min);
-        let maxDim = Math.max(sizeVec.x, sizeVec.y, sizeVec.z);
-        if (maxDim < 0.001) maxDim = 1;
-
-        this._modelSize = maxDim; // Lưu để scale marker
-
-        let center = bounds.max.add(bounds.min).scale(0.5);
-
-        // Compute pure translation offset (World space shift of the origin)
-        // This makes Editor view strictly map to Body Space without negative scaling issues.
-        this._bboxOffBJS = this.editorMesh.position.subtract(center);
-
-        // Descartes offset from body origin to Tinkercad origin
-        this._bboxCenterDesc = [this._bboxOffBJS.x, this._bboxOffBJS.z, this._bboxOffBJS.y];
-        console.log('[SnapEditor] _fitCamera: bboxCenterDesc=', this._bboxCenterDesc);
-        console.log('[SnapEditor] _fitCamera: editorMesh.scaling=', this.editorMesh.scaling.toString());
-
-        console.log('[SnapEditor] _fitCamera: center_world=', center.toString(), 'meshPos before=', this.editorMesh.position.toString());
-        this.editorMesh.position.subtractInPlace(center); // Đưa về gốc tọa độ
-        this.editorMesh.computeWorldMatrix(true); // MUST recompute after position change!
-        console.log('[SnapEditor] _fitCamera: meshPos after=', this.editorMesh.position.toString());
-
-        this.camera.setTarget(BABYLON.Vector3.Zero());
-        this.camera.radius = maxDim * 2.2;
-        this.camera.lowerRadiusLimit = maxDim * 0.1;
-        this.camera.upperRadiusLimit = maxDim * 10;
-
-        // Apply bbox offset to previously loaded data if any
-        if (this.snapPoints && this.snapPoints.length > 0 && !this._appliedBboxToLoadedPts) {
-            this._appliedBboxToLoadedPts = true;
-            let bboxOff = this._bboxCenterDesc || [0, 0, 0];
-            let needsRefresh = false;
-
-            this.snapPoints.forEach(pt => {
-                if (pt._needsBboxOff) {
-                    pt.position[0] -= bboxOff[0];
-                    pt.position[1] -= bboxOff[1];
-                    pt.position[2] -= bboxOff[2];
-                    delete pt._needsBboxOff;
-                    needsRefresh = true;
-                }
-            });
-
-            if (needsRefresh) {
-                console.log('[SnapEditor] Applied bbox offset to loaded points: ', bboxOff);
-                this._refreshPointList();
-                this._refreshMarkers();
-                if (this.selectedPointIndex >= 0) {
-                    this._populatePropsForm(this.snapPoints[this.selectedPointIndex]);
-                }
-            }
-        }
+        // Obsolete: We now do this inside onMeshReady to correctly preserve bounds from before the quaternion wipe.
+        // Keeping an empty stub for compatibility if called from elsewhere.
     }
 
     /**
@@ -954,9 +985,13 @@ class SnapPointEditorClass {
         this._previewNode.position = worldPoint.clone();
 
         let axisY = new BABYLON.Vector3(0, 1, 0);
-        let dot = BABYLON.Vector3.Dot(axisY, worldNormal);
+        // INVERT world normal for correct arrow direction visualization
+        // The cylinder arrow points UP by default, so we need to invert it to point
+        // in the actual normal direction
+        let invertedNormal = worldNormal.scale(-1);
+        let dot = BABYLON.Vector3.Dot(axisY, invertedNormal);
         if (Math.abs(dot) < 0.9999) {
-            let cross = BABYLON.Vector3.Cross(axisY, worldNormal);
+            let cross = BABYLON.Vector3.Cross(axisY, invertedNormal);
             let angle = Math.acos(Math.max(-1, Math.min(1, dot)));
             this._previewNode.rotationQuaternion = BABYLON.Quaternion.RotationAxis(cross.normalize(), angle);
         } else if (dot < 0) {
@@ -978,16 +1013,24 @@ class SnapPointEditorClass {
         let worldPoint = pickInfo.pickedPoint;
         let worldNormal = pickInfo.getNormal(true, true) || new BABYLON.Vector3(0, 1, 0);
 
-        // P_bjs = P_world - bboxOffBJS
-        let localPoint = worldPoint.subtract(this._bboxOffBJS || BABYLON.Vector3.Zero());
-        let localNormal = worldNormal; // No flip needed
+        // Convert world pick position to native model coords using inverse world matrix
+        // This correctly handles all transforms: scaling (including Z-flip), position, rotation
+        this.editorMesh.computeWorldMatrix(true);
+        let invMatrix = this.editorMesh.getWorldMatrix().clone();
+        invMatrix.invert();
+        let nativeBJS = BABYLON.Vector3.TransformCoordinates(worldPoint, invMatrix);
 
-        // Chuyển sang Descartes System: Descartes X=BJS X, Descartes Y=BJS Z, Descartes Z=BJS Y
-        let ptPos = [localPoint.x, localPoint.z, localPoint.y];
+        // Native BJS -> Descartes mapping (No centering offset - store raw native)
+        let ptPos = [nativeBJS.x, nativeBJS.z, nativeBJS.y];
+
+        // Normal: Inverse rotation only
+        let rotMatrix = new BABYLON.Matrix();
+        invMatrix.getRotationMatrixToRef(rotMatrix);
+        let localNormal = BABYLON.Vector3.TransformNormal(worldNormal, rotMatrix).normalize();
         let ptNorm = [localNormal.x, localNormal.z, localNormal.y];
 
         console.log('[SnapEditor] PICK: worldPt=' + worldPoint.toString()
-            + ' localPt=' + localPoint.toString()
+            + ' nativeBJS=' + nativeBJS.toString()
             + ' descPos=' + JSON.stringify(ptPos));
 
         let newName = "point_" + (this.snapPoints.length + 1);
@@ -1006,109 +1049,46 @@ class SnapPointEditorClass {
         this._populatePropsForm();
     }
 
-    /**
-     * BUG FIX 2: Rewrite _autoFromBBox với tọa độ Descartes đúng.
-     *
-     * Hệ quy chiếu:
-     * - BabylonJS: X=phải, Y=lên, Z=trước
-     * - Descartes (dự án): X=phải, Y=trước, Z=lên (Y↔Z swap)
-     *
-     * Lưu snap point trong Descartes: position=[X_d, Y_d, Z_d], normal=[Xn_d, Yn_d, Zn_d]
-     * Từ BabylonJS local coords: X_d=BJS_X, Y_d=BJS_Z, Z_d=BJS_Y
-     */
     _autoFromBBox() {
-        if (!this.editorMesh) {
+        if (!this.editorMesh || !this._unflippedBoundsNative) {
             alert('Model chưa tải xong, vui lòng thử lại sau.');
             return;
         }
 
-        // Lấy bounding box từ editorMesh (đã được fit vào editor scene)
-        this.editorMesh.computeWorldMatrix(true);
-        let bounds;
-        try {
-            bounds = this.editorMesh.getHierarchyBoundingVectors(true);
-        } catch (e) {
-            let bi = this.editorMesh.getBoundingInfo();
-            bounds = { min: bi.boundingBox.minimumWorld, max: bi.boundingBox.maximumWorld };
-        }
+        const bounds = this._unflippedBoundsNative;
+        const cx = this._rawBBoxCenter.x;
+        const cy = this._rawBBoxCenter.y;
+        const cz = this._rawBBoxCenter.z;
 
-        // Thay vì dùng invMatrix và localMin/Max của editorMesh bị lật ngược (scaling.z=-1), 
-        // Lấy tâm và kích thước từ raw bounds, sau đó trừ đi offset giống như picking.
-        let cx = bounds.max.x + bounds.min.x; cx /= 2;
-        let cy = bounds.max.y + bounds.min.y; cy /= 2;
-        let cz = bounds.max.z + bounds.min.z; cz /= 2;
 
-        let ex = bounds.max.x - cx;
-        let ey = bounds.max.y - cy;
-        let ez = bounds.max.z - cz;
+        const generatePoint = (name, rawBjsX, rawBjsY, rawBjsZ, normal) => {
+            // rawBjs coordinates are absolute in the native mesh space.
+            // Map BJS to Descartes: [X, Z, Y] (Store raw native)
+            let ptPos = [rawBjsX, rawBjsZ, rawBjsY];
 
-        let ox = this._bboxOffBJS?.x || 0;
-        let oy = this._bboxOffBJS?.y || 0;
-        let oz = this._bboxOffBJS?.z || 0;
+            // Map normal: [X, Z, Y]
+            let ptNorm = [normal[0], normal[2], normal[1]];
 
-        let minX = cx - ex - ox; let maxX = cx + ex - ox;
-        let minY = cy - ey - oy; let maxY = cy + ey - oy;
-        let minZ = cz - ez - oz; let maxZ = cz + ez - oz;
+            return {
+                name: name,
+                role: "surface",
+                position: ptPos.map(v => Math.round(v * 10000) / 10000),
+                normal: ptNorm.map(v => Math.round(v * 10000) / 10000)
+            };
+        };
 
-        let cx_bjs = cx - ox;
-        let cy_bjs = cy - oy;
-        let cz_bjs = cz - oz;
-
-        // Tâm trong Descartes
-        let cx_d = cx_bjs;
-        let cy_d = cz_bjs; // Descartes Y = BJS Z
-        let cz_d = cy_bjs; // Descartes Z = BJS Y
-
-        // Round helper
-        const r = (v) => Math.round(v * 10000) / 10000;
-
-        // 6 faces trong Descartes coords:
         let autoPoints = [
-            {
-                name: "top",
-                pos: [r(cx_d), r(cy_d), r(maxY)],  // Descartes Z+ = BJS Y+
-                norm: [0, 0, 1]
-            },
-            {
-                name: "bottom",
-                pos: [r(cx_d), r(cy_d), r(minY)],  // Descartes Z- = BJS Y-
-                norm: [0, 0, -1]
-            },
-            {
-                name: "front",
-                pos: [r(cx_d), r(maxZ), r(cz_d)],  // Descartes Y+ = BJS Z+ = forward
-                norm: [0, 1, 0]
-            },
-            {
-                name: "back",
-                pos: [r(cx_d), r(minZ), r(cz_d)],  // Descartes Y- = BJS Z- = backward
-                norm: [0, -1, 0]
-            },
-            {
-                name: "left",
-                pos: [r(minX), r(cy_d), r(cz_d)],  // Descartes X- = BJS X-
-                norm: [-1, 0, 0]
-            },
-            {
-                name: "right",
-                pos: [r(maxX), r(cy_d), r(cz_d)],  // Descartes X+ = BJS X+
-                norm: [1, 0, 0]
-            }
+            generatePoint("top", cx, bounds.max.y, cz, [0, -1, 0]),
+            generatePoint("bottom", cx, bounds.min.y, cz, [0, 1, 0]),
+            generatePoint("front", cx, cy, bounds.min.z, [0, 0, -1]),
+            generatePoint("back", cx, cy, bounds.max.z, [0, 0, 1]),
+            generatePoint("left", bounds.min.x, cy, cz, [-1, 0, 0]),
+            generatePoint("right", bounds.max.x, cy, cz, [1, 0, 0])
         ];
 
-        console.log('[SnapEditor] _autoFromBBox: cx_bjs=' + cx_bjs + ' cy_bjs=' + cy_bjs + ' cz_bjs=' + cz_bjs);
-        console.log('[SnapEditor] _autoFromBBox: cx_d=' + cx_d + ' cy_d=' + cy_d + ' cz_d=' + cz_d);
-
         autoPoints.forEach(p => {
-            this.snapPoints.push({
-                name: p.name,
-                role: "surface",
-                position: p.pos,
-                normal: p.norm
-            });
+            this.snapPoints.push(p);
         });
-
-        console.log('[SnapEditor] _autoFromBBox: top=', this.snapPoints.find(p => p.name === 'top')?.position, 'bottom=', this.snapPoints.find(p => p.name === 'bottom')?.position);
 
         this.selectedPointIndex = this.snapPoints.length - 1;
         this._refreshPointList();
@@ -1274,13 +1254,25 @@ class SnapPointEditorClass {
 
         let pos = pt.position || [0, 0, 0];
         let norm = pt.normal || [0, 1, 0];
-        let localPos = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
-        let localNorm = new BABYLON.Vector3(norm[0], norm[2], norm[1]).normalize();
 
-        // P_world = P_ui_bjs + bboxOffBJS
-        let worldPos = localPos.add(this._bboxOffBJS || BABYLON.Vector3.Zero());
-        // Editor Mesh rotation is always Zero, so worldNorm equals localNorm
-        let worldNorm = localNorm;
+        // Recover native Descartes position
+        let nativeDesc = [pos[0], pos[1], pos[2]];
+
+        // Native BJS mapping (BJS Y=Up(Z), BJS Z=Forward(Y))
+        let nativeBJS = new BABYLON.Vector3(pos[0], pos[2], pos[1]);
+
+        // Use BabylonJS world matrix to transform native coords to editor world coords
+        this.editorMesh.computeWorldMatrix(true);
+        let worldPos = BABYLON.Vector3.TransformCoordinates(nativeBJS, this.editorMesh.getWorldMatrix());
+
+        // Normal mapping
+        let normBJS = new BABYLON.Vector3(norm[0], norm[2], norm[1]);
+        let rotMatrix = new BABYLON.Matrix();
+        this.editorMesh.getWorldMatrix().getRotationMatrixToRef(rotMatrix);
+        let worldNorm = BABYLON.Vector3.TransformCoordinates(normBJS, rotMatrix).normalize();
+        // Cylinder points UP by default, and we need it to point in the normal direction.
+        // Rotation logic handles aligning the Y-axis to worldNorm.
+        // No inversion needed.
 
         group.wrapper.position = worldPos.clone();
 
@@ -1322,13 +1314,14 @@ class SnapPointEditorClass {
 
         let dbFormatPoints = this.snapPoints.map(p => {
             let pos = p.position || p.localPos || [0, 0, 0];
-            // Convert: Tinkercad-origin-relative → body-center-relative
-            // WE NOW SAVE WITHOUT SCALE AND WITHOUT Z-FLIP!
-            // UI pos = localPos - bboxOff -> localPos = pos + bboxOff
+            // SAVING PURE V_RAW WITHOUT OFFSETTING
+            // In the DB and presets, snap point options represent the raw Descartes
+            // coordinate directly overlaid on the 3D model geometry without scaling or offsets.
+            // SnapManager mathematically applies scale, offset, and Z-flip at runtime.
             let adjusted = [
-                pos[0] + bboxOff[0],
-                pos[1] + bboxOff[1],
-                pos[2] + bboxOff[2]
+                pos[0],
+                pos[1],
+                pos[2]
             ];
 
             let norm = [...(p.normal || [0, 0, 1])];
@@ -1343,12 +1336,26 @@ class SnapPointEditorClass {
         dbFormatPoints.forEach((pt, i) => {
             let srcPos = this.snapPoints[i]?.position;
             console.log('[SnapEditor] SAVE pt[' + i + '] "' + pt.name + '": editorPos(Desc)=' + JSON.stringify(srcPos)
-                + ' - bboxOff=' + JSON.stringify(bboxOff)
-                + ' × scale=' + modelScale
-                + ' → localPos=' + JSON.stringify(pt.localPos)
-                + ' | BJS_local=(' + pt.localPos[0] + ', ' + pt.localPos[2] + ', ' + pt.localPos[1] + ')');
+                + ' -> Saved DB localPos=' + JSON.stringify(pt.localPos));
         });
         console.log('%c[SnapEditor] ===== SAVE DEBUG END =====', 'color: red; font-weight: bold');
+
+        if (this.componentData) {
+            if (!this.componentData.options) this.componentData.options = {};
+
+            // Save current modelScale
+            this.componentData.options.modelScale = this._getModelScale();
+
+            // Save modelBoundingCenter (Descartes [X, Y, Z])
+            if (this._rawBBoxCenter) {
+                // native BJS (X, Y, Z) -> Descartes (X, Z, Y)
+                this.componentData.options.modelBoundingCenter = [
+                    this._rawBBoxCenter.x,
+                    this._rawBBoxCenter.z,
+                    this._rawBBoxCenter.y
+                ];
+            }
+        }
 
         if (this.isBuiltIn && this.modelURL) {
             // Built-in model (by URL): Save to LocalStorage + update runtime DB
@@ -1376,16 +1383,29 @@ class SnapPointEditorClass {
             }
             alert('Đã áp dụng Snap Points cho Body.');
         } else if (this.isBuiltInComponent && this.componentType) {
-            // Built-in component type (UltrasonicSensor, etc.): Update runtime DB
+            // Built-in component type (MotorActuator, UltrasonicSensor, etc.): Update runtime DB
             if (typeof SNAP_POINTS_DB !== 'undefined') {
-                SNAP_POINTS_DB[this.componentType] = {
-                    snapPoints: JSON.parse(JSON.stringify(dbFormatPoints))
-                };
+                // Preserve the existing entry (keep dynamic/getSnapPoints if present)
+                if (SNAP_POINTS_DB[this.componentType]) {
+                    SNAP_POINTS_DB[this.componentType].snapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
+                } else {
+                    SNAP_POINTS_DB[this.componentType] = {
+                        snapPoints: JSON.parse(JSON.stringify(dbFormatPoints))
+                    };
+                }
             }
             // Also save to componentData options for persistence
             if (this.componentData) {
                 if (!this.componentData.options) this.componentData.options = {};
                 this.componentData.options.snapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
+
+                // If a preset is active, also update the preset registry so the snap points
+                // are used when the preset is loaded in future resetScene calls
+                let presetName = this.componentData.options.preset;
+                if (presetName && presetName !== 'Custom' && typeof window !== 'undefined' && window.MOTOR_PRESETS && window.MOTOR_PRESETS[presetName]) {
+                    window.MOTOR_PRESETS[presetName].snapPoints = JSON.parse(JSON.stringify(dbFormatPoints));
+                    console.log('[SnapEditor] Updated MOTOR_PRESETS["' + presetName + '"].snapPoints');
+                }
             }
             alert('Đã cập nhật Snap Points cho ' + this.componentType + '.\nDùng "Copy code for DB" để lưu vĩnh viễn vào snapPointsDB.js.');
         } else {
