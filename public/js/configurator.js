@@ -3303,6 +3303,33 @@ var configurator = new function () {
       wireframeAnimation.setKeys(keys);
       wireframe.animations.push(wireframeAnimation);
       babylon.scene.beginAnimation(wireframe, 0, 30, true);
+
+      // Add bounding box center visualization (white transparent sphere)
+      let bboxCenterMarker = babylon.scene.getMeshByID('bboxCenterMarkerConfigurator');
+      if (bboxCenterMarker) {
+        bboxCenterMarker.dispose();
+      }
+
+      // Get bounding box center from body
+      let bboxCenter = body.getBoundingInfo().boundingBox.center;
+      let bboxCenterWorld = BABYLON.Vector3.TransformCoordinates(bboxCenter, body.getWorldMatrix());
+
+      // Create white transparent sphere at bbox center
+      let bboxMat = babylon.scene.getMaterialByName("bboxCenterMatConfigurator") || (() => {
+        let m = new BABYLON.StandardMaterial("bboxCenterMatConfigurator", babylon.scene);
+        m.emissiveColor = new BABYLON.Color3(1, 1, 1);
+        m.alpha = 0.4;
+        m.disableLighting = true;
+        return m;
+      })();
+
+      bboxCenterMarker = BABYLON.MeshBuilder.CreateSphere("bboxCenterMarkerConfigurator", {
+        diameter: 0.5, segments: 12
+      }, babylon.scene);
+      bboxCenterMarker.position = bboxCenterWorld;
+      bboxCenterMarker.material = bboxMat;
+      bboxCenterMarker.isPickable = false;
+      bboxCenterMarker.renderingGroupId = 1;
     }
   }
 

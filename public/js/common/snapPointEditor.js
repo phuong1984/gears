@@ -29,6 +29,9 @@ class SnapPointEditorClass {
         this._previewMarker = null;
         this._previewNormal = null;
 
+        // Bounding box center visualization
+        this._bboxCenterMarker = null; // White sphere at bbox center
+
         this.ui = {};
     }
 
@@ -119,6 +122,7 @@ class SnapPointEditorClass {
         if (this._previewMarker) { this._previewMarker.dispose(); this._previewMarker = null; }
         if (this._previewNormal) { this._previewNormal.dispose(); this._previewNormal = null; }
         if (this._previewNode) { this._previewNode.dispose(); this._previewNode = null; }
+        if (this._bboxCenterMarker) { this._bboxCenterMarker.dispose(); this._bboxCenterMarker = null; }
         this._lastPickResult = null;
         if (this.engine) {
             this.engine.dispose();
@@ -650,6 +654,11 @@ class SnapPointEditorClass {
 
             if (this._previewNode) {
                 this._previewNode.scaling.set(ms, ms, ms);
+            }
+
+            // Scale bbox center marker like snap point markers
+            if (this._bboxCenterMarker) {
+                this._bboxCenterMarker.scaling.set(ms, ms, ms);
             }
         });
     }
@@ -1228,6 +1237,9 @@ class SnapPointEditorClass {
             this.pointMarkers.push({ wrapper, sphere, cyl, idx });
             this._updateMarkerTransform(idx); // Initial position and rotation
         });
+
+        // Also refresh bbox center marker
+        this._refreshBBoxCenterMarker();
     }
 
     _highlightMarker(idx) {
@@ -1287,6 +1299,45 @@ class SnapPointEditorClass {
         } else {
             group.wrapper.rotationQuaternion = BABYLON.Quaternion.Identity();
         }
+    }
+
+    /**
+     * Render bounding box center as a white transparent sphere.
+     * Similar style to snap points but always white and without normal arrow.
+     */
+    _refreshBBoxCenterMarker() {
+        // Dispose old marker if exists
+        if (this._bboxCenterMarker) {
+            this._bboxCenterMarker.dispose();
+            this._bboxCenterMarker = null;
+        }
+
+        if (!this.scene || !this.editorMesh || !this._rawBBoxCenter) {
+            return;
+        }
+
+        // Create white material for bbox center (transparent like snap points)
+        let whiteMat = this.scene.getMaterialByName("bboxCenterWhite") || (() => {
+            let m = new BABYLON.StandardMaterial("bboxCenterWhite", this.scene);
+            m.emissiveColor = new BABYLON.Color3(1, 1, 1);
+            m.alpha = 0.4; // Transparency like snap points
+            m.disableLighting = true;
+            return m;
+        })();
+
+        // Transform raw bbox center to world coordinates
+        let nativeBJS = new BABYLON.Vector3(this._rawBBoxCenter.x, this._rawBBoxCenter.y, this._rawBBoxCenter.z);
+        this.editorMesh.computeWorldMatrix(true);
+        let worldPos = BABYLON.Vector3.TransformCoordinates(nativeBJS, this.editorMesh.getWorldMatrix());
+
+        // Create sphere at world position
+        this._bboxCenterMarker = BABYLON.MeshBuilder.CreateSphere("bboxCenterMarker", {
+            diameter: 1.0, segments: 12
+        }, this.scene);
+        this._bboxCenterMarker.position = worldPos;
+        this._bboxCenterMarker.material = whiteMat;
+        this._bboxCenterMarker.isPickable = false;
+        this._bboxCenterMarker.renderingGroupId = 1;
     }
 
     _saveAndApply() {
